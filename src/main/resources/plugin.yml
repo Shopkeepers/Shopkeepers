@@ -12,6 +12,7 @@ commands:
     shopkeeper:
         description: Base for all shopkeeper commands.
         aliases: [shopkeepers]
+        permission: shopkeeper.help
         usage: 'Unknown command! Try /<command> help'
 
 permissions:
