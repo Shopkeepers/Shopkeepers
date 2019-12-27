@@ -80,6 +80,9 @@
 								<includes>
 									<include>${project.groupId}:ShopkeepersAPI</include>
 									<include>org.bstats</include>
+									<!--
+									<include>com.zaxxer</include>
+									-->
 								</includes>
 							</artifactSet>
 							<relocations>
@@ -87,6 +90,12 @@
 									<pattern>org.bstats.bukkit</pattern>
 									<shadedPattern>${project.groupId}.libs.bstats</shadedPattern>
 								</relocation>
+								<!--
+								<relocation>
+									<pattern>com.zaxxer.hikari</pattern>
+									<shadedPattern>${project.groupId}.libs.hikari</shadedPattern>
+								</relocation>
+								-->
 							</relocations>
 						</configuration>
 					</execution>

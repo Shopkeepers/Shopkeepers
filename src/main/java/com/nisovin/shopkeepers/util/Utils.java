@@ -1,13 +1,20 @@
 package com.nisovin.shopkeepers.util;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.zip.CRC32;
 
 import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
@@ -30,6 +37,13 @@ import org.bukkit.util.Vector;
 public final class Utils {
 
 	private Utils() {
+	}
+
+	public static String getStackTraceAsString(Throwable throwable) {
+		// Note: Closing is not required for StringWriter (and therefore the PrintWriter as well)
+		StringWriter sw = new StringWriter();
+		throwable.printStackTrace(new PrintWriter(sw));
+		return sw.toString();
 	}
 
 	// note: doesn't work for primitive arrays
@@ -56,6 +70,41 @@ public final class Utils {
 	// Note: The returned Iterable can only be iterated once!
 	public static <T> Iterable<T> toIterable(Stream<T> stream) {
 		return stream::iterator;
+	}
+
+	public static int calculateCRC32(String text) {
+		return calculateCRC32("", text);
+	}
+
+	/**
+	 * Creates the CRC32 checksum over the String representations of the given objects, separated by the given
+	 * delimiter.
+	 * <p>
+	 * The checksum is built over the utf-8 encoding of these strings. Null objects are encoded as empty strings.
+	 * 
+	 * @param delimiter
+	 *            the delimiter, or <code>null</code> or empty to use no delimiter
+	 * @param objects
+	 *            the objects
+	 * @return the unsigned 32-bit CRC32 checksum, represented as signed 32-bit integer
+	 */
+	public static int calculateCRC32(String delimiter, Object... objects) {
+		CRC32 crc = new CRC32();
+		if (objects != null) {
+			if (delimiter == null) delimiter = "";
+			final byte[] delimiterBytes = delimiter.getBytes(StandardCharsets.UTF_8);
+			boolean first = true;
+			for (Object object : objects) {
+				String string = (object == null) ? "" : String.valueOf(object);
+				if (first) {
+					first = false;
+				} else {
+					crc.update(delimiterBytes);
+				}
+				crc.update(string.getBytes(StandardCharsets.UTF_8));
+			}
+		}
+		return (int) crc.getValue(); // unsigned 32 bit crc int represented as 32 bit signed int
 	}
 
 	public static void printRegisteredListeners(Event event) {
@@ -291,5 +340,136 @@ public final class Utils {
 			if (distanceToGround < 0.0D) distanceToGround = 0.0D;
 		}
 		return distanceToGround;
+	}
+
+	/**
+	 * Cast a CheckedException as an unchecked one.
+	 *
+	 * @param throwable
+	 *            to cast
+	 * @param <T>
+	 *            the type of the Throwable
+	 * @return this method will never return a Throwable instance, it will just throw it
+	 * @throws T
+	 *             the throwable as an unchecked throwable
+	 */
+	// https://stackoverflow.com/questions/4554230/rethrowing-checked-exceptions/4555351#4555351
+	@SuppressWarnings("unchecked")
+	public static <T extends Throwable> RuntimeException rethrow(Throwable throwable) throws T {
+		throw (T) throwable; // rely on vacuous cast
+	}
+
+	/**
+	 * Calls the given {@link Callable} and rethrows any checked exception as an unchecked one.
+	 * 
+	 * @param <T>
+	 *            the return type
+	 * @param callable
+	 *            the callable
+	 * @return the callable's result
+	 */
+	public static <T> T callAndRethrow(Callable<T> callable) {
+		try {
+			return callable.call();
+		} catch (Throwable e) {
+			Utils.rethrow(e);
+			return null;
+		}
+	}
+
+	public interface RetryHandler {
+		/**
+		 * Gets invoked right before {@link Utils#retry(Callable, RetryHandler, int)} attempts another retry.
+		 * 
+		 * @param currentAttempt
+		 *            the current attempt number, starts at <code>1</code> for the first attempt and is at
+		 *            <code>2</code> when the {@link RetryHandler} gets invoked for the first time
+		 * @param lastException
+		 *            the exception of the last failed attempt
+		 * @throws Exception
+		 *             aborts the retrying altogether and forwards this exceptions
+		 */
+		void onRetry(int currentAttempt, Exception lastException) throws Exception;
+	}
+
+	/**
+	 * Runs the given {@link Callable} and returns its return value.
+	 * <p>
+	 * If the callable throws an exception, the exception gets silently ignored and the callable gets executed another
+	 * time, up until the specified limit of attempts is reached. In case of success the return value of the callable
+	 * gets returned. In case of failure the exception thrown by the callable during the final attempt gets forwarded.
+	 * 
+	 * @param callable
+	 *            the callable to execute
+	 * @param maxAttempts
+	 *            the maximum amount of times the callable gets run
+	 * @return the return value of the callable in case of successful execution
+	 * @throws Exception
+	 *             any exception thrown by the callable during the last attempt gets forwarded
+	 * @see #retry(Callable, RetryHandler, int)
+	 */
+	public static <T> T retry(Callable<T> callable, int maxAttempts) throws Exception {
+		return retry(callable, null, maxAttempts);
+	}
+
+	/**
+	 * Runs the given {@link Callable} and returns its return value.
+	 * <p>
+	 * If the callable throws an exception, the exception gets silently ignored and the callable gets executed another
+	 * time, up until the specified limit of attempts is reached. In case of success the return value of the callable
+	 * gets returned. In case of failure the exception thrown by the callable during the final attempt gets forwarded.
+	 * <p>
+	 * Optionally a {@link RetryHandler} can be provided, which gets run before every re-attempt. It provides the number
+	 * of the current (upcoming) attempt together with the last thrown exception of the previous attempt. Note: This is
+	 * not run for the first attempt, nor after the final failed attempt! It is meant to perform any preparation
+	 * required for the next upcoming attempt. Handling of failed attempts can be handled as part of the callable, and
+	 * preparation for the first attempt can be handled prior to invocation of this method. Any exceptions thrown by the
+	 * retry handler are handled just like exceptions thrown by the callable and result in the abortion of
+	 * the current attempt and continuation with the next attempt. The retry handler is also able to abort the retrying
+	 * altogether.
+	 * 
+	 * @param callable
+	 *            the callable to execute
+	 * @param retryHandler
+	 *            if not <code>null</code> this callback gets run before every retry
+	 * @param maxAttempts
+	 *            the maximum amount of times the callable is attempted to get run
+	 * @return the return value of the callable in case of successful execution
+	 * @throws Exception
+	 *             any exception thrown by the callable or retry-handler during the last attempt gets forwarded
+	 */
+	public static <T> T retry(Callable<T> callable, RetryHandler retryHandler, int maxAttempts) throws Exception {
+		Validate.isTrue(maxAttempts > 0, "MaxAttempts is less than 1");
+		int currentAttempt = 0;
+		Exception lastException = null;
+		while (++currentAttempt <= maxAttempts) {
+			try {
+				if (currentAttempt > 1 && retryHandler != null) {
+					// inform RetryHandler:
+					try {
+						retryHandler.onRetry(currentAttempt, lastException);
+					} catch (Exception e) {
+						// abort re-attempts with this exception:
+						lastException = e;
+						break;
+					}
+				}
+				return callable.call();
+			} catch (Exception e) {
+				lastException = e;
+			}
+		}
+		assert lastException != null;
+		throw lastException;
+	}
+
+	// shortcut:
+	public static void close(String closableName, Closeable closeable) {
+		if (closeable == null) return;
+		try {
+			closeable.close();
+		} catch (IOException e) {
+			Log.severe("Couldn't close " + closableName, e);
+		}
 	}
 }

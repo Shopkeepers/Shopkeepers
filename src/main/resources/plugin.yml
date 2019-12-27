@@ -39,6 +39,15 @@ permissions:
         description: List the admin shops
         default: op
 
+    shopkeeper.history.own:
+        description: View your own trading history
+        default: true
+    shopkeeper.history.all:
+        description: View the trading history of everybody
+        default: op
+        children:
+            shopkeeper.history.own: true
+
     shopkeeper.remove.own:
         description: Remove all your own player shops via command
         default: op
@@ -162,6 +171,8 @@ permissions:
             shopkeeper.list.own: true
             shopkeeper.list.others: true
             shopkeeper.list.admin: true
+            shopkeeper.history.own: true
+            shopkeeper.history.all: true
             shopkeeper.remove.own: true
             shopkeeper.remove.others: true
             shopkeeper.remove.all: true

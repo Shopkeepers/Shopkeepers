@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -37,6 +38,7 @@ import com.nisovin.shopkeepers.chestprotection.ProtectedChests;
 import com.nisovin.shopkeepers.commands.Commands;
 import com.nisovin.shopkeepers.compat.NMSManager;
 import com.nisovin.shopkeepers.config.ConfigLoadException;
+import com.nisovin.shopkeepers.history.TradingHistory;
 import com.nisovin.shopkeepers.metrics.CitizensChart;
 import com.nisovin.shopkeepers.metrics.FeaturesChart;
 import com.nisovin.shopkeepers.metrics.GringottsChart;
@@ -47,6 +49,9 @@ import com.nisovin.shopkeepers.metrics.VaultEconomyChart;
 import com.nisovin.shopkeepers.metrics.WorldGuardChart;
 import com.nisovin.shopkeepers.metrics.WorldsChart;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
+import com.nisovin.shopkeepers.player.PlayerIdCache;
+import com.nisovin.shopkeepers.player.profile.PlayerProfiles;
+import com.nisovin.shopkeepers.player.profile.SKPlayerProfiles;
 import com.nisovin.shopkeepers.pluginhandlers.CitizensHandler;
 import com.nisovin.shopkeepers.pluginhandlers.WorldGuardHandler;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperCreation;
@@ -67,7 +72,9 @@ import com.nisovin.shopkeepers.shopobjects.living.LivingShops;
 import com.nisovin.shopkeepers.shopobjects.sign.SignShops;
 import com.nisovin.shopkeepers.spigot.SpigotFeatures;
 import com.nisovin.shopkeepers.storage.SKShopkeeperStorage;
-import com.nisovin.shopkeepers.tradelogging.TradeFileLogger;
+import com.nisovin.shopkeepers.storage.SKStorage;
+import com.nisovin.shopkeepers.storage.StorageException;
+import com.nisovin.shopkeepers.storage.StorageTypes;
 import com.nisovin.shopkeepers.ui.SKUIRegistry;
 import com.nisovin.shopkeepers.ui.defaults.SKDefaultUITypes;
 import com.nisovin.shopkeepers.util.DebugListener;
@@ -82,13 +89,27 @@ import com.nisovin.shopkeepers.villagers.VillagerInteractionListener;
 
 public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin {
 
-	private static final int ASYNC_TASKS_TIMEOUT_SECONDS = 10;
+	private static final int ASYNC_TASKS_TIMEOUT_SECONDS = 60;
 
 	private static SKShopkeepersPlugin plugin;
 
 	public static SKShopkeepersPlugin getInstance() {
 		return plugin;
 	}
+
+	// utilities:
+	private final Executor syncExecutor = SchedulerUtils.createSyncExecutor(this);
+	private final Executor asyncExecutor = SchedulerUtils.createAsyncExecutor(this);
+
+	// stores the uuids and names of all online players, as well as all known shop owners among the loaded shopkeepers:
+	private final PlayerIdCache playerIdCache = new PlayerIdCache();
+
+	// database storage:
+	private final StorageTypes storageTypes = new StorageTypes();
+
+	private SKStorage storage = null;
+	private final SKPlayerProfiles playerProfiles = new SKPlayerProfiles(this);
+	private final TradingHistory tradingHistory = new TradingHistory(this);
 
 	// shop types and shop object types registry:
 	private final SKShopTypesRegistry shopTypesRegistry = new SKShopTypesRegistry();
@@ -212,6 +233,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 
 	private void registerDefaults() {
 		Log.info("Registering defaults.");
+		storageTypes.registerDefaults();
 		uiRegistry.registerAll(defaultUITypes.getAllUITypes());
 		shopTypesRegistry.registerAll(defaultShopTypes.getAll());
 		shopObjectTypesRegistry.registerAll(defaultShopObjectTypes.getAll());
@@ -330,8 +352,27 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 			Log.debug("Defaults already registered.");
 		}
 
+		// setup PlayerIdCache for all already online players:
+		for (Player player : Bukkit.getOnlinePlayers()) {
+			playerIdCache.addPlayerId(player);
+		}
+
 		// call startup event so other plugins can make their registrations:
 		Bukkit.getPluginManager().callEvent(new ShopkeepersStartupEvent());
+
+		// setup storage and components (but only if trading history is enabled):
+		if (Settings.enableTradingHistory) {
+			try {
+				storage = SKStorage.setup(this);
+			} catch (StorageException e) {
+				Log.severe("Error during storage setup!", e);
+				this.setEnabled(false); // also calls onDisable
+				return;
+			}
+
+			playerProfiles.onEnable();
+			tradingHistory.onEnable();
+		}
 
 		// inform ui registry (registers ui event handlers):
 		uiRegistry.onEnable();
@@ -343,7 +384,6 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		PluginManager pm = Bukkit.getPluginManager();
 		pm.registerEvents(new PlayerJoinQuitListener(this), this);
 		pm.registerEvents(new TradingCountListener(this), this);
-		pm.registerEvents(new TradeFileLogger(this.getDataFolder()), this);
 
 		// DEFAULT SHOP OBJECT TYPES
 
@@ -436,6 +476,14 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		// wait for async tasks to complete:
 		SchedulerUtils.awaitAsyncTasksCompletion(this, ASYNC_TASKS_TIMEOUT_SECONDS, this.getLogger());
 
+		// shutdown storage and components:
+		if (storage != null) {
+			tradingHistory.onDisable();
+			playerProfiles.onDisable();
+			storage.shutdown();
+			storage = null;
+		}
+
 		// inform ui registry about disable:
 		uiRegistry.onDisable();
 
@@ -476,6 +524,8 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		shopTypesRegistry.clearAll();
 		shopObjectTypesRegistry.clearAll();
 		uiRegistry.clearAll();
+		storageTypes.clearAll();
+		playerIdCache.clear();
 
 		HandlerList.unregisterAll(this);
 		Bukkit.getScheduler().cancelTasks(this);
@@ -490,6 +540,16 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	public void reload() {
 		this.onDisable();
 		this.onEnable();
+	}
+
+	// UTILITIES
+
+	public Executor getSyncExecutor() {
+		return syncExecutor;
+	}
+
+	public Executor getAsyncExecutor() {
+		return asyncExecutor;
 	}
 
 	// METRICS
@@ -512,6 +572,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	// PLAYER JOINING AND QUITTING
 
 	void onPlayerJoin(Player player) {
+		playerIdCache.addPlayerId(player);
 		this.updateShopkeepersForPlayer(player.getUniqueId(), player.getName());
 	}
 
@@ -524,6 +585,34 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		shopkeeperNaming.onPlayerQuit(player);
 		shopkeeperCreation.onPlayerQuit(player);
 		commands.onPlayerQuit(player);
+		playerIdCache.removePlayerId(player);
+	}
+
+	// STORAGE:
+
+	// null if trading history is disabled
+	public SKStorage getStorage() {
+		return storage;
+	}
+
+	// PLAYER PROFILES
+
+	public PlayerIdCache getPlayerIdCache() {
+		return playerIdCache;
+	}
+
+	public PlayerProfiles getPlayerProfiles() {
+		return playerProfiles;
+	}
+
+	// TRADING HISTORY
+
+	public StorageTypes getStorageTypes() {
+		return storageTypes;
+	}
+
+	public TradingHistory getTradingHistory() {
+		return tradingHistory;
 	}
 
 	// SHOPKEEPER REGISTRY

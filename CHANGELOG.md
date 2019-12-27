@@ -6,6 +6,22 @@ Date format: (YYYY-MM-DD)
 
 * Changed: Replaced the NMS call for setting the CanJoinRaid property on MC 1.15.x with a corresponding Bukkit API call. This only works on the very latest versions of MC 1.15.1 and upwards.
 
+Config changes:  
+* Added various settings related to message formatting:
+  * 'locale' (default: empty)
+  * 'time-zone' (default: 'default')
+  * 'date-time-format' (default: 'd MMM yyyy HH:mm:ss z')
+
+New messages:  
+* msg-player-profile
+* msg-player-profile-not-found
+* msg-ambiguous-shopkeeper-name
+* msg-ambiguous-shopkeeper-name-entry
+* msg-ambiguous-shopkeeper-name-more
+* msg-ambiguous-target-shopkeeper
+* msg-ambiguous-target-shopkeeper-entry
+* msg-ambiguous-target-shopkeeper-more
+
 ## v2.9.0 (2019-12-28)
 ### Supported MC versions: 1.15.1, 1.14.4
 

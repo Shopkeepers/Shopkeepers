@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -9,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -26,6 +28,8 @@ public final class ItemUtils {
 	private ItemUtils() {
 	}
 
+	// shared YAML config that gets reused
+	private static final ThreadLocal<YamlConfiguration> YAML = ThreadLocal.withInitial(() -> new YamlConfiguration());
 	public static int MAX_STACK_SIZE = 64;
 
 	// material utilities:
@@ -108,6 +112,26 @@ public final class ItemUtils {
 		itemMeta.setDisplayName(displayName); // null will clear the display name
 		itemStack.setItemMeta(itemMeta);
 		return itemStack;
+	}
+
+	public static String getPrettyMaterialName(Material material) {
+		if (material == null) return null;
+		return getPrettyMaterialName(material.name());
+	}
+
+	public static String getPrettyMaterialName(String materialName) {
+		if (materialName == null) return null;
+		String prettyName = materialName.replace('_', ' ');
+		prettyName = StringUtils.capitalizeAll(prettyName.toLowerCase(Locale.ROOT));
+		return prettyName;
+	}
+
+	public static String getItemStackName(ItemStack itemStack) {
+		if (itemStack == null) return null;
+		ItemMeta itemMeta = itemStack.getItemMeta();
+		if (itemMeta == null) return null;
+		if (!itemMeta.hasDisplayName()) return null;
+		return itemMeta.getDisplayName();
 	}
 
 	public static ItemStack setLocalizedName(ItemStack item, String locName) {
@@ -677,5 +701,66 @@ public final class ItemUtils {
 
 	public static void updateInventoryLater(Player player) {
 		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> player.updateInventory());
+	}
+
+	// DE-/SERIALIZATION
+
+	private static final String ITEM_KEY = "item";
+	private static final String META_KEY = "meta";
+
+	public static String serializeItem(ItemStack itemStack) throws Exception {
+		if (itemStack == null) return null;
+		YamlConfiguration yaml = YAML.get(); // shared yaml config
+		yaml.set(ITEM_KEY, itemStack);
+		String dataString = null;
+		try {
+			dataString = yaml.saveToString();
+		} catch (Exception e) { // just in case something goes wrong
+			Log.severe("Error during serialization of ItemStack!", e);
+		}
+		yaml.set(ITEM_KEY, null); // clear shared yaml config again
+		return dataString;
+	}
+
+	public static ItemStack deserializeItem(String itemStackData) throws Exception {
+		if (StringUtils.isEmpty(itemStackData)) return null;
+		YamlConfiguration yaml = YAML.get(); // shared yaml config
+		try {
+			yaml.loadFromString(itemStackData);
+		} catch (Exception e) {
+			Log.severe("Error during deserialization of ItemStack!", e);
+		}
+		ItemStack itemStack = yaml.getItemStack(ITEM_KEY);
+		yaml.set(ITEM_KEY, null); // clear shared yaml config again
+		return itemStack;
+	}
+
+	public static String serializeItemMeta(ItemMeta itemMeta) {
+		if (itemMeta == null || Bukkit.getItemFactory().equals(itemMeta, null)) {
+			return null;
+		}
+		YamlConfiguration yaml = YAML.get(); // shared yaml config
+		yaml.set(META_KEY, itemMeta);
+		String dataString = null;
+		try {
+			dataString = yaml.saveToString();
+		} catch (Exception e) { // just in case something goes wrong
+			Log.severe("Error during serialization of ItemMeta!", e);
+		}
+		yaml.set(META_KEY, null); // clear shared yaml config again
+		return dataString;
+	}
+
+	public static ItemMeta deserializeItemMeta(String itemMetaData) {
+		if (StringUtils.isEmpty(itemMetaData)) return null;
+		YamlConfiguration yaml = YAML.get(); // shared yaml config
+		try {
+			yaml.loadFromString(itemMetaData);
+		} catch (Exception e) {
+			Log.severe("Error during deserialization of ItemMeta!", e);
+		}
+		ItemMeta itemMeta = yaml.getSerializable(META_KEY, ItemMeta.class, null);
+		yaml.set(META_KEY, null); // clear shared yaml config again
+		return itemMeta;
 	}
 }

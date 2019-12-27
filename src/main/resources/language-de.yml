@@ -255,9 +255,38 @@ msg-trade-setup-desc-book:
 - 'Obere Reihe: Verkaufte Bücher'
 - 'Untere Reihen: Kosten'
 
+msg-player-profile: |-
+  &7Spieler: &f{name}
+  &7ID: &f{uuid}
+  &7Zuerst gesehen: &f{firstSeen}
+  &7Zuletzt gesehen: &f{lastSeen}
+msg-player-profile-not-found: "&7Spieler wurde nicht gefunden."
+
 msg-list-admin-shops-header: "&9Es gibt &e{shopsCount} &9Admin-Shops: &e(Seite {page} von {maxPage})"
 msg-list-player-shops-header: "&9Spieler '&e{player}&9' hat &e{shopsCount} &9Shops: &e(Seite {page} von {maxPage})"
 msg-list-shops-entry: "  &e{shopId}) &7{shopName}&r&8an &7({location})&8, Typ: &7{shopType}&8, Objekt: &7{objectType}"
+
+msg-history-header-all-shops: "&9Handelsverlauf von &eallen Shops&9: &e(Seite {page} von {maxPage})"
+msg-history-header-admin-shops: "&9Handelsverlauf von allen &eAdmin-Shops&9: &e(Seite {page} von {maxPage})"
+msg-history-header-player-shops: "&9Handelsverlauf von allen &eSpieler-Shops&9: &e(Seite {page} von {maxPage})"
+msg-history-header-owned-shops: "&9Handelsverlauf von allen Shops im Besitz von '&e{owner}&9': &e(Seite {page} von {maxPage})"
+msg-history-header-shop: "&9Handelsverlauf von Shop '&e{shop}&9': &e(Seite {page} von {maxPage})"
+msg-history-header-owned-shop: "&9Handelsverlauf von Shop '&e{shop}&9' im Besitz von '&e{owner}&9': &e(Seite {page} von {maxPage})"
+
+msg-history-header-player-with-all-shops: "&9Handelsverlauf von '&e{player}&9': &e(Seite {page} von {maxPage})"
+msg-history-header-player-with-admin-shops: "&9Handelsverlauf von '&e{player}&9' mit allen &eAdmin-Shops&9: &e(Seite {page} von {maxPage})"
+msg-history-header-player-with-player-shops: "&9Handelsverlauf von '&e{player}&9' mit allen &eSpieler-Shops&9: &e(Seite {page} von {maxPage})"
+msg-history-header-player-with-owned-shops: "&9Handelsverlauf von '&e{player}&9' mit Shops im Besitz von '&e{owner}&9': &e(Seite {page} von {maxPage})"
+msg-history-header-player-with-shop: "&9Handelsverlauf von '&e{player}&9' mit Shop '&e{shop}&9': &e(Seite {page} von {maxPage})"
+msg-history-header-player-with-owned-shop: "&9Handelsverlauf von '&e{player}&9' mit Shop '&e{shop}&9' im Besitz von '&e{owner}&9': &e(Seite {page} von {maxPage})"
+
+msg-history-disabled: "&7Der Handelsverlauf ist deaktiviert."
+msg-history-no-trades-found: "&7Es wurden keine Einträge gefunden."
+
+msg-history-entry-admin-shop-one-item: "  &f{index}) &e{player}&7 hat &6{item1Amount}x &a{item1}&7 für &6{resultItemAmount}x &a{resultItem}&7 mit &eAdmin-shop&7 gehandelt (&fvor {timeAgo}&7)"
+msg-history-entry-admin-shop-two-items: "  &f{index}) &e{player}&7 hat &6{item1Amount}x &a{item1}&7 und &6{item2Amount}x &a{item2}&7 für &6{resultItemAmount}x &a{resultItem}&7 mit &eAdmin-Shop&7 gehandelt (&fvor {timeAgo}&7)"
+msg-history-entry-player-shop-one-item: "  &f{index}) &e{player}&7 hat &6{item1Amount}x &a{item1}&7 für &6{resultItemAmount}x &a{resultItem}&7 mit &e{owner}&7 gehandelt (&fvor {timeAgo}&7)"
+msg-history-entry-player-shop-two-items: "  &f{index}) &e{player}&7 hat &6{item1Amount}x &a{item1}&7 und &6{item2Amount}x &a{item2}&7 für &6{resultItemAmount}x &a{resultItem}&7 mit &e{owner}&7 gehandelt (&fvor {timeAgo}&7)"
 
 msg-removed-admin-shops: "&aEs wurden &e{shopsCount} &aAdmin-Shops entfernt."
 msg-removed-player-shops: "&aEs wurden &e{shopsCount} &aShops von Spieler '&e{player}&a' entfernt."
@@ -291,6 +320,14 @@ msg-ambiguous-player-name: "&cEs gibt mehrere Treffer für den Namen '&e{name}&c
 msg-ambiguous-player-name-entry: "&c  - '&e{name}&r&c' (&6{uuid}&c)"
 msg-ambiguous-player-name-more: "&c  - ...."
 
+msg-ambiguous-shopkeeper-name: "&cEs gibt mehrere Treffer für den Namen '&e{name}&c'!"
+msg-ambiguous-shopkeeper-name-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-shopkeeper-name-more: "&c  - ...."
+
+msg-ambiguous-target-shopkeeper: "&cEs werden mehrere Shops anvisiert!"
+msg-ambiguous-target-shopkeeper-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-target-shopkeeper-more: "&c  - ...."
+
 msg-command-help-title: "&9***** &8[&6Shopkeepers v{version}&8] &9*****"
 msg-command-help-usage-format: "&e{usage}"
 msg-command-help-description-format: "&8 - &3{description}"
@@ -300,6 +337,7 @@ msg-command-description-help: "Zeigt diese Hilfe."
 msg-command-description-reload: "Lädt das Plugin neu."
 msg-command-description-debug: "Schaltet den Debug-Modus an und aus."
 msg-command-description-list: "Listet alle Shops des ausgewählten Spielers, oder alle Admin-Shops auf."
+msg-command-description-history: "Zeigt den Handelsverlauf."
 msg-command-description-remove: "Entfernt alle Shops des ausgewählten Spielers, aller Spieler, oder alle Admin-Shops."
 msg-command-description-give: "Gibt dem Spieler Shop-Erstellungs Items."
 msg-command-description-remote: "Öffnet einen Shop aus der Ferne."

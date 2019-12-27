@@ -36,6 +36,11 @@ public interface ShopkeepersPlugin extends Plugin {
 	public static final String LIST_OTHERS_PERMISSION = "shopkeeper.list.others";
 	public static final String LIST_ADMIN_PERMISSION = "shopkeeper.list.admin";
 
+	// Access to the own trading history and the trading history of owned shopkeepers:
+	public static final String HISTORY_OWN_PERMISSION = "shopkeeper.history.own";
+	// Access to the trading history of everybody (including own):
+	public static final String HISTORY_ALL_PERMISSION = "shopkeeper.history.all";
+
 	public static final String REMOVE_OWN_PERMISSION = "shopkeeper.remove.own";
 	public static final String REMOVE_OTHERS_PERMISSION = "shopkeeper.remove.others";
 	public static final String REMOVE_ALL_PERMISSION = "shopkeeper.remove.all";

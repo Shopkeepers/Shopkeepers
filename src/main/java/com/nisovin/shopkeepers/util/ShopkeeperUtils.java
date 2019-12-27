@@ -14,6 +14,7 @@ import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -345,5 +346,39 @@ public class ShopkeeperUtils {
 				return ShopkeepersAPI.getShopkeeperRegistry().getShopkeepersByName(input);
 			}
 		};
+	}
+
+	private static final int DEFAULT_AMBIGUOUS_SHOPKEEPER_NAME_MAX_ENTRIES = 5;
+
+	// Note: Iterable is only iterated once
+	// true if there are multiple matches
+	public static boolean handleAmbiguousShopkeeperName(CommandSender sender, String name, Iterable<? extends Shopkeeper> matches) {
+		return handleAmbiguousShopkeeperName(sender, name, matches, DEFAULT_AMBIGUOUS_SHOPKEEPER_NAME_MAX_ENTRIES);
+	}
+
+	// Note: Iterable is only iterated once
+	// true if there are multiple matches
+	public static boolean handleAmbiguousShopkeeperName(CommandSender sender, String name, Iterable<? extends Shopkeeper> matches, int maxEntries) {
+		return CommandUtils.handleAmbiguousInput(sender, name, matches, maxEntries,
+				() -> {
+					TextUtils.sendMessage(sender, Settings.msgAmbiguousShopkeeperName, "name", name);
+				},
+				(match, index) -> {
+					int shopId = match.getId();
+					UUID shopUUID = match.getUniqueId();
+					String shopUUIDString = shopUUID.toString();
+					String shopName = match.getName();
+
+					TextUtils.sendMessage(sender, Settings.msgAmbiguousShopkeeperNameEntry,
+							"index", index,
+							"id", shopId,
+							"name", Text.insertion(shopName).childText(shopName).buildRoot(),
+							"uuid", Text.insertion(shopUUIDString).childText(shopUUIDString).buildRoot()
+					);
+				},
+				() -> {
+					TextUtils.sendMessage(sender, Settings.msgAmbiguousShopkeeperNameMore);
+				}
+		);
 	}
 }

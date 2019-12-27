@@ -6,6 +6,12 @@
 
 # Determines the required config migrations. Do not edit manually!
 config-version: 2
+# In case you link multiple servers to the same database, this name is used to
+# identify this server. The name is limited to a length of 36 characters and
+# can only contain these characters: [A-Za-z0-9_-]
+# Note: Changing this name in retrospect will not automatically rename the
+# already existing database entries using the old name.
+server-id: 'main'
 # The initial debugging state of the plugin.
 debug: false
 # Additional debugging options.
@@ -17,6 +23,9 @@ debug: false
 # - 'commands': Enables additional commands related debugging output.
 # - 'owner-name-updates': Logs information when updating stored shop owner
 #    names.
+# - 'player-id-cache': Enables additional debugging output related to the
+#    player id cache.
+# - 'database': Enables additional database related debugging output.
 debug-options: []
 # Whether to report anonymous usage statistics to https://bStats.org
 # All reported information can be found here:
@@ -227,8 +236,8 @@ sign-shop-first-line: "[SHOP]"
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
 # A regular expression used to validate shopkeeper names. For detailed
-# information on the regular expression format see the java documentation:
-# https://docs.oracle.com/javase/9/docs/api/java/util/regex/Pattern.html
+# information on the regular expression format see the Java documentation:
+# https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
 # Here are a few examples:
 # * "[A-Za-z0-9 ]{3,25}": The default. Allows letters and numbers, from 3 to 25
 # characters long.
@@ -326,10 +335,6 @@ prevent-trading-while-owner-is-online: false
 # will prevent the trade once the player tries to pickup the item from the
 # trading result slot.
 use-strict-item-comparison: false
-# Whether all shopkeeper purchases shall be logged to csv files in the plugin
-# folder. Note: This might currently not properly work for admin shops, so
-# don't rely on the correctness of the logged purchases for those!
-enable-purchase-logging: false
 # Whether to increment minecraft's talked-to-villager and traded-with-villager
 # statistics whenever a player opens the trading menu and trades with a
 # shopkeeper.
@@ -340,6 +345,43 @@ tax-rate: 0
 # Whether to round up instead of down when calculating the tax of a player shop
 # transaction.
 tax-round-up: false
+
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+# Trading History
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+
+# Whether to log all trades and thereby enable the trading history.
+enable-trading-history: true
+# Whether to omit the item data and only store item types when logging trades.
+# This may slightly reduce database storage requirements.
+trading-history-omit-item-data: false
+
+# Storage settings:
+# Note: This database is only used for storing the trading history. The
+# shopkeepers data is stored separately (inside the local save.yml file) and
+# there is no option currently to store that inside the database.
+# Available storage types are 'sqlite' (default) and 'mysql'.
+storage-type: 'sqlite'
+# The prefix to use for all Shopkeepers SQL tables. Note: Changing this will
+# not automatically cleanup or migrate previously created tables. You will have
+# to manually cleanup or migrate those yourself currently.
+database-table-prefix: 'sk_'
+
+# The following settings are only required when using MySQL:
+# The address and port of the database. '3306' is the default port for MySQL.
+database-host: 'localhost'
+database-port: '3306'
+# The name of the database to use. The database must already exist.
+database-name: 'shopkeepers'
+# The database credentials.
+database-user: 'root'
+database-password: '123456'
+
+# Additional connection properties. These are specific to the database driver.
+database-connection-properties: {}
+# Example, in case you run into SSL errors with MySQL:
+#  useSSL: false
+#  verifyServerCertificate: false
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Currencies
@@ -364,6 +406,28 @@ high-currency-value: 9
 # The second currency will only be used if an item's cost is greater than this
 # value.
 high-currency-min-cost: 20
+
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+# Message Formatting
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+
+# The locale to use for formatting of locale specific text. For detailed
+# information on the available language codes see the Java documentation:
+# https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html
+# Example: 'en-US' for american english.
+# 'default' will use the server's default locale.
+# An empty value will result in a locale with undefined language and country.
+locale: ""
+# The time-zone to use when formatting timestamps. For detailed information on
+# the available time-zone ids see the Java documentation:
+# https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
+# Examples: 'Europe/Paris', 'UTC', or 'GMT+2'
+# 'default' will use the server's default time-zone.
+time-zone: "default"
+# The pattern to use when formatting timestamps. For detailed information on
+# the available formatting patterns see the Java documentation:
+# https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+date-time-format: "d MMM yyyy HH:mm:ss z"
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Messages
@@ -624,9 +688,38 @@ msg-trade-setup-desc-book:
 - 'Top row: Books being sold'
 - 'Bottom rows: Cost items'
 
+msg-player-profile: |-
+  &7Player: &f{name}
+  &7ID: &f{uuid}
+  &7First seen: &f{firstSeen}
+  &7Last seen: &f{lastSeen}
+msg-player-profile-not-found: "&7Player not found."
+
 msg-list-admin-shops-header: "&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})"
 msg-list-player-shops-header: "&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})"
 msg-list-shops-entry: "  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}"
+
+msg-history-header-all-shops: "&9Trading history of &eall shops&9: &e(Page {page} of {maxPage})"
+msg-history-header-admin-shops: "&9Trading history of all &eadmin shops&9: &e(Page {page} of {maxPage})"
+msg-history-header-player-shops: "&9Trading history of all &eplayer shops&9: &e(Page {page} of {maxPage})"
+msg-history-header-owned-shops: "&9Trading history of all shops owned by '&e{owner}&9': &e(Page {page} of {maxPage})"
+msg-history-header-shop: "&9Trading history of shopkeeper '&e{shop}&9': &e(Page {page} of {maxPage})"
+msg-history-header-owned-shop: "&9Trading history of shopkeeper '&e{shop}&9' owned by '&e{owner}&9': &e(Page {page} of {maxPage})"
+
+msg-history-header-player-with-all-shops: "&9Trading history of '&e{player}&9': &e(Page {page} of {maxPage})"
+msg-history-header-player-with-admin-shops: "&9Trading history of '&e{player}&9' with all &eadmin shops&9: &e(Page {page} of {maxPage})"
+msg-history-header-player-with-player-shops: "&9Trading history of '&e{player}&9' with all &eplayer shops&9: &e(Page {page} of {maxPage})"
+msg-history-header-player-with-owned-shops: "&9Trading history of '&e{player}&9' with shops owned by '&e{owner}&9': &e(Page {page} of {maxPage})"
+msg-history-header-player-with-shop: "&9Trading history of '&e{player}&9' with shopkeeper '&e{shop}&9': &e(Page {page} of {maxPage})"
+msg-history-header-player-with-owned-shop: "&9Trading history of '&e{player}&9' with shopkeeper '&e{shop}&9' owned by '&e{owner}&9': &e(Page {page} of {maxPage})"
+
+msg-history-disabled: "&7The trading history is disabled."
+msg-history-no-trades-found: "&7No trades found."
+
+msg-history-entry-admin-shop-one-item: "  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &eadmin shop&7 (&f{timeAgo} ago&7)"
+msg-history-entry-admin-shop-two-items: "  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 and &6{item2Amount}x &a{item2}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &eadmin shop&7 (&f{timeAgo} ago&7)"
+msg-history-entry-player-shop-one-item: "  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &e{owner}&7 (&f{timeAgo} ago&7)"
+msg-history-entry-player-shop-two-items: "  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 and &6{item2Amount}x &a{item2}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &e{owner}&7 (&f{timeAgo} ago&7)"
 
 msg-removed-admin-shops: "&e{shopsCount} &aadmin shops were removed."
 msg-removed-player-shops: "&e{shopsCount} &ashops of player '&e{player}&a' were removed."
@@ -660,6 +753,14 @@ msg-ambiguous-player-name: "&cThere are multiple matches for the name '&e{name}&
 msg-ambiguous-player-name-entry: "&c  - '&e{name}&r&c' (&6{uuid}&c)"
 msg-ambiguous-player-name-more: "&c  - ...."
 
+msg-ambiguous-shopkeeper-name: "&cThere are multiple matches for the name '&e{name}&c'!"
+msg-ambiguous-shopkeeper-name-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-shopkeeper-name-more: "&c  - ...."
+
+msg-ambiguous-target-shopkeeper: "&cThere are multiple targeted shopkeepers!"
+msg-ambiguous-target-shopkeeper-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-target-shopkeeper-more: "&c  - ...."
+
 msg-command-help-title: "&9***** &8[&6Shopkeepers v{version}&8] &9*****"
 msg-command-help-usage-format: "&e{usage}"
 msg-command-help-description-format: "&8 - &3{description}"
@@ -669,6 +770,7 @@ msg-command-description-help: "Shows this help page."
 msg-command-description-reload: "Reloads this plugin."
 msg-command-description-debug: "Toggles debug mode on and off."
 msg-command-description-list: "Lists all shops for the specified player, or all admin shops."
+msg-command-description-history: "Shows the trading history."
 msg-command-description-remove: "Removes all shops for the specified player, all players, or all admin shops."
 msg-command-description-give: "Gives shop creation item(s) to the specified player."
 msg-command-description-remote: "Remotely opens a shop."

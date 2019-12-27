@@ -2,11 +2,18 @@ package com.nisovin.shopkeepers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IllformedLocaleException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -14,6 +21,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -47,6 +55,10 @@ public class Settings {
 		public static final String commands = "commands";
 		// Logs information when updating stored shop owner names.
 		public static final String ownerNameUpdates = "owner-name-updates";
+		// Enables additional debugging output related to the player id cache.
+		public static final String playerIdCache = "player-id-cache";
+		// Enables additional database related debugging output.
+		public static final String database = "database";
 	}
 
 	public static boolean isDebugging() {
@@ -71,14 +83,21 @@ public class Settings {
 			INSTANCE = new AsyncSettings();
 		}
 
+		public final String serverId;
 		public final boolean debug;
 		public final List<String> debugOptions;
 		public final String fileEncoding;
+		public final Map<String, Object> databaseConnectionProperties;
+		public final boolean tradingHistoryOmitItemData;
 
 		private AsyncSettings() {
+			this.serverId = Settings.serverId;
 			this.debug = Settings.debug;
 			this.debugOptions = new ArrayList<String>(Settings.debugOptions);
 			this.fileEncoding = Settings.fileEncoding;
+			// deep copy is not expected to be required for this setting:
+			this.databaseConnectionProperties = new LinkedHashMap<>(Settings.databaseConnectionProperties);
+			this.tradingHistoryOmitItemData = Settings.tradingHistoryOmitItemData;
 		}
 	}
 
@@ -90,6 +109,7 @@ public class Settings {
 	 * General Settings
 	 */
 	public static int configVersion = 2;
+	public static String serverId = "main";
 	public static boolean debug = false;
 	// See DebugOptions for all available options.
 	public static List<String> debugOptions = new ArrayList<>(0);
@@ -263,11 +283,31 @@ public class Settings {
 	public static boolean preventTradingWithOwnShop = true;
 	public static boolean preventTradingWhileOwnerIsOnline = false;
 	public static boolean useStrictItemComparison = false;
-	public static boolean enablePurchaseLogging = false;
 	public static boolean incrementVillagerStatistics = false;
 
 	public static int taxRate = 0;
 	public static boolean taxRoundUp = false;
+
+	/*
+	 * Trading History
+	 */
+	public static boolean enableTradingHistory = true;
+	public static boolean tradingHistoryOmitItemData = false;
+
+	// Storage settings: See StorageTypes for the available options.
+	// TODO maybe offer an csv based storage option? (performance issue?)
+	// TODO maybe as mirror (additionally)?
+	// TODO or: command to export (excerpt of) trading history as csv? -> preferred
+	public static String storageType = "sqlite";
+	public static String databaseTablePrefix = "sk_";
+
+	public static String databaseHost = "localhost";
+	public static String databasePort = "3306"; // default for MySql
+	public static String databaseName = "shopkeepers";
+	public static String databaseUser = "root";
+	public static String databasePassword = "123456";
+
+	public static Map<String, Object> databaseConnectionProperties = new LinkedHashMap<>();
 
 	/*
 	 * Currencies
@@ -280,6 +320,13 @@ public class Settings {
 	// note: this can in general be larger than 64!
 	public static int highCurrencyValue = 9;
 	public static int highCurrencyMinCost = 20;
+
+	/*
+	 * Message Formatting
+	 */
+	public static String locale = "";
+	public static String timeZone = "default";
+	public static String dateTimeFormat = "d MMM yyyy HH:mm:ss z";
 
 	/*
 	 * Messages
@@ -455,9 +502,34 @@ public class Settings {
 	public static List<String> msgTradeSetupDescTrading = Arrays.asList("Trades items.", "Pickup an item from your inventory", "and then click a slot to place it.", "Left/Right click to adjust amounts.", "Top row: Result items", "Bottom rows: Cost items");
 	public static List<String> msgTradeSetupDescBook = Arrays.asList("Sells book copies.", "Insert written and blank books", "into the chest.", "Left/Right click to adjust costs.", "Top row: Books being sold", "Bottom rows: Cost items");
 
+	public static Text msgPlayerProfile = Text.parse("&7Player: &f{name}\n&7ID: &f{uuid}\n&7First seen: &f{firstSeen}\n&7Last seen: &f{lastSeen}");
+	public static Text msgPlayerProfileNotFound = Text.parse("&7Player not found.");
+
 	public static Text msgListAdminShopsHeader = Text.parse("&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})");
 	public static Text msgListPlayerShopsHeader = Text.parse("&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})");
 	public static Text msgListShopsEntry = Text.parse("  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}");
+
+	public static Text msgHistoryHeaderAllShops = Text.parse("&9Trading history of &eall shops&9: &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderAdminShops = Text.parse("&9Trading history of all &eadmin shops&9: &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerShops = Text.parse("&9Trading history of all &eplayer shops&9: &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderOwnedShops = Text.parse("&9Trading history of all shops owned by '&e{owner}&9': &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderShop = Text.parse("&9Trading history of shopkeeper '&e{shop}&9': &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderOwnedShop = Text.parse("&9Trading history of shopkeeper '&e{shop}&9' owned by '&e{owner}&9': &e(Page {page} of {maxPage})");
+
+	public static Text msgHistoryHeaderPlayerWithAllShops = Text.parse("&9Trading history of '&e{player}&9': &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerWithAdminShops = Text.parse("&9Trading history of '&e{player}&9' with all &eadmin shops&9: &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerWithPlayerShops = Text.parse("&9Trading history of '&e{player}&9' with all &eplayer shops&9: &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerWithOwnedShops = Text.parse("&9Trading history of '&e{player}&9' with shops owned by '&e{owner}&9': &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerWithShop = Text.parse("&9Trading history of '&e{player}&9' with shopkeeper '&e{shop}&9': &e(Page {page} of {maxPage})");
+	public static Text msgHistoryHeaderPlayerWithOwnedShop = Text.parse("&9Trading history of '&e{player}&9' with shopkeeper '&e{shop}&9' owned by '&e{owner}&9': &e(Page {page} of {maxPage})");
+
+	public static Text msgHistoryDisabled = Text.parse("&7The trading history is disabled.");
+	public static Text msgHistoryNoTradesFound = Text.parse("&7No trades found.");
+
+	public static Text msgHistoryEntryAdminShopOneItem = Text.parse("  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &eadmin shop&7 (&f{timeAgo} ago&7)");
+	public static Text msgHistoryEntryAdminShopTwoItems = Text.parse("  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 and &6{item2Amount}x &a{item2}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &eadmin shop&7 (&f{timeAgo} ago&7)");
+	public static Text msgHistoryEntryPlayerShopOneItem = Text.parse("  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &e{owner}&7 (&f{timeAgo} ago&7)");
+	public static Text msgHistoryEntryPlayerShopTwoItems = Text.parse("  &f{index}) &e{player}&7 traded &6{item1Amount}x &a{item1}&7 and &6{item2Amount}x &a{item2}&7 for &6{resultItemAmount}x &a{resultItem}&7 with &e{owner}&7 (&f{timeAgo} ago&7)");
 
 	public static Text msgRemovedAdminShops = Text.parse("&e{shopsCount} &aadmin shops were removed.");
 	public static Text msgRemovedPlayerShops = Text.parse("&e{shopsCount} &ashops of player '&e{player}&a' were removed.");
@@ -491,6 +563,14 @@ public class Settings {
 	public static Text msgAmbiguousPlayerNameEntry = Text.parse("&c  - '&e{name}&r&c' (&6{uuid}&c)");
 	public static Text msgAmbiguousPlayerNameMore = Text.parse("&c  ....");
 
+	public static Text msgAmbiguousShopkeeperName = Text.parse("&cThere are multiple matches for the name '&e{name}&c'!");
+	public static Text msgAmbiguousShopkeeperNameEntry = Text.parse("&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)");
+	public static Text msgAmbiguousShopkeeperNameMore = Text.parse("&c  - ....");
+
+	public static Text msgAmbiguousTargetShopkeeper = Text.parse("&cThere are multiple targeted shopkeepers!");
+	public static Text msgAmbiguousTargetShopkeeperEntry = Text.parse("&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)");
+	public static Text msgAmbiguousTargetShopkeeperMore = Text.parse("&c  - ....");
+
 	public static Text msgCommandHelpTitle = Text.parse("&9***** &8[&6Shopkeepers v{version}&8] &9*****");
 	public static Text msgCommandHelpUsageFormat = Text.parse("&e{usage}");
 	public static Text msgCommandHelpDescriptionFormat = Text.parse("&8 - &3{description}");
@@ -500,6 +580,7 @@ public class Settings {
 	public static Text msgCommandDescriptionReload = Text.parse("Reloads this plugin.");
 	public static Text msgCommandDescriptionDebug = Text.parse("Toggles debug mode on and off.");
 	public static Text msgCommandDescriptionList = Text.parse("Lists all shops for the specified player, or all admin shops.");
+	public static Text msgCommandDescriptionHistory = Text.parse("Shows the trading history.");
 	public static Text msgCommandDescriptionRemove = Text.parse("Removes all shops for the specified player, all players, or all admin shops.");
 	public static Text msgCommandDescriptionGive = Text.parse("Gives shop creation item(s) to the specified player.");
 	public static Text msgCommandDescriptionRemote = Text.parse("Remotely opens a shop.");
@@ -528,7 +609,10 @@ public class Settings {
 		List<String> noColorConversionKeys = Arrays.asList(
 				toConfigKey("debugOptions"), toConfigKey("fileEncoding"), toConfigKey("shopCreationItemSpawnEggEntityType"),
 				toConfigKey("maxShopsPermOptions"), toConfigKey("enabledLivingShops"), toConfigKey("nameRegex"),
-				toConfigKey("language"));
+				toConfigKey("locale"), toConfigKey("timeZone"), toConfigKey("dateTimeFormat"), toConfigKey("language"),
+				toConfigKey("serverId"), toConfigKey("storageType"), toConfigKey("databaseTablePrefix"),
+				toConfigKey("databaseHost"), toConfigKey("databasePort"), toConfigKey("databaseName"),
+				toConfigKey("databaseUser"), toConfigKey("databasePassword"));
 		try {
 			Field[] fields = Settings.class.getDeclaredFields();
 			for (Field field : fields) {
@@ -572,6 +656,11 @@ public class Settings {
 		}
 
 		// validation:
+
+		if (!serverId.matches("^[A-Za-z0-9_\\-]{1,36}$")) {
+			Log.warning("Config: Invalid server-id '" + serverId + "'! Reverting to default 'main'!");
+			serverId = "main";
+		}
 
 		boolean foundInvalidEntityType = false;
 		for (String entityTypeId : enabledLivingShops) {
@@ -677,6 +766,18 @@ public class Settings {
 			} else {
 				return null; // not supported currently
 			}
+		} else if (typeClass == Map.class) {
+			// only supports <String,Object> maps currently:
+			// accepts both Map and ConfigurationSection:
+			Object mapObject = config.get(configKey);
+			if (mapObject instanceof ConfigurationSection) {
+				return ((ConfigurationSection) mapObject).getValues(false);
+			} else if (mapObject instanceof Map) {
+				return (Map<?, ?>) mapObject;
+			} else {
+				// default: empty map
+				return new LinkedHashMap<String, Object>();
+			}
 		}
 		return null;
 	}
@@ -773,6 +874,10 @@ public class Settings {
 
 		public static Pattern shopNamePattern = Pattern.compile("^" + Settings.nameRegex + "$");
 
+		public static Locale locale = Locale.ROOT;
+		public static ZoneId timeZone = ZoneId.systemDefault();
+		public static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss z", locale).withZone(timeZone);
+
 		// gets called after the config has been loaded:
 		private static void setup() {
 			// ignore display name (which is used for specifying the new shopkeeper name):
@@ -790,6 +895,45 @@ public class Settings {
 				Log.warning("Config: 'name-regex' is not a valid regular expression ('" + Settings.nameRegex + "'). Reverting to default.");
 				Settings.nameRegex = "[A-Za-z0-9 ]{3,32}";
 				shopNamePattern = Pattern.compile("^" + Settings.nameRegex + "$");
+			}
+
+			// message formatting:
+			String languageTag = Settings.locale;
+			if (languageTag.isEmpty()) {
+				locale = Locale.ROOT;
+			} else if (languageTag.equals("default")) {
+				locale = Locale.getDefault();
+			} else {
+				// normalize language tags to use hyphen:
+				languageTag = languageTag.replace('_', '-');
+				try {
+					locale = new Locale.Builder().setLanguageTag(languageTag).build();
+				} catch (IllformedLocaleException e) {
+					Log.warning("Config: Invalid 'locale' ('" + Settings.locale + "'): " + e.getMessage());
+					Settings.locale = "";
+					locale = Locale.ROOT;
+				}
+			}
+
+			String zoneId = Settings.timeZone;
+			if (zoneId.equals("default")) {
+				timeZone = ZoneId.systemDefault();
+			} else {
+				try {
+					timeZone = ZoneId.of(zoneId);
+				} catch (DateTimeException e) {
+					Log.warning("Config: Invalid 'time-zone' ('" + zoneId + "'): " + e.getMessage());
+					Settings.timeZone = "default";
+					timeZone = ZoneId.systemDefault();
+				}
+			}
+
+			try {
+				dateTimeFormatter = DateTimeFormatter.ofPattern(Settings.dateTimeFormat, locale).withZone(timeZone);
+			} catch (IllegalArgumentException e) {
+				Log.warning("Config: Invalid 'date-time-format' ('" + Settings.dateTimeFormat + "'): " + e.getMessage());
+				Settings.dateTimeFormat = "d MMM yyyy HH:mm:ss z";
+				dateTimeFormatter = DateTimeFormatter.ofPattern(Settings.dateTimeFormat, locale).withZone(timeZone);
 			}
 		}
 	}
@@ -906,5 +1050,9 @@ public class Settings {
 			// unknown entity type:
 			return null;
 		}
+	}
+
+	public static String formatTimestamp(Instant instant) {
+		return Settings.DerivedSettings.dateTimeFormatter.format(instant);
 	}
 }

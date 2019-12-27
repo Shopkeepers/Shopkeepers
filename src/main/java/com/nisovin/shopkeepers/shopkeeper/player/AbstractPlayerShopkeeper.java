@@ -133,6 +133,9 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	protected void onAdded(ShopkeeperAddedEvent.Cause cause) {
 		super.onAdded(cause);
 
+		// cache owner identification information:
+		SKShopkeepersPlugin.getInstance().getPlayerIdCache().addPlayerId(ownerUUID, ownerName, false);
+
 		// register protected chest:
 		SKShopkeepersPlugin.getInstance().getProtectedChests().addChest(this.getWorldName(), chestX, chestY, chestZ, this);
 	}
@@ -143,6 +146,9 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 
 		// unregister previously protected chest:
 		SKShopkeepersPlugin.getInstance().getProtectedChests().removeChest(this.getWorldName(), chestX, chestY, chestZ, this);
+
+		// cleanup cached owner identification information:
+		SKShopkeepersPlugin.getInstance().getPlayerIdCache().removePlayerId(ownerUUID, ownerName);
 	}
 
 	@Override
@@ -190,6 +196,15 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 		Validate.notNull(ownerUUID, "Owner uuid is null!");
 		Validate.notEmpty(ownerName, "Owner name is empty!");
 		this.markDirty();
+
+		if (this.isValid()) {
+			// cleanup cached owner identification information:
+			SKShopkeepersPlugin.getInstance().getPlayerIdCache().removePlayerId(this.ownerUUID, this.ownerName);
+
+			// cache new owner's identification information:
+			SKShopkeepersPlugin.getInstance().getPlayerIdCache().addPlayerId(ownerUUID, ownerName, false);
+		}
+
 		this.ownerUUID = ownerUUID;
 		this.ownerName = ownerName;
 		// TODO do this in a more abstract way

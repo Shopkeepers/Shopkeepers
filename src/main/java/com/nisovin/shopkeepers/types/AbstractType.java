@@ -27,6 +27,14 @@ public abstract class AbstractType implements Type {
 	protected final List<String> aliases; // unmodifiable, not null, can be empty, normalized
 	protected final String permission; // can be null
 
+	protected AbstractType(String identifier) {
+		this(identifier, null, null);
+	}
+
+	protected AbstractType(String identifier, List<String> aliases) {
+		this(identifier, aliases, null);
+	}
+
 	protected AbstractType(String identifier, String permission) {
 		this(identifier, null, permission);
 	}
