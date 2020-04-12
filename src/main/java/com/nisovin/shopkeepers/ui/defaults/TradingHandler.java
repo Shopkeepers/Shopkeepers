@@ -360,11 +360,11 @@ public class TradingHandler extends UIHandler {
 		ItemStack offeredItem2 = ItemUtils.getNullIfEmpty(merchantInventory.getItem(BUY_ITEM_2_SLOT_ID));
 		boolean swappedItemOrder = false;
 
-		// minecraft checks both combinations (item1, item2) and (item2, item1) when determining if a trading recipe
+		// Minecraft checks both combinations (item1, item2) and (item2, item1) when determining if a trading recipe
 		// matches, so we need to determine the used item order for the currently used trading recipe:
-		if (NMSManager.getProvider().matches(offeredItem1, requiredItem1) && NMSManager.getProvider().matches(offeredItem2, requiredItem2)) {
+		if (matches(offeredItem1, offeredItem2, requiredItem1, requiredItem2)) {
 			// order is as-is
-		} else if (NMSManager.getProvider().matches(offeredItem1, requiredItem2) && NMSManager.getProvider().matches(offeredItem2, requiredItem1)) {
+		} else if (matches(offeredItem1, offeredItem2, requiredItem2, requiredItem1)) {
 			// swapped order:
 			swappedItemOrder = true;
 			ItemStack temp = offeredItem1;
@@ -417,6 +417,17 @@ public class TradingHandler extends UIHandler {
 		// custom setup by sub-classes:
 		this.setupTradeData(tradeData, clickEvent);
 		return tradeData;
+	}
+
+	private boolean matches(ItemStack offeredItem1, ItemStack offeredItem2, ItemStack requiredItem1, ItemStack requiredItem2) {
+		int offeredItem1Amount = ItemUtils.getItemStackAmount(offeredItem1);
+		int offeredItem2Amount = ItemUtils.getItemStackAmount(offeredItem2);
+		int requiredItem1Amount = ItemUtils.getItemStackAmount(requiredItem1);
+		int requiredItem2Amount = ItemUtils.getItemStackAmount(requiredItem2);
+		return (offeredItem1Amount >= requiredItem1Amount
+				&& offeredItem2Amount >= requiredItem2Amount
+				&& NMSManager.getProvider().matches(offeredItem1, requiredItem1)
+				&& NMSManager.getProvider().matches(offeredItem2, requiredItem2));
 	}
 
 	protected final void debugPreventedTrade(Player player, String reason) {

@@ -4,6 +4,11 @@ Date format: (YYYY-MM-DD)
 ## Next release
 ### Supported MC versions: xxx
 
+## v2.2.4 (TBA)
+### Supported MC versions: 1.12, 1.11, 1.10, 1.9, 1.8
+
+* Fixed: If a trade required two matching item stacks of the same type but different sizes, it was possible to trade for less items when offering the items in reverse order.
+
 ## v2.2.3 (2020-01-14)
 ### Supported MC versions: 1.12, 1.11, 1.10, 1.9, 1.8
 
