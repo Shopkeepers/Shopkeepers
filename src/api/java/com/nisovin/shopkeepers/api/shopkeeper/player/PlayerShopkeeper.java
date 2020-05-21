@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.api.shopkeeper.player;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import org.bukkit.block.Block;
@@ -31,6 +32,7 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 */
 	public UUID getOwnerUUID();
 
+	// TODO remove?
 	/**
 	 * Gets the last known name of the player who owns this shop.
 	 * 
@@ -62,6 +64,44 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * @return the owner of this shop, or <code>null</code> if the owner is offline
 	 */
 	public Player getOwner();
+
+	/**
+	 * Gets the uuids of all trusted players.
+	 * <p>
+	 * Trusted players are able to access the shop's chest and (with a few exceptions) edit the shop.
+	 * 
+	 * @return an unmodifiable view on the uuids of all trusted players
+	 */
+	public Collection<UUID> getTrustedPlayers();
+
+	/**
+	 * Adds the given player uuid to the collection of trusted players.
+	 * <p>
+	 * This has no effect if the player is already trusted.
+	 * 
+	 * @param playerUUID
+	 *            the player's uuid
+	 */
+	public void addTrustedPlayer(UUID playerUUID);
+
+	/**
+	 * Removes the given player uuid from the collection of trusted players.
+	 * <p>
+	 * This has no effect if the player is already untrusted.
+	 * 
+	 * @param playerUUID
+	 *            the player's uuid
+	 */
+	public void removeTrustedPlayer(UUID playerUUID);
+
+	/**
+	 * Checks if the given player is trusted.
+	 * 
+	 * @param player
+	 *            the player
+	 * @return <code>true</code> if the player is trusted
+	 */
+	public boolean isTrusted(Player player);
 
 	/**
 	 * Checks whether this shopkeeper is for hire.

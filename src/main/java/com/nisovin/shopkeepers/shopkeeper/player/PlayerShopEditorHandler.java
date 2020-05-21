@@ -28,6 +28,11 @@ public abstract class PlayerShopEditorHandler extends EditorHandler {
 	}
 
 	@Override
+	protected void setupButtons() {
+		this.addButtonOrIgnore(null);
+	}
+
+	@Override
 	protected boolean canOpen(Player player) {
 		return super.canOpen(player) && (this.getShopkeeper().isOwner(player) || PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION));
 	}

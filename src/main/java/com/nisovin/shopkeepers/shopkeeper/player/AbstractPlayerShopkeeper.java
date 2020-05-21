@@ -1,7 +1,10 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -45,6 +48,8 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 
 	protected UUID ownerUUID; // not null after successful initialization
 	protected String ownerName; // not null after successful initialization
+	protected Set<UUID> trustedPlayers;
+	protected Set<UUID> trustedPlayersView = Collections.unmodifiableSet(trustedPlayers);
 	// TODO store chest world separately? currently it uses the shopkeeper world
 	// this would allow the chest and shopkeeper to be located in different worlds, and virtual player shops
 	protected int chestX;
@@ -270,6 +275,28 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	@Override
 	public Player getOwner() {
 		return Bukkit.getPlayer(ownerUUID);
+	}
+
+	@Override
+	public Collection<UUID> getTrustedPlayers() {
+		return trustedPlayersView;
+	}
+
+	@Override
+	public void addTrustedPlayer(UUID playerUUID) {
+		Validate.notNull(playerUUID, "playerUUID is null");
+		trustedPlayers.add(playerUUID);
+	}
+
+	@Override
+	public void removeTrustedPlayer(UUID playerUUID) {
+		Validate.notNull(playerUUID, "playerUUID is null");
+		trustedPlayers.remove(playerUUID);
+	}
+
+	@Override
+	public boolean isTrusted(Player player) {
+		return trustedPlayersView.contains(player.getUniqueId());
 	}
 
 	@Override
