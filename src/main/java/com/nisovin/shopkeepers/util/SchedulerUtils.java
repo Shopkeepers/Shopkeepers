@@ -1,11 +1,13 @@
 package com.nisovin.shopkeepers.util;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scheduler.BukkitWorker;
 
@@ -17,6 +19,34 @@ public final class SchedulerUtils {
 	private SchedulerUtils() {
 	}
 
+	/**
+	 * Creates an {@link Executor} that executes tasks on the server's main thread using
+	 * {@link #runOnMainThreadOrOmit(Plugin, Runnable)}.
+	 * <p>
+	 * If the thread registering the task is already the server's main thread, the task gets run immediately. Otherwise
+	 * it gets scheduled using the {@link BukkitScheduler}. If the plugin is not enabled at the time of task
+	 * registration, the task gets omitted.
+	 * 
+	 * @param plugin
+	 *            the plugin
+	 * @return the executor
+	 */
+	public static Executor createSyncExecutor(Plugin plugin) {
+		return (runnable) -> SchedulerUtils.runOnMainThreadOrOmit(plugin, runnable);
+	}
+
+	/**
+	 * Creates an {@link Executor} that executes tasks using {@link #runAsyncTaskOrOmit(Plugin, Runnable)}.
+	 * 
+	 * @param plugin
+	 *            the plugin
+	 * @return the executor
+	 */
+	public static Executor createAsyncExecutor(Plugin plugin) {
+		return (runnable) -> SchedulerUtils.runAsyncTaskOrOmit(plugin, runnable);
+	}
+
+	
 	public static int getActiveAsyncTasks(Plugin plugin) {
 		int workers = 0;
 		for (BukkitWorker worker : Bukkit.getScheduler().getActiveWorkers()) {

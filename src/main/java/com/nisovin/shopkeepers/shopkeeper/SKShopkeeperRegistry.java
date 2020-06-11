@@ -976,7 +976,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 				return getAllShopkeepers().stream()
 						.filter(shopkeeper -> shopkeeper instanceof PlayerShopkeeper)
 						.map(shopkeeper -> (AbstractPlayerShopkeeper) shopkeeper)
-						.filter(shopkeeper -> shopkeeper.getOwnerUUID().equals(ownerUUID));
+						.filter(shopkeeper -> shopkeeper.getOwner().getUniqueId().equals(ownerUUID));
 			}
 
 			@Override

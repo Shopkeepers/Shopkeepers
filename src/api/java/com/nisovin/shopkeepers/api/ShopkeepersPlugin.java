@@ -18,6 +18,7 @@ import com.nisovin.shopkeepers.api.shopobjects.ShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.api.ui.UIRegistry;
+import com.nisovin.shopkeepers.api.user.UserManager;
 
 public interface ShopkeepersPlugin extends Plugin {
 
@@ -65,6 +66,10 @@ public interface ShopkeepersPlugin extends Plugin {
 	 * @return <code>false</code> if he cannot create shops at all, <code>true</code> otherwise
 	 */
 	public boolean hasCreatePermission(Player player);
+
+	// USER MANAGER
+
+	public UserManager getUserManager();
 
 	// SHOP TYPES
 

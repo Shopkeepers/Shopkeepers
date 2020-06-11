@@ -49,6 +49,8 @@ public class Settings {
 		public static final String ownerNameUpdates = "owner-name-updates";
 		// Logs whenever a shopkeeper performs item migrations (eg. for trading offers).
 		public static final String itemMigrations = "item-migrations";
+		// Enables debug output related to the user cache.
+		public static final String userCache = "user-cache";
 	}
 
 	public static boolean isDebugging() {

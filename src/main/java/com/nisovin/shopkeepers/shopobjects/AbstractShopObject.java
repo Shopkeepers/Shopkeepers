@@ -8,6 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObject;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.ui.defaults.EditorHandler;
@@ -144,6 +145,14 @@ public abstract class AbstractShopObject implements ShopObject {
 	 * @return <code>true</code> to if the shop object might no longer be active or its id has changed
 	 */
 	public abstract boolean check();
+
+	/**
+	 * This is called whenever the {@link PlayerShopkeeper#getOwner() owner} of the corresponding
+	 * {@link PlayerShopkeeper} has changed.
+	 * TODO: Maybe have a general 'onShopkeeperChanged' callback, which also incorporates the shopkeeper name changes,
+	 * any any other shopkeeper data the shop objects might be interested in.
+	 */
+	public abstract void onShopkeeperOwnerChanged();
 
 	// NAMING
 

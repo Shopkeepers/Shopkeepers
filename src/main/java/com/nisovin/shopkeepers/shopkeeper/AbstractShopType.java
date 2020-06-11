@@ -84,7 +84,7 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper> extends Abs
 
 		// the creator, can not be null when creating a shopkeeper via this method:
 		Player creator = shopCreationData.getCreator();
-		Validate.notNull(creator, "Creator cannot be null!");
+		Validate.notNull(creator, "Creator player cannot be null!");
 
 		ShopType<?> shopType = shopCreationData.getShopType();
 		ShopObjectType<?> shopObjectType = shopCreationData.getShopObjectType();

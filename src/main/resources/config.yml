@@ -19,6 +19,7 @@ debug: false
 #    names.
 # - 'item-migrations': Logs whenever a shopkeeper performs item migrations (eg.
 #    for trading offers).
+# - 'user-cache': Enables debug output related to the user cache.
 debug-options: []
 # Whether to report anonymous usage statistics to https://bStats.org
 # All reported information can be found here:

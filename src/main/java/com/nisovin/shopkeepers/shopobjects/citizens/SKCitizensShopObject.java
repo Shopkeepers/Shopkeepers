@@ -15,6 +15,7 @@ import com.nisovin.shopkeepers.Settings;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.citizens.CitizensShopObject;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopobjects.SKDefaultShopObjectTypes;
 import com.nisovin.shopkeepers.shopobjects.entity.AbstractEntityShopObject;
@@ -117,9 +118,11 @@ public class SKCitizensShopObject extends AbstractEntityShopObject implements Ci
 		EntityType entityType;
 		String name;
 		if (shopkeeper instanceof PlayerShopkeeper) {
+			PlayerShopkeeper playerShopkeeper = (PlayerShopkeeper) shopkeeper;
 			// player shops will use a player npc:
 			entityType = EntityType.PLAYER;
-			name = ((PlayerShopkeeper) shopkeeper).getOwnerName();
+			User owner = playerShopkeeper.getOwner();
+			name = owner.getName();
 		} else {
 			entityType = EntityType.VILLAGER;
 			name = "Shopkeeper";
@@ -233,6 +236,16 @@ public class SKCitizensShopObject extends AbstractEntityShopObject implements Ci
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void onShopkeeperOwnerChanged() {
+		if (!Settings.allowRenamingOfPlayerNpcShops) {
+			// Update the NPC's name:
+			PlayerShopkeeper playerShopkeeper = (PlayerShopkeeper) shopkeeper;
+			User owner = playerShopkeeper.getOwner();
+			this.setName(owner.getName());
+		}
 	}
 
 	// NAMING

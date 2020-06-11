@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -27,12 +28,12 @@ import com.nisovin.shopkeepers.api.events.ShopkeeperRemoveEvent;
 import com.nisovin.shopkeepers.api.events.ShopkeepersStartupEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
-import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.PriceOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.TradingOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.chestprotection.ProtectedChests;
 import com.nisovin.shopkeepers.chestprotection.RemoveShopOnChestBreak;
 import com.nisovin.shopkeepers.commands.Commands;
@@ -48,7 +49,6 @@ import com.nisovin.shopkeepers.metrics.VaultEconomyChart;
 import com.nisovin.shopkeepers.metrics.WorldGuardChart;
 import com.nisovin.shopkeepers.metrics.WorldsChart;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
-import com.nisovin.shopkeepers.pluginhandlers.CitizensHandler;
 import com.nisovin.shopkeepers.pluginhandlers.WorldGuardHandler;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperCreation;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopType;
@@ -71,10 +71,10 @@ import com.nisovin.shopkeepers.storage.SKShopkeeperStorage;
 import com.nisovin.shopkeepers.tradelogging.TradeFileLogger;
 import com.nisovin.shopkeepers.ui.SKUIRegistry;
 import com.nisovin.shopkeepers.ui.defaults.SKDefaultUITypes;
+import com.nisovin.shopkeepers.user.SKUserManager;
 import com.nisovin.shopkeepers.util.DebugListener;
 import com.nisovin.shopkeepers.util.Log;
 import com.nisovin.shopkeepers.util.SchedulerUtils;
-import com.nisovin.shopkeepers.util.TextUtils;
 import com.nisovin.shopkeepers.util.TradingCountListener;
 import com.nisovin.shopkeepers.util.Validate;
 import com.nisovin.shopkeepers.villagers.BlockVillagerSpawnListener;
@@ -90,6 +90,12 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	public static SKShopkeepersPlugin getInstance() {
 		return plugin;
 	}
+
+	// utilities:
+	private final Executor syncExecutor = SchedulerUtils.createSyncExecutor(this);
+	private final Executor asyncExecutor = SchedulerUtils.createAsyncExecutor(this);
+
+	private final SKUserManager userManager = new SKUserManager(this);
 
 	// shop types and shop object types registry:
 	private final SKShopTypesRegistry shopTypesRegistry = new SKShopTypesRegistry();
@@ -226,14 +232,15 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	@Override
 	public void onLoad() {
 		Log.setLogger(this.getLogger()); // setup logger early
-		// setting plugin reference early, so it is also available for any code running here:
-		plugin = this;
-		ShopkeepersAPI.enable(this);
 
 		// making sure that certain classes, that are needed during shutdown, are loaded:
 		// this helps for hot reloads (when the plugin gets disabled, but the original jar got replaced and is therefore
 		// no longer available)
 		this.loadRequiredClasses();
+
+		// setting plugin reference early, so that it is also available for any code running here:
+		plugin = this;
+		ShopkeepersAPI.enable(this);
 
 		// validate that this server is running a minimum required version:
 		this.outdatedServer = this.isOutdatedServerVersion();
@@ -335,6 +342,9 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		// call startup event so other plugins can make their registrations:
 		Bukkit.getPluginManager().callEvent(new ShopkeepersStartupEvent());
 
+		// enable UserManager:
+		userManager.onEnable();
+
 		// inform ui registry (registers ui event handlers):
 		uiRegistry.onEnable();
 
@@ -396,19 +406,11 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 			return;
 		}
 
+		// remove inactive player shopkeepers:
+		this.removeInactivePlayerShops();
+
 		// activate (spawn) shopkeepers in loaded chunks of all loaded worlds:
 		shopkeeperRegistry.activateShopkeepersInAllWorlds();
-
-		Bukkit.getScheduler().runTaskLater(this, () -> {
-			// remove inactive player shopkeepers:
-			this.removeInactivePlayerShops();
-		}, 5L);
-
-		// let's update the shopkeepers for all already online players:
-		for (Player player : Bukkit.getOnlinePlayers()) {
-			if (CitizensHandler.isNPC(player)) continue;
-			this.updateShopkeepersForPlayer(player.getUniqueId(), player.getName());
-		}
 
 		// write back all updated data:
 		if (shopkeeperStorage.isDirty()) {
@@ -476,7 +478,10 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		shopkeeperNaming.onDisable();
 		shopkeeperCreation.onDisable();
 
-		// clear all types of registers:
+		// disable UserManager:
+		userManager.onDisable();
+
+		// clear all types of registries:
 		shopTypesRegistry.clearAll();
 		shopObjectTypesRegistry.clearAll();
 		uiRegistry.clearAll();
@@ -516,7 +521,6 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	// PLAYER JOINING AND QUITTING
 
 	void onPlayerJoin(Player player) {
-		this.updateShopkeepersForPlayer(player.getUniqueId(), player.getName());
 	}
 
 	void onPlayerQuit(Player player) {
@@ -528,6 +532,23 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 		shopkeeperNaming.onPlayerQuit(player);
 		shopkeeperCreation.onPlayerQuit(player);
 		commands.onPlayerQuit(player);
+	}
+
+	// UTILITIES
+
+	public Executor getSyncExecutor() {
+		return syncExecutor;
+	}
+
+	public Executor getAsyncExecutor() {
+		return asyncExecutor;
+	}
+
+	// USER MANAGER
+
+	@Override
+	public SKUserManager getUserManager() {
+		return userManager;
 	}
 
 	// SHOPKEEPER REGISTRY
@@ -662,112 +683,66 @@ public class SKShopkeepersPlugin extends JavaPlugin implements ShopkeepersPlugin
 	// INACTIVE SHOPS
 
 	private void removeInactivePlayerShops() {
-		if (Settings.playerShopkeeperInactiveDays <= 0) return;
+		if (Settings.playerShopkeeperInactiveDays <= 0) return; // disabled
 
-		Set<UUID> playerUUIDs = new HashSet<>();
-		for (Shopkeeper shopkeeper : shopkeeperRegistry.getAllShopkeepers()) {
-			if (shopkeeper instanceof PlayerShopkeeper) {
-				PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-				playerUUIDs.add(playerShop.getOwnerUUID());
+		// Find shops owned by inactive players:
+		long startTime = System.currentTimeMillis();
+		Set<User> checkedShopOwners = new HashSet<>();
+		Set<User> inactiveShopOwners = new HashSet<>();
+		List<PlayerShopkeeper> forRemoval = new ArrayList<>();
+		for (PlayerShopkeeper shopkeeper : shopkeeperRegistry.getAllPlayerShopkeepers()) {
+			User shopOwner = shopkeeper.getOwner();
+			// Check if the shop owner is inactive, if we did not already check it for this player:
+			if (checkedShopOwners.add(shopOwner)) {
+				// Note: This may access the player's data file. But this should not be an issue to do sync since we run
+				// this during plugin startup.
+				if (this.isPlayerInactive(shopOwner)) {
+					inactiveShopOwners.add(shopOwner);
+				}
+			}
+
+			// If the shop owner is inactive, mark the shop for removal:
+			if (inactiveShopOwners.contains(shopOwner)) {
+				forRemoval.add(shopkeeper);
 			}
 		}
-		if (playerUUIDs.isEmpty()) {
-			// no player shops found:
-			return;
-		}
+		long duration = (System.currentTimeMillis() - startTime);
+		Log.debug(() -> "Checking " + shopkeeperRegistry.getAllPlayerShopkeepers().size() + " player shops owned by "
+				+ checkedShopOwners.size() + " players for player inactivity took " + duration + " ms.");
 
-		// fetch OfflinePlayers async:
-		int playerShopkeeperInactiveDays = Settings.playerShopkeeperInactiveDays;
-		Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-			List<OfflinePlayer> inactivePlayers = new ArrayList<>();
-			long now = System.currentTimeMillis();
-			for (UUID uuid : playerUUIDs) {
-				OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-				if (!offlinePlayer.hasPlayedBefore()) continue;
-
-				long lastPlayed = offlinePlayer.getLastPlayed();
-				if ((lastPlayed > 0) && ((now - lastPlayed) / 86400000 > playerShopkeeperInactiveDays)) {
-					inactivePlayers.add(offlinePlayer);
-				}
+		// Delete the found shops:
+		if (!forRemoval.isEmpty()) {
+			for (PlayerShopkeeper shopkeeper : forRemoval) {
+				shopkeeper.delete();
+				Log.info("Shopkeeper " + shopkeeper.getIdString() + " at " + shopkeeper.getPositionString()
+						+ " owned by " + shopkeeper.getOwnerString() + " has been removed for owner inactivity.");
 			}
 
-			if (inactivePlayers.isEmpty()) {
-				// no inactive players found:
-				return;
-			}
-
-			// continue in main thread:
-			SchedulerUtils.runTaskOrOmit(SKShopkeepersPlugin.this, () -> {
-				List<PlayerShopkeeper> forRemoval = new ArrayList<>();
-				for (OfflinePlayer inactivePlayer : inactivePlayers) {
-					// remove all shops of this inactive player:
-					UUID playerUUID = inactivePlayer.getUniqueId();
-
-					for (Shopkeeper shopkeeper : shopkeeperRegistry.getAllShopkeepers()) {
-						if (shopkeeper instanceof PlayerShopkeeper) {
-							PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-							UUID ownerUUID = playerShop.getOwnerUUID();
-							if (ownerUUID.equals(playerUUID)) {
-								forRemoval.add(playerShop);
-							}
-						}
-					}
-				}
-
-				// remove those shopkeepers:
-				if (!forRemoval.isEmpty()) {
-					for (PlayerShopkeeper shopkeeper : forRemoval) {
-						shopkeeper.delete();
-						Log.info("Shopkeeper " + shopkeeper.getIdString() + " at " + shopkeeper.getPositionString()
-								+ " owned by " + shopkeeper.getOwnerString() + " has been removed for owner inactivity.");
-					}
-
-					// save:
-					shopkeeperStorage.save();
-				}
-			});
-		});
-	}
-
-	// HANDLING PLAYER NAME CHANGES:
-
-	// updates owner names for the shopkeepers of the specified player:
-	private void updateShopkeepersForPlayer(UUID playerUUID, String playerName) {
-		Log.debug(Settings.DebugOptions.ownerNameUpdates,
-				() -> "Updating shopkeepers for: " + TextUtils.getPlayerString(playerName, playerUUID)
-		);
-		boolean dirty = false;
-		for (Shopkeeper shopkeeper : shopkeeperRegistry.getAllShopkeepers()) {
-			if (shopkeeper instanceof PlayerShopkeeper) {
-				PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-				UUID ownerUUID = playerShop.getOwnerUUID();
-				String ownerName = playerShop.getOwnerName();
-
-				if (ownerUUID.equals(playerUUID)) {
-					if (!ownerName.equals(playerName)) {
-						// update the stored name, because the player must have changed it:
-						Log.debug(Settings.DebugOptions.ownerNameUpdates,
-								() -> "  Updating owner name ('" + ownerName + "') of shopkeeper " + shopkeeper.getId() + "."
-						);
-						playerShop.setOwner(playerUUID, playerName);
-						dirty = true;
-					} else {
-						// The stored owner name matches the player's current name.
-						// Assumption: The stored owner names among all shops are consistent.
-						// We can therefore abort checking the other shops here.
-						Log.debug(Settings.DebugOptions.ownerNameUpdates,
-								() -> "  The stored owner name of shopkeeper " + shopkeeper.getId()
-										+ " matches the current player name. Skipping checking of further shops."
-						);
-						return;
-					}
-				}
-			}
-		}
-
-		if (dirty) {
+			// Save:
 			shopkeeperStorage.save();
 		}
+	}
+
+	private boolean isPlayerInactive(User user) {
+		assert user != null;
+		OfflinePlayer player = user.getOfflinePlayer();
+		assert player != null;
+		if (player.isOnline()) return false; // Player is online -> not inactive
+
+		// Note: We do not check if the player has played before, because checking for missing player data is already
+		// covered by the following check as well:
+		long lastPlayed = player.getLastPlayed();
+		if (lastPlayed <= 0) {
+			// Invalid or player data missing (maybe deleted) -> considered inactive:
+			return true;
+		}
+
+		long millisSinceLastSeen = (System.currentTimeMillis() - lastPlayed);
+		long daysSinceLastSeen = TimeUnit.MILLISECONDS.toDays(millisSinceLastSeen);
+		if (daysSinceLastSeen > Settings.playerShopkeeperInactiveDays) {
+			return true;
+		}
+		return false;
 	}
 
 	// FACTORY

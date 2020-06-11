@@ -2,7 +2,7 @@ package com.nisovin.shopkeepers.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -16,6 +16,45 @@ import com.nisovin.shopkeepers.text.Text;
 public class PlayerUtils {
 
 	private PlayerUtils() {
+	}
+
+	/**
+	 * Normalizes the given player name.
+	 * <p>
+	 * This assumes that the player name is valid, i.e. it only consist of characters in the range of [a-zA-Z0-9_] (no
+	 * whitespace, no color codes). Normalizing the name then simply consists of converted to characters to lower case.
+	 * <p>
+	 * This returns <code>null</code> for a <code>null</code> input name.
+	 * 
+	 * @param playerName
+	 *            the player name
+	 * @return the normalized player name
+	 */
+	public static String normalizePlayerName(String playerName) {
+		if (playerName == null) return null;
+		return playerName.toLowerCase(Locale.ROOT);
+	}
+
+	/**
+	 * Normalizes the given player display name.
+	 * <p>
+	 * This performs the following normalizations:
+	 * <ul>
+	 * <li>Strip all color codes.
+	 * <li>Remove leading and trailing whitespace.
+	 * <li>Convert all remaining whitespace and underscores to dashes('-').
+	 * <li>Converts all characters to lower case.
+	 * </ul>
+	 * <p>
+	 * This returns <code>null</code> for a <code>null</code> input display name.
+	 * 
+	 * @param displayName
+	 *            the player display name
+	 * @return the normalized player display name
+	 */
+	public static String normalizeDisplayName(String displayName) {
+		if (displayName == null) return null;
+		return StringUtils.normalize(TextUtils.stripColor(displayName));
 	}
 
 	/*
@@ -79,7 +118,7 @@ public class PlayerUtils {
 		};
 
 		// Note: Similar to Bukkit.matchPlayer(String) but also considers display names and ignores
-		// dashes/underscores/whitespace.
+		// dashes, underscores and whitespace.
 		public static final PlayerNameMatcher CONTAINS = new AbstractPlayerNameMatcher() {
 			@Override
 			protected boolean matches(String normalizedInputName, String normalizedName) {
@@ -100,13 +139,15 @@ public class PlayerUtils {
 				if (exactMatch != null) return Stream.of(exactMatch);
 			}
 
-			String normalizedInput = StringUtils.normalize(input);
+			// We only do the full input normalization if it is required (if we also compare with display names):
+			final boolean matchDisplayNames = this.matchesDisplayNames();
+			String normalizedInput = matchDisplayNames ? normalizeDisplayName(input) : normalizePlayerName(input);
 			List<Player> matchingPlayers = new ArrayList<>();
 			boolean[] onlyPerfectMatches = new boolean[] { false };
 			for (Player player : Bukkit.getOnlinePlayers()) {
 				// check name:
 				String playerName = player.getName();
-				String normalizedPlayerName = StringUtils.normalize(playerName);
+				String normalizedPlayerName = normalizePlayerName(playerName);
 
 				boolean matched = this.match(normalizedInput, player, normalizedPlayerName, matchingPlayers, onlyPerfectMatches);
 				if (matched) {
@@ -119,9 +160,11 @@ public class PlayerUtils {
 				}
 
 				// check display name:
-				String displayName = player.getDisplayName();
-				String normalizedDisplayName = StringUtils.normalize(TextUtils.stripColor(displayName));
-				this.match(normalizedInput, player, normalizedDisplayName, matchingPlayers, onlyPerfectMatches);
+				if (matchDisplayNames) {
+					String displayName = player.getDisplayName();
+					String normalizedDisplayName = normalizeDisplayName(displayName);
+					this.match(normalizedInput, player, normalizedDisplayName, matchingPlayers, onlyPerfectMatches);
+				}
 			}
 			return matchingPlayers.stream();
 		}
@@ -160,25 +203,46 @@ public class PlayerUtils {
 		protected abstract boolean matches(String normalizedInputName, String normalizedName);
 	}
 
+	public static class PlayerNameMatch {
+
+		private final UUID uniqueId;
+		private final String name;
+
+		public PlayerNameMatch(UUID uniqueId, String name) {
+			Validate.notNull(uniqueId, "uniqueId is null");
+			Validate.notNull(name, "name is null");
+			this.uniqueId = uniqueId;
+			this.name = name;
+		}
+
+		public UUID getUniqueId() {
+			return uniqueId;
+		}
+
+		public String getName() {
+			return name;
+		}
+	}
+
 	private static final int DEFAULT_AMBIGUOUS_PLAYER_NAME_MAX_ENTRIES = 5;
 
 	// Note: Iterable is only iterated once
 	// true if there are multiple matches
-	public static boolean handleAmbiguousPlayerName(CommandSender sender, String name, Iterable<Map.Entry<UUID, String>> matches) {
+	public static boolean handleAmbiguousPlayerName(CommandSender sender, String name, Iterable<PlayerNameMatch> matches) {
 		return handleAmbiguousPlayerName(sender, name, matches, DEFAULT_AMBIGUOUS_PLAYER_NAME_MAX_ENTRIES);
 	}
 
 	// Note: Iterable is only iterated once
 	// true if there are multiple matches
-	public static boolean handleAmbiguousPlayerName(CommandSender sender, String name, Iterable<Map.Entry<UUID, String>> matches, int maxEntries) {
+	public static boolean handleAmbiguousPlayerName(CommandSender sender, String name, Iterable<PlayerNameMatch> matches, int maxEntries) {
 		return CommandUtils.handleAmbiguousInput(sender, name, matches, maxEntries,
 				() -> {
 					TextUtils.sendMessage(sender, Settings.msgAmbiguousPlayerName, "name", name);
 				},
 				(match, index) -> {
-					UUID matchUUID = match.getKey();
+					UUID matchUUID = match.getUniqueId();
 					String matchUUIDString = matchUUID.toString();
-					String matchName = match.getValue();
+					String matchName = match.getName();
 
 					TextUtils.sendMessage(sender, Settings.msgAmbiguousPlayerNameEntry,
 							"index", index,

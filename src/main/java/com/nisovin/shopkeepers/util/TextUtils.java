@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -72,7 +73,7 @@ public class TextUtils {
 		return worldName + "," + cx + "," + cz;
 	}
 
-	public static String getPlayerString(Player player) {
+	public static String getPlayerString(OfflinePlayer player) {
 		return getPlayerString(player.getName(), player.getUniqueId());
 	}
 

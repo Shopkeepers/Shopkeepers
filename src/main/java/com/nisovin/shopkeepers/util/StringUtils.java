@@ -49,7 +49,7 @@ public class StringUtils {
 	 * This trims leading and trailing whitespace and converts all remaining whitespace and underscores to dashes
 	 * ('{@code -}').
 	 * <p>
-	 * This returns {@link null} for a {@code null} input identifier.
+	 * This returns <code>null</code> for a <code>null</code> input identifier.
 	 * 
 	 * @param identifier
 	 *            the identifier
@@ -69,7 +69,7 @@ public class StringUtils {
 	 * This trims leading and trailing whitespace, converts all remaining whitespace and underscores to dashes
 	 * ('{@code -}') and converts all characters to lower case.
 	 * <p>
-	 * This returns {@link null} for a {@code null} input identifier.
+	 * This returns <code>null</code> for a <code>null</code> input identifier.
 	 * 
 	 * @param identifier
 	 *            the identifier

@@ -3,7 +3,7 @@ package com.nisovin.shopkeepers.commands.shopkeepers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -15,6 +15,7 @@ import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.lib.Command;
 import com.nisovin.shopkeepers.commands.lib.CommandContextView;
 import com.nisovin.shopkeepers.commands.lib.CommandException;
@@ -90,7 +91,7 @@ class CommandList extends Command {
 		int page = context.get(ARGUMENT_PAGE);
 		boolean listAdminShops = context.has(ARGUMENT_ADMIN); // can be null
 		UUID targetPlayerUUID = context.get(ARGUMENT_PLAYER_UUID); // can be null
-		String targetPlayerName = context.get(ARGUMENT_PLAYER_NAME);
+		String targetPlayerName = context.get(ARGUMENT_PLAYER_NAME); // can be null
 		assert listAdminShops ^ (targetPlayerUUID != null ^ targetPlayerName != null); // xor
 
 		List<? extends Shopkeeper> shops;
@@ -141,15 +142,15 @@ class CommandList extends Command {
 			assert ownedPlayerShopsResult != null;
 
 			// if the input name is ambiguous, we print an error and require the player to be specified by uuid:
-			Map<UUID, String> matchingShopOwners = ownedPlayerShopsResult.getMatchingShopOwners();
+			Set<User> matchingShopOwners = ownedPlayerShopsResult.getMatchingShopOwners();
 			assert matchingShopOwners != null;
-			if (PlayerUtils.handleAmbiguousPlayerName(sender, targetPlayerName, matchingShopOwners.entrySet())) {
+			if (PlayerUtils.handleAmbiguousPlayerName(sender, targetPlayerName, matchingShopOwners)) {
 				return;
 			}
 
 			// get missing / exact player information:
 			targetPlayerUUID = ownedPlayerShopsResult.getPlayerUUID();
-			targetPlayerName = ownedPlayerShopsResult.getPlayerName();
+			targetPlayerName = ownedPlayerShopsResult.getPlayerName(); // can still be null
 
 			// get found shops:
 			shops = ownedPlayerShopsResult.getShops();

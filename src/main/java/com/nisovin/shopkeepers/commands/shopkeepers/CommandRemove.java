@@ -3,7 +3,7 @@ package com.nisovin.shopkeepers.commands.shopkeepers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -17,6 +17,7 @@ import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.admin.AdminShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.Confirmations;
 import com.nisovin.shopkeepers.commands.lib.Command;
 import com.nisovin.shopkeepers.commands.lib.CommandContextView;
@@ -155,9 +156,9 @@ class CommandRemove extends Command {
 			assert ownedPlayerShopsResult != null;
 
 			// If the input name is ambiguous, we print an error and require the player to be specified by uuid:
-			Map<UUID, String> matchingShopOwners = ownedPlayerShopsResult.getMatchingShopOwners();
+			Set<User> matchingShopOwners = ownedPlayerShopsResult.getMatchingShopOwners();
 			assert matchingShopOwners != null;
-			if (PlayerUtils.handleAmbiguousPlayerName(sender, targetPlayerName, matchingShopOwners.entrySet())) {
+			if (PlayerUtils.handleAmbiguousPlayerName(sender, targetPlayerName, matchingShopOwners)) {
 				return;
 			}
 

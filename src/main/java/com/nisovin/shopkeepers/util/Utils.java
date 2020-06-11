@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.util;
 
+import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +57,10 @@ public final class Utils {
 	// Note: The returned Iterable can only be iterated once!
 	public static <T> Iterable<T> toIterable(Stream<T> stream) {
 		return stream::iterator;
+	}
+
+	public static <R> Stream<R> mapReferents(Stream<? extends Reference<R>> referenceStream) {
+		return referenceStream.map(ref -> ref.get()).filter(Objects::nonNull);
 	}
 
 	public static void printRegisteredListeners(Event event) {

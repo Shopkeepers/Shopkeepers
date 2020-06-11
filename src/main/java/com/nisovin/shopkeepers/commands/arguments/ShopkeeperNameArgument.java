@@ -62,7 +62,7 @@ public class ShopkeeperNameArgument extends ObjectNameArgument {
 	}
 
 	@Override
-	protected Iterable<String> getCompletionSuggestions(String idPrefix) {
-		return getDefaultCompletionSuggestions(idPrefix, (shopkeeper) -> true);
+	protected Iterable<String> getCompletionSuggestions(String namePrefix) {
+		return getDefaultCompletionSuggestions(namePrefix, (shopkeeper) -> true);
 	}
 }

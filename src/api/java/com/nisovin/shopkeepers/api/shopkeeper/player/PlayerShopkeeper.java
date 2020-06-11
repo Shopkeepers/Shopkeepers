@@ -1,12 +1,12 @@
 package com.nisovin.shopkeepers.api.shopkeeper.player;
 
-import java.util.UUID;
-
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 
 /**
  * A shopkeeper that is managed by a player. This shopkeeper draws its supplies from a chest and will deposit earnings
@@ -14,54 +14,39 @@ import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
  */
 public interface PlayerShopkeeper extends Shopkeeper {
 
+	// TODO check all reference since this could previously return null if the player is not online
+	/**
+	 * Gets the owner of this shop.
+	 * 
+	 * @return the owner, not <code>null</code>
+	 */
+	public User getOwner();
+
 	/**
 	 * Sets the owner of this shop.
 	 * 
+	 * @param newOwner
+	 *            the new owner, not <code>null</code>
+	 */
+	public void setOwner(User newOwner);
+
+	/**
+	 * Checks if the given player owns this shop.
+	 * 
 	 * @param player
-	 *            the owner of this shop
+	 *            the player
+	 * @return <code>true</code> if the player owns this shop
 	 */
-	public void setOwner(Player player);
-
-	public void setOwner(UUID ownerUUID, String ownerName);
+	public boolean isOwner(OfflinePlayer player);
 
 	/**
-	 * Gets the uuid of the player who owns this shop.
-	 * 
-	 * @return the owner's player uuid, not <code>null</code>
-	 */
-	public UUID getOwnerUUID();
-
-	/**
-	 * Gets the last known name of the player who owns this shop.
-	 * 
-	 * @return the owner's last known name, not <code>null</code>
-	 */
-	public String getOwnerName();
-
-	/**
-	 * Gets a string representation of the owning player.
+	 * Gets a String representation of the owner.
 	 * <p>
-	 * This contains the owner's last known name as well as his uuid.
+	 * This contains the owner's unique id, as well as his last known name (if available).
 	 * 
-	 * @return a string representing the the owner
+	 * @return a String representation of the owner
 	 */
 	public String getOwnerString();
-
-	/**
-	 * Checks if the given owner is owning this shop.
-	 * 
-	 * @param player
-	 *            the player to check
-	 * @return <code>true</code> if the given player owns this shop
-	 */
-	public boolean isOwner(Player player);
-
-	/**
-	 * Gets the owner of this shop IF he is online.
-	 * 
-	 * @return the owner of this shop, or <code>null</code> if the owner is offline
-	 */
-	public Player getOwner();
 
 	/**
 	 * Checks whether this shopkeeper is for hire.
