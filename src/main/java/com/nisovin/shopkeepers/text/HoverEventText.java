@@ -65,10 +65,10 @@ public class HoverEventText extends TextBuilder {
 	// PLACEHOLDER ARGUMENTS
 
 	@Override
-	public Text setPlaceholderArguments(Map<String, ?> placeholderArguments) {
-		super.setPlaceholderArguments(placeholderArguments);
+	public Text setPlaceholderArguments(Map<String, ?> arguments) {
+		super.setPlaceholderArguments(arguments);
 		// delegate to hover text:
-		value.setPlaceholderArguments(placeholderArguments);
+		value.setPlaceholderArguments(arguments);
 		return this;
 	}
 

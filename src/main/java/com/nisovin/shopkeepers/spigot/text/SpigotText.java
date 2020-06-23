@@ -11,8 +11,8 @@ import com.nisovin.shopkeepers.text.FormattingText;
 import com.nisovin.shopkeepers.text.HoverEventText;
 import com.nisovin.shopkeepers.text.InsertionText;
 import com.nisovin.shopkeepers.text.PlaceholderText;
+import com.nisovin.shopkeepers.text.PlainText;
 import com.nisovin.shopkeepers.text.Text;
-import com.nisovin.shopkeepers.text.TextText;
 import com.nisovin.shopkeepers.text.TranslatableText;
 import com.nisovin.shopkeepers.util.Log;
 import com.nisovin.shopkeepers.util.StringUtils;
@@ -157,11 +157,11 @@ public class SpigotText {
 					}
 				}
 				component = current;
-			} else if (text instanceof TextText) {
+			} else if (text instanceof PlainText) {
 				if (current == null || hasText(current) || hasExtra(current)) {
 					current = newTextComponent(parent, textStyle);
 				}
-				current.setText(((TextText) text).getText());
+				current.setText(((PlainText) text).getText());
 				component = current;
 			} else if (text instanceof PlaceholderText) {
 				PlaceholderText placeholderText = (PlaceholderText) text;

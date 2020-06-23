@@ -105,7 +105,6 @@ public class TranslatableText extends TextBuilder {
 	@Override
 	public TranslatableText copy(Text sourceText, boolean copyChilds) {
 		super.copy(sourceText, copyChilds);
-
 		this.copyTranslationArguments(sourceText);
 		return this;
 	}

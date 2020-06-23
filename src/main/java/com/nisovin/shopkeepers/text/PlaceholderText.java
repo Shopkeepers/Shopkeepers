@@ -110,16 +110,16 @@ public class PlaceholderText extends TextBuilder {
 	// PLACEHOLDER ARGUMENTS
 
 	@Override
-	public Text setPlaceholderArguments(Map<String, ?> placeholderArguments) {
+	public Text setPlaceholderArguments(Map<String, ?> arguments) {
 		// temporarily clear placeholder argument (if any) to not delegate to it via child delegation:
 		Text prevArgument = this.getPlaceholderArgument();
 		this.setPlaceholderArgument(null);
 
 		try {
 			// handles validation and delegation:
-			super.setPlaceholderArguments(placeholderArguments);
+			super.setPlaceholderArguments(arguments);
 
-			Object argument = placeholderArguments.get(placeholderKey); // can be null
+			Object argument = arguments.get(placeholderKey); // can be null
 			if (argument != null) {
 				this.setPlaceholderArgument(argument);
 				prevArgument = null; // don't restore previous argument
@@ -195,7 +195,6 @@ public class PlaceholderText extends TextBuilder {
 	@Override
 	public PlaceholderText copy(Text sourceText, boolean copyChilds) {
 		super.copy(sourceText, copyChilds);
-
 		this.copyPlaceholderArgument(sourceText);
 		return this;
 	}

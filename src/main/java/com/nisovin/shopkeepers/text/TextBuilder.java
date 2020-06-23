@@ -1,6 +1,7 @@
 package com.nisovin.shopkeepers.text;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.bukkit.ChatColor;
 
@@ -14,9 +15,6 @@ import com.nisovin.shopkeepers.util.Validate;
  * Use one of the factory methods in {@link Text} to create an instance.
  */
 public abstract class TextBuilder extends AbstractText {
-
-	private Text child = null;
-	private Text next = null;
 
 	private boolean built = false;
 
@@ -81,46 +79,12 @@ public abstract class TextBuilder extends AbstractText {
 	// PLACEHOLDER ARGUMENTS
 
 	@Override
-	public Text setPlaceholderArguments(Map<String, ?> placeholderArguments) {
-		Validate.notNull(placeholderArguments, "Placeholder arguments is null!");
+	public Text setPlaceholderArguments(Map<String, ?> arguments) {
 		Validate.isTrue(this.isBuilt(), "Cannot set placeholder arguments for unbuilt Text!");
-
-		// delegate to childs:
-		Text child = this.getChild();
-		if (child != null) {
-			child.setPlaceholderArguments(placeholderArguments);
-		}
-
-		// delegate to next:
-		Text next = this.getNext();
-		if (next != null) {
-			next.setPlaceholderArguments(placeholderArguments);
-		}
-		return this;
-	}
-
-	@Override
-	public Text clearPlaceholderArguments() {
-		// delegate to childs:
-		Text child = this.getChild();
-		if (child != null) {
-			child.clearPlaceholderArguments();
-		}
-
-		// delegate to next:
-		Text next = this.getNext();
-		if (next != null) {
-			next.clearPlaceholderArguments();
-		}
-		return this;
+		return super.setPlaceholderArguments(arguments);
 	}
 
 	// CHILD
-
-	@Override
-	public Text getChild() {
-		return child;
-	}
 
 	/**
 	 * Sets the child Text.
@@ -128,55 +92,36 @@ public abstract class TextBuilder extends AbstractText {
 	 * The child Text may be an unbuilt {@link AbstractTextBuilder TextBuilder} as well. It gets built once this Text
 	 * gets built.
 	 * 
+	 * @param <T>
+	 *            the type of the child text
 	 * @param child
 	 *            the child text, or <code>null</code> to unset it
 	 * @return the child Text
 	 */
 	public <T extends Text> T child(T child) {
 		this.validateModification();
-		if (child != null) {
-			Validate.isTrue(child != this, "Cannot set self as child!");
-			Validate.isTrue(child.getParent() == null, "The given child Text already has a parent!");
-			((AbstractText) child).setParent(this);
-		}
-
-		if (this.child != null) {
-			((AbstractText) this.child).setParent(null);
-		}
-		this.child = child; // can be null
-		// note: returning the child Text here allow for convenient chaining when fluently building a Text
+		this.setChild(child);
+		// Returning the child Text here allows for convenient chaining when fluently building a Text.
 		return child;
 	}
 
 	// NEXT
-
-	@Override
-	public Text getNext() {
-		return next;
-	}
 
 	/**
 	 * Sets the next {@link Text}.
 	 * <p>
 	 * The next Text may be an unbuilt {@link TextBuilder} as well. It gets built once this Text gets built.
 	 * 
+	 * @param <T>
+	 *            the type of the next text
 	 * @param next
 	 *            the next text, or <code>null</code> to unset it
 	 * @return the next Text
 	 */
 	public <T extends Text> T next(T next) {
 		this.validateModification();
-		if (next != null) {
-			Validate.isTrue(next != this, "Cannot set self as next!");
-			Validate.isTrue(next.getParent() == null, "The given next Text already has a parent!");
-			((AbstractText) next).setParent(this);
-		}
-
-		if (this.next != null) {
-			((AbstractText) this.next).setParent(null);
-		}
-		this.next = next; // can be null
-		// note: returning the next Text here allow for convenient chaining when fluently building a Text
+		this.setNext(next);
+		// Returning the next Text here allows for convenient chaining when fluently building a Text.
 		return next;
 	}
 
@@ -495,69 +440,13 @@ public abstract class TextBuilder extends AbstractText {
 		return this.next(Text.insertion(insertion));
 	}
 
-	// PLAIN TEXT
-
-	@Override
-	protected void appendPlainText(StringBuilder builder, boolean formatText) {
-		// child:
-		Text child = this.getChild();
-		if (child != null) {
-			((AbstractText) child).appendPlainText(builder, formatText);
-		}
-
-		// next:
-		Text next = this.getNext();
-		if (next != null) {
-			((AbstractText) next).appendPlainText(builder, formatText);
-		}
-	}
-
-	@Override
-	public boolean isPlainText() {
-		// child:
-		Text child = this.getChild();
-		if (child != null && !child.isPlainText()) {
-			return false;
-		}
-
-		// next:
-		Text next = this.getNext();
-		if (next != null && !next.isPlainText()) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public boolean isPlainTextEmpty() {
-		// child:
-		Text child = this.getChild();
-		if (child != null && !child.isPlainTextEmpty()) {
-			return false;
-		}
-
-		// next:
-		Text next = this.getNext();
-		if (next != null && !next.isPlainTextEmpty()) {
-			return false;
-		}
-		return true;
-	}
-
-	// UNFORMATTED TEXT
-
-	@Override
-	public String toUnformattedText() {
-		return ChatColor.stripColor(this.toPlainText());
-	}
-
 	// COPY
 
 	@Override
 	public abstract Text copy();
 
 	/**
-	 * Copies the properties from the given source Text.
+	 * Copies the properties of the given source Text.
 	 * <p>
 	 * Copied child and subsequent Texts will be unmodifiable already.
 	 * 

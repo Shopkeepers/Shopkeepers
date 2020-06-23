@@ -181,22 +181,24 @@ public class TextUtils {
 
 	private static final Map<String, Object> TEMP_ARGUMENTS_MAP = new HashMap<>();
 
-	@SafeVarargs
-	private static <T> void addArguments(Map<String, Object> argumentsMap, T... arguments) {
-		if (arguments == null) return;
-		int argumentsKeyLimit = arguments.length - 1;
+	// Arguments format: [key1, value1, key2, value2, ...]
+	// The keys are expected to be of type String.
+	public static <T> void addArgumentsToMap(Map<String, Object> argumentsMap, Object... argumentPairs) {
+		Validate.notNull(argumentsMap, "argumentsMap is null");
+		Validate.notNull(argumentPairs, "argumentPairs is null");
+		Validate.isTrue(argumentPairs.length % 2 == 0, "argumentPairs.length is not a multiple of 2");
+		int argumentsKeyLimit = argumentPairs.length - 1;
 		for (int i = 0; i < argumentsKeyLimit; i += 2) {
-			String key = (String) arguments[i];
-			Object value = arguments[i + 1];
+			String key = (String) argumentPairs[i];
+			Object value = argumentPairs[i + 1];
 			argumentsMap.put(key, value);
 		}
 	}
 
-	@SafeVarargs
-	public static <T> String replaceArguments(String message, T... arguments) {
+	public static String replaceArguments(String message, Object... argumentPairs) {
 		assert TEMP_ARGUMENTS_MAP.isEmpty();
 		try {
-			addArguments(TEMP_ARGUMENTS_MAP, arguments);
+			addArgumentsToMap(TEMP_ARGUMENTS_MAP, argumentPairs);
 			return replaceArguments(message, TEMP_ARGUMENTS_MAP);
 		} finally {
 			TEMP_ARGUMENTS_MAP.clear(); // reset
@@ -219,10 +221,10 @@ public class TextUtils {
 		return replaced;
 	}
 
-	public static List<String> replaceArguments(Collection<String> messages, Object... arguments) {
+	public static List<String> replaceArguments(Collection<String> messages, Object... argumentPairs) {
 		assert TEMP_ARGUMENTS_MAP.isEmpty();
 		try {
-			addArguments(TEMP_ARGUMENTS_MAP, arguments);
+			addArgumentsToMap(TEMP_ARGUMENTS_MAP, argumentPairs);
 			return replaceArguments(messages, TEMP_ARGUMENTS_MAP);
 		} finally {
 			TEMP_ARGUMENTS_MAP.clear(); // reset
@@ -248,9 +250,9 @@ public class TextUtils {
 		sendMessage(recipient, replaceArguments(message, arguments));
 	}
 
-	public static void sendMessage(CommandSender recipient, String message, Object... arguments) {
+	public static void sendMessage(CommandSender recipient, String message, Object... argumentPairs) {
 		// replace message arguments and then send:
-		sendMessage(recipient, replaceArguments(message, arguments));
+		sendMessage(recipient, replaceArguments(message, argumentPairs));
 	}
 
 	/*
@@ -287,20 +289,6 @@ public class TextUtils {
 		}
 	}
 
-	// ARGUMENTS
-
-	public static Text setPlaceholderArguments(Text text, Object... arguments) {
-		Validate.notNull(text, "Text is null!");
-		assert TEMP_ARGUMENTS_MAP.isEmpty();
-		try {
-			addArguments(TEMP_ARGUMENTS_MAP, arguments);
-			text.setPlaceholderArguments(TEMP_ARGUMENTS_MAP);
-			return text;
-		} finally {
-			TEMP_ARGUMENTS_MAP.clear(); // reset
-		}
-	}
-
 	// SENDING
 
 	public static void sendMessage(CommandSender recipient, Text message) {
@@ -315,11 +303,11 @@ public class TextUtils {
 		sendMessage(recipient, message);
 	}
 
-	public static void sendMessage(CommandSender recipient, Text message, Object... arguments) {
+	public static void sendMessage(CommandSender recipient, Text message, Object... argumentPairs) {
 		Validate.notNull(recipient, "Recipient is null!");
 		Validate.notNull(message, "Message is null!");
 		// assign arguments and then send:
-		setPlaceholderArguments(message, arguments);
+		message.setPlaceholderArguments(argumentPairs);
 		sendMessage(recipient, message);
 	}
 }

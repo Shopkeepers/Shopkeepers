@@ -119,7 +119,7 @@ public interface Text {
 	 * @return the new {@link TextBuilder}
 	 */
 	public static TextBuilder text(String text) {
-		return new TextText(text);
+		return new PlainText(text);
 	}
 
 	/**
@@ -285,6 +285,11 @@ public interface Text {
 	 */
 	public <T extends Text> T getRoot();
 
+	// Maybe also useful (eg. when building Texts):
+	// TODO Add getLeaf which returns the last Text in the chain of next Texts?
+	// TODO Add getLast which returns the last Text in the sequential order of Texts (goes to the leaf, but then also
+	// considers the child Texts of that leaf)
+
 	// CHILD
 
 	/**
@@ -311,8 +316,9 @@ public interface Text {
 	// PLACEHOLDER ARGUMENTS
 
 	/**
-	 * Assigns the given arguments to their corresponding {@link #getPlaceholderKey() placeholders} used inside this
-	 * {@link Text}, its child and subsequent Texts and any {@link HoverEvent hover events}.
+	 * Assigns the given arguments to their corresponding {@link PlaceholderText placeholders} used inside this
+	 * {@link Text}, its {@link #getChild() child} and {@link #getNext() subsequent} Texts and any {@link HoverEventText
+	 * hover events}.
 	 * <p>
 	 * Any placeholders for which no corresponding argument is provided will retain their currently assigned placeholder
 	 * argument if any.
@@ -324,14 +330,32 @@ public interface Text {
 	 * Any {@link Text} placeholder arguments that were not yet {@link AbstractTextBuilder#isBuilt() built} may get
 	 * built by this method.
 	 * 
-	 * @param placeholderArguments
-	 *            the placeholder arguments
+	 * @param arguments
+	 *            a mapping between placeholder keys and their arguments
 	 * @return this Text
 	 */
-	public Text setPlaceholderArguments(Map<String, ?> placeholderArguments);
+	public Text setPlaceholderArguments(Map<String, ?> arguments);
 
 	/**
-	 * Clears all placeholder arguments from this {@link Text} and its child and subsequent Texts.
+	 * Assigns the given arguments to their corresponding {@link PlaceholderText placeholders} used inside this
+	 * {@link Text}, its {@link #getChild() child} and {@link #getNext() subsequent} Texts and any {@link HoverEventText
+	 * hover events}.
+	 * <p>
+	 * This is provided as a convenience over having to manually prepare a Map when calling
+	 * {@link #setPlaceholderArguments(Map)}. However, to simplify the implementation of sub-classes, the implementation
+	 * of this method is supposed to delegate to {@link #setPlaceholderArguments(Map)}.
+	 * 
+	 * @param argumentPairs
+	 *            an array that pairwise contains placeholder keys (of type String) and their arguments in the format
+	 *            <code>[key1, value1, key2, value2, ...]</code>
+	 * @return this Text
+	 * @see #setPlaceholderArguments(Map)
+	 */
+	public Text setPlaceholderArguments(Object... argumentPairs);
+
+	/**
+	 * Clears all placeholder arguments from this {@link Text} and its {@link #getChild() child} and {@link #getNext()
+	 * subsequent} Texts.
 	 * 
 	 * @return this Text
 	 */
@@ -342,7 +366,7 @@ public interface Text {
 	/**
 	 * Converts this {@link Text} to a plain String text.
 	 * <p>
-	 * This includes color codes.
+	 * This includes color and formatting codes.
 	 * 
 	 * @return the plain text
 	 */
@@ -386,7 +410,8 @@ public interface Text {
 	/**
 	 * Creates a (deep) copy of this {@link Text}.
 	 * <p>
-	 * This also (deeply) copies the child and subsequent Texts and any translation or placeholder arguments.
+	 * This also (deeply) copies the {@link #getChild() child} and {@link #getNext() subsequent} Texts and any
+	 * {@link TranslatableText translation} or {@link PlaceholderText placeholder} arguments.
 	 * 
 	 * @return the copy
 	 */

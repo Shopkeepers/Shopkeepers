@@ -3,14 +3,19 @@ package com.nisovin.shopkeepers.text;
 import com.nisovin.shopkeepers.util.Validate;
 
 /**
- * A Text containing text.
+ * A {@link Text} containing plain text.
+ * <p>
+ * Even though this is not enforced currently, this type of {@link Text} should ideally not contain legacy color codes.
+ * Using legacy color codes inside a {@link PlainText} can cause issues in certain edge cases, such as issues related to
+ * the inheritance of text formatting, texts spanning multiple lines, or when converting the Text to plain unformatted
+ * text (which is not supposed to contain formatting codes).
  */
-public class TextText extends TextBuilder {
+public class PlainText extends TextBuilder {
 
 	private final String text; // not null, can be empty
 
-	TextText(String text) {
-		Validate.notNull(text, "Text is null!");
+	PlainText(String text) {
+		Validate.notNull(text, "text is null");
 		this.text = text;
 	}
 
@@ -18,9 +23,6 @@ public class TextText extends TextBuilder {
 
 	/**
 	 * Gets the text.
-	 * <p>
-	 * Ideally this should not contain legacy color codes, because those can cause issues in certain edge cases (eg.
-	 * with inheritance of text formatting and texts spanning multiple lines). But this may not be enforced currently.
 	 * 
 	 * @return the text, not <code>null</code>, can be empty
 	 */
@@ -45,7 +47,7 @@ public class TextText extends TextBuilder {
 
 	@Override
 	public Text copy() {
-		TextText copy = new TextText(text);
+		PlainText copy = new PlainText(text);
 		copy.copy(this, true);
 		return copy.build();
 	}
