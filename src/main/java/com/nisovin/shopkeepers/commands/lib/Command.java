@@ -16,7 +16,6 @@ import com.nisovin.shopkeepers.Settings;
 import com.nisovin.shopkeepers.commands.lib.arguments.FallbackArgument;
 import com.nisovin.shopkeepers.text.Text;
 import com.nisovin.shopkeepers.util.Log;
-import com.nisovin.shopkeepers.util.MapUtils;
 import com.nisovin.shopkeepers.util.PermissionUtils;
 import com.nisovin.shopkeepers.util.StringUtils;
 import com.nisovin.shopkeepers.util.TextUtils;
@@ -793,6 +792,9 @@ public abstract class Command {
 		}
 
 		// parse fallback:
+		// TODO Maybe invoke the parseFallback function of the top-most parent argument which extends FallbackArgument.
+		// Currently parent arguments often need to wrap fallback exceptions in order to get informed when one of their
+		// child arguments wants to parse a fallback.
 		FallbackArgument<?> fallbackArgument = fallback.getFallbackArgument();
 		ArgumentParseException fallbackError = null;
 		// hasRemainingArgs: only the case if args got reset and there were remaining args originally as well
@@ -1389,10 +1391,10 @@ public abstract class Command {
 			}
 
 			Text helpEntryFormat = HELP_ENTRY_FORMAT;
-			helpEntryFormat.setPlaceholderArguments(MapUtils.createMap(
+			helpEntryFormat.setPlaceholderArguments(
 					"usage", usageFormat,
 					"description", descriptionFormat
-			));
+			);
 
 			// skip if both usage and description formats are empty:
 			if (!helpEntryFormat.isPlainTextEmpty()) {
@@ -1433,10 +1435,10 @@ public abstract class Command {
 				}
 
 				Text helpEntryFormat = HELP_ENTRY_FORMAT;
-				helpEntryFormat.setPlaceholderArguments(MapUtils.createMap(
+				helpEntryFormat.setPlaceholderArguments(
 						"usage", childUsageFormat,
 						"description", childDescriptionFormat
-				));
+				);
 
 				TextUtils.sendMessage(recipient, helpEntryFormat);
 			}

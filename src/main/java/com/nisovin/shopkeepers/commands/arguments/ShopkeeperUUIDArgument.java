@@ -57,7 +57,7 @@ public class ShopkeeperUUIDArgument extends ObjectUUIDArgument {
 	}
 
 	@Override
-	protected Iterable<UUID> getCompletionSuggestions(String idPrefix) {
-		return getDefaultCompletionSuggestions(idPrefix, (shopkeeper) -> true);
+	protected Iterable<UUID> getCompletionSuggestions(String uuidPrefix) {
+		return getDefaultCompletionSuggestions(uuidPrefix, (shopkeeper) -> true);
 	}
 }

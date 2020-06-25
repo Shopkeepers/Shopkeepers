@@ -31,6 +31,8 @@ public class CommandException extends Exception {
 		// TODO can this copy be avoided?
 		// required since placeholder and translation arguments may dynamically change while the exception is kept
 		// around
+		// TODO Add an immutable Text variant, a TextView or a flag which also prevents changing the placeholder
+		// arguments and then use that when returning the Text?
 		this.messageText = message.copy();
 	}
 

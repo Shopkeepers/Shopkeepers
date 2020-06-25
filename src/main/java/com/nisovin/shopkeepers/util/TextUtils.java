@@ -14,10 +14,12 @@ import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.ChunkCoords;
 import com.nisovin.shopkeepers.spigot.text.SpigotText;
 import com.nisovin.shopkeepers.text.Text;
@@ -72,7 +74,9 @@ public class TextUtils {
 		return worldName + "," + cx + "," + cz;
 	}
 
-	public static String getPlayerString(Player player) {
+	private static final String UNKNOWN_PLAYER = "[unknown]";
+	
+	public static String getPlayerString(OfflinePlayer player) {
 		return getPlayerString(player.getName(), player.getUniqueId());
 	}
 
@@ -83,7 +87,7 @@ public class TextUtils {
 		} else if (playerUUID != null) {
 			return playerUUID.toString();
 		} else {
-			return "[unknown]";
+			return UNKNOWN_PLAYER;
 		}
 	}
 
@@ -95,7 +99,15 @@ public class TextUtils {
 		} else if (playerUUID != null) {
 			return playerUUID.toString();
 		} else {
-			return "[unknown]";
+			return UNKNOWN_PLAYER;
+		}
+	}
+
+	public static String getPlayerNameOrUnknown(String playerName) {
+		if (playerName != null) {
+			return playerName;
+		} else {
+			return UNKNOWN_PLAYER;
 		}
 	}
 
@@ -261,12 +273,12 @@ public class TextUtils {
 
 	public static Text getPlayerText(Player player) {
 		assert player != null;
-		String playerName = player.getName();
-		String playerUUIDString = player.getUniqueId().toString();
-		return Text.hoverEvent(Text.of(playerUUIDString))
-				.childInsertion(playerUUIDString)
-				.childText(playerName)
-				.buildRoot();
+		return getPlayerText(player.getName(), player.getUniqueId());
+	}
+
+	public static Text getPlayerText(User user) {
+		assert user != null;
+		return getPlayerText(user.getName(), user.getUniqueId());
 	}
 
 	public static Text getPlayerText(String playerName, UUID playerUUID) {

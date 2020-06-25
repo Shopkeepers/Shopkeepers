@@ -73,6 +73,10 @@ public class SKVirtualShopObject extends AbstractShopObject implements VirtualSh
 		return false; // everything alright
 	}
 
+	@Override
+	public void onShopkeeperOwnerChanged() {
+	}
+
 	// NAMING
 
 	@Override

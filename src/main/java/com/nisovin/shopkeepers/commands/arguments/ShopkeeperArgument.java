@@ -2,8 +2,6 @@ package com.nisovin.shopkeepers.commands.arguments;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.commands.lib.ArgumentFilter;
@@ -13,13 +11,13 @@ import com.nisovin.shopkeepers.commands.lib.CommandArgument;
 import com.nisovin.shopkeepers.commands.lib.CommandContextView;
 import com.nisovin.shopkeepers.commands.lib.CommandInput;
 import com.nisovin.shopkeepers.commands.lib.arguments.TypedFirstOfArgument;
-import com.nisovin.shopkeepers.util.ShopkeeperUtils;
 
 public class ShopkeeperArgument extends CommandArgument<Shopkeeper> {
 
-	private final ShopkeeperByUUIDArgument shopUUIDArgument;
-	private final ShopkeeperByIdArgument shopIdArgument;
-	private final ShopkeeperByNameArgument shopNameArgument;
+	protected final ArgumentFilter<Shopkeeper> filter; // not null
+	private final ShopkeeperByUUIDArgument shopByUUIDArgument;
+	private final ShopkeeperByIdArgument shopByIdArgument;
+	private final ShopkeeperByNameArgument shopByNameArgument;
 	private final TypedFirstOfArgument<Shopkeeper> firstOfArgument;
 
 	public ShopkeeperArgument(String name) {
@@ -40,34 +38,22 @@ public class ShopkeeperArgument extends CommandArgument<Shopkeeper> {
 
 	public ShopkeeperArgument(String name, boolean joinRemainingArgs, ArgumentFilter<Shopkeeper> filter, int minimalNameCompletionInput, int minimalUUIDCompletionInput) {
 		super(name);
-		this.shopUUIDArgument = new ShopkeeperByUUIDArgument(name + ":uuid", filter, minimalUUIDCompletionInput);
-		this.shopIdArgument = new ShopkeeperByIdArgument(name + ":id", filter);
-		this.shopNameArgument = new ShopkeeperByNameArgument(name + ":name", joinRemainingArgs, filter, minimalNameCompletionInput) {
+		this.filter = (filter == null) ? ArgumentFilter.acceptAny() : filter;
+		this.shopByUUIDArgument = new ShopkeeperByUUIDArgument(name + ":uuid", filter, minimalUUIDCompletionInput);
+		this.shopByIdArgument = new ShopkeeperByIdArgument(name + ":id", filter);
+		this.shopByNameArgument = new ShopkeeperByNameArgument(name + ":name", joinRemainingArgs, filter, minimalNameCompletionInput) {
 			@Override
 			public Shopkeeper getObject(String nameInput) throws ArgumentParseException {
-				return ShopkeeperArgument.this.getShopkeeper(nameInput);
+				return ShopkeeperArgument.this.getShopkeeperByName(nameInput);
+			}
+
+			@Override
+			protected Iterable<String> getCompletionSuggestions(String namePrefix) {
+				return ShopkeeperArgument.this.getNameCompletionSuggestions(namePrefix);
 			}
 		};
-		this.firstOfArgument = new TypedFirstOfArgument<>(name + ":firstOf", Arrays.asList(shopUUIDArgument, shopIdArgument, shopNameArgument), false, false);
+		this.firstOfArgument = new TypedFirstOfArgument<>(name + ":firstOf", Arrays.asList(shopByUUIDArgument, shopByIdArgument, shopByNameArgument), false, false);
 		firstOfArgument.setParent(this);
-	}
-
-	/**
-	 * Gets a shopkeeper which matches the given name input.
-	 * <p>
-	 * This can be overridden if a different behavior is required.
-	 * 
-	 * @param nameInput
-	 *            the raw name input
-	 * @return the matched shopkeeper, or <code>null</code>
-	 * @throws IllegalArgumentException
-	 *             if the id is ambiguous
-	 */
-	public Shopkeeper getShopkeeper(String nameInput) throws IllegalArgumentException {
-		Stream<? extends Shopkeeper> shopkeepers = ShopkeeperUtils.ShopkeeperNameMatchers.DEFAULT.match(nameInput);
-		Optional<? extends Shopkeeper> shopkeeper = shopkeepers.findFirst();
-		return shopkeeper.orElse(null);
-		// TODO deal with ambiguities
 	}
 
 	@Override
@@ -79,5 +65,34 @@ public class ShopkeeperArgument extends CommandArgument<Shopkeeper> {
 	@Override
 	public List<String> complete(CommandInput input, CommandContextView context, ArgumentsReader argsReader) {
 		return firstOfArgument.complete(input, context, argsReader);
+	}
+
+	/**
+	 * Gets the {@link Shopkeeper} which matches the given name input.
+	 * <p>
+	 * This can be overridden if a different matching behavior is required. You may also want to override
+	 * {@link #getNameCompletionSuggestions(String)} then.
+	 * 
+	 * @param nameInput
+	 *            the name input
+	 * @return the matched shopkeeper, or <code>null</code>
+	 * @throws ArgumentParseException
+	 *             if the name is ambiguous
+	 */
+	public Shopkeeper getShopkeeperByName(String nameInput) throws ArgumentParseException {
+		return shopByNameArgument.getDefaultShopkeeperByName(nameInput);
+	}
+
+	/**
+	 * Gets the name completion suggestions for the given name prefix.
+	 * <p>
+	 * This should take this argument's shopkeeper filter into account.
+	 * 
+	 * @param namePrefix
+	 *            the name prefix, may be empty, not <code>null</code>
+	 * @return the suggestions
+	 */
+	protected Iterable<String> getNameCompletionSuggestions(String namePrefix) {
+		return ShopkeeperNameArgument.getDefaultCompletionSuggestions(namePrefix, filter);
 	}
 }

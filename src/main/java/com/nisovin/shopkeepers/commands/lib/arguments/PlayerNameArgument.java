@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import com.nisovin.shopkeepers.Settings;
 import com.nisovin.shopkeepers.commands.lib.ArgumentFilter;
 import com.nisovin.shopkeepers.text.Text;
+import com.nisovin.shopkeepers.util.PlayerUtils;
 import com.nisovin.shopkeepers.util.StringUtils;
 import com.nisovin.shopkeepers.util.TextUtils;
 
@@ -56,20 +57,27 @@ public class PlayerNameArgument extends ObjectNameArgument {
 	 * @return the player name completion suggestions
 	 */
 	public static Iterable<String> getDefaultCompletionSuggestions(String namePrefix, Predicate<Player> playerFilter, boolean includeDisplayNames) {
-		// assumption: id prefix does not contain color codes (users are not expected to specify color codes)
+		// assumption: namePrefix does not contain color codes (users are not expected to specify color codes)
 		// normalizes whitespace and converts to lowercase:
-		String normalizedNamePrefix = StringUtils.normalize(namePrefix);
+		String normalizedNamePrefix;
+		if (includeDisplayNames) {
+			// Full normalization:
+			normalizedNamePrefix = PlayerUtils.normalizeDisplayName(namePrefix);
+		} else {
+			// Lightweight normalization:
+			normalizedNamePrefix = PlayerUtils.normalizePlayerName(namePrefix);
+		}
 		return Bukkit.getOnlinePlayers().stream()
 				.filter(playerFilter)
 				.map(player -> {
 					// Note: Not suggesting both the name and display name for the same player.
-					// Assumption: Player names don't contain whitespace or color codes
+					// Assumption: Player names don't contain whitespace or color codes.
 					String name = player.getName();
-					if (StringUtils.normalize(name).startsWith(normalizedNamePrefix)) {
+					if (PlayerUtils.normalizePlayerName(name).startsWith(normalizedNamePrefix)) {
 						return name;
 					} else if (includeDisplayNames) {
-						String displayName = TextUtils.stripColor(player.getDisplayName());
-						String normalizedWithCase = StringUtils.normalizeKeepCase(displayName);
+						String displayNameWithoutColors = TextUtils.stripColor(player.getDisplayName());
+						String normalizedWithCase = StringUtils.normalizeKeepCase(displayNameWithoutColors);
 						String normalized = normalizedWithCase.toLowerCase(Locale.ROOT);
 						if (normalized.startsWith(normalizedNamePrefix)) {
 							return normalizedWithCase;
@@ -80,7 +88,7 @@ public class PlayerNameArgument extends ObjectNameArgument {
 	}
 
 	@Override
-	protected Iterable<String> getCompletionSuggestions(String idPrefix) {
-		return getDefaultCompletionSuggestions(idPrefix, (player) -> true, true);
+	protected Iterable<String> getCompletionSuggestions(String namePrefix) {
+		return getDefaultCompletionSuggestions(namePrefix, (player) -> true, true);
 	}
 }

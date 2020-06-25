@@ -1,7 +1,6 @@
 package com.nisovin.shopkeepers.commands.arguments;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.nisovin.shopkeepers.Settings;
@@ -53,16 +52,29 @@ public class ShopkeeperByNameArgument extends ObjectByIdArgument<String, Shopkee
 		return text;
 	}
 
-	@Override
-	public Shopkeeper getObject(String nameInput) throws ArgumentParseException {
+	/**
+	 * The default implementation of getting a {@link Shopkeeper} by name.
+	 * 
+	 * @param nameInput
+	 *            the name input
+	 * @return the matched shopkeeper, or <code>null</code>
+	 * @throws ArgumentParseException
+	 *             if the name is ambiguous
+	 */
+	public final Shopkeeper getDefaultShopkeeperByName(String nameInput) throws ArgumentParseException {
 		Stream<? extends Shopkeeper> shopkeepers = ShopkeeperUtils.ShopkeeperNameMatchers.DEFAULT.match(nameInput);
-		Optional<? extends Shopkeeper> shopkeeper = shopkeepers.findFirst();
-		return shopkeeper.orElse(null);
+		Shopkeeper shopkeeper = shopkeepers.findFirst().orElse(null);
+		return shopkeeper;
 		// TODO deal with ambiguities
 	}
 
 	@Override
-	protected Iterable<String> getCompletionSuggestions(String idPrefix) {
-		return ShopkeeperNameArgument.getDefaultCompletionSuggestions(idPrefix, filter);
+	public Shopkeeper getObject(String nameInput) throws ArgumentParseException {
+		return this.getDefaultShopkeeperByName(nameInput);
+	}
+
+	@Override
+	protected Iterable<String> getCompletionSuggestions(String namePrefix) {
+		return ShopkeeperNameArgument.getDefaultCompletionSuggestions(namePrefix, filter);
 	}
 }

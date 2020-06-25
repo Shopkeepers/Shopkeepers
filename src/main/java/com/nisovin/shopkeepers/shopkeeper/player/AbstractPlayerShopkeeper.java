@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.ConfigurationSection;
@@ -26,16 +27,13 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
-import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
-import com.nisovin.shopkeepers.shopobjects.citizens.SKCitizensShopObject;
-import com.nisovin.shopkeepers.shopobjects.sign.SKSignShopObject;
 import com.nisovin.shopkeepers.util.Filter;
 import com.nisovin.shopkeepers.util.ItemCount;
 import com.nisovin.shopkeepers.util.ItemUtils;
 import com.nisovin.shopkeepers.util.Log;
-import com.nisovin.shopkeepers.util.TextUtils;
 import com.nisovin.shopkeepers.util.Utils;
 import com.nisovin.shopkeepers.util.Validate;
 
@@ -43,8 +41,7 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 
 	private static final int CHECK_CHEST_PERIOD_SECONDS = 5;
 
-	protected UUID ownerUUID; // not null after successful initialization
-	protected String ownerName; // not null after successful initialization
+	protected User owner; // not null after successful initialization
 	// TODO store chest world separately? currently it uses the shopkeeper world
 	// this would allow the chest and shopkeeper to be located in different worlds, and virtual player shops
 	protected int chestX;
@@ -74,13 +71,12 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	protected void loadFromCreationData(ShopCreationData shopCreationData) throws ShopkeeperCreateException {
 		super.loadFromCreationData(shopCreationData);
 		PlayerShopCreationData playerShopCreationData = (PlayerShopCreationData) shopCreationData;
-		Player owner = playerShopCreationData.getCreator();
+		User creatorUser = playerShopCreationData.getCreatorUser();
 		Block chest = playerShopCreationData.getShopChest();
-		assert owner != null;
+		assert creatorUser != null;
 		assert chest != null;
 
-		this.ownerUUID = owner.getUniqueId();
-		this.ownerName = owner.getName();
+		this.owner = creatorUser;
 		this._setChest(chest.getX(), chest.getY(), chest.getZ());
 	}
 
@@ -95,18 +91,28 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	@Override
 	protected void loadFromSaveData(ConfigurationSection configSection) throws ShopkeeperCreateException {
 		super.loadFromSaveData(configSection);
+		UUID ownerUUID;
 		try {
-			ownerUUID = UUID.fromString(configSection.getString("owner uuid"));
+			ownerUUID = UUID.fromString(configSection.getString("owner"));
 		} catch (Exception e) {
-			// uuid invalid or non-existent:
-			throw new ShopkeeperCreateException("Missing owner uuid!");
+			// Owner uuid invalid or non-existent.
+			// Try loading from 'owner uuid' (removed in late MC 1.15.x):
+			// TODO Remove loading from legacy data again at some point.
+			// Since late MC 1.15.x we store the owner uuid in 'owner' instead of 'owner uuid'. 'owner' previously
+			// stored the owner's name, which has been removed from the save data completely. Previously stored owner
+			// names should however not parse as valid uuid, so reusing that data key to store the uuid now should not
+			// be an issue.
+			try {
+				ownerUUID = UUID.fromString(configSection.getString("owner uuid"));
+			} catch (Exception e2) {
+				throw new ShopkeeperCreateException("Missing or invalid owner uuid!");
+			}
 		}
-		ownerName = configSection.getString("owner");
-		// TODO no longer using fallback name (since late 1.14.4); remove the "unknown"-check again in the future
-		// (as soon as possible, because it conflicts with any player actually named 'unknown')
-		if (ownerName == null || ownerName.isEmpty() || ownerName.equals("unknown")) {
-			throw new ShopkeeperCreateException("Missing owner name!");
-		}
+		assert ownerUUID != null;
+		// We load the user immediately here. Since we usually load shopkeepers only during plugin startup and on plugin
+		// reloads, this should not be an issue.
+		this.owner = ShopkeepersAPI.getUserManager().getOrCreateUserImmediately(ownerUUID);
+		assert this.owner != null;
 
 		if (!configSection.isInt("chestx") || !configSection.isInt("chesty") || !configSection.isInt("chestz")) {
 			throw new ShopkeeperCreateException("Missing chest coordinate(s)");
@@ -141,8 +147,7 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	@Override
 	public void save(ConfigurationSection configSection) {
 		super.save(configSection);
-		configSection.set("owner uuid", ownerUUID.toString());
-		configSection.set("owner", ownerName);
+		configSection.set("owner", owner.getUniqueId().toString());
 		configSection.set("chestx", chestX);
 		configSection.set("chesty", chestY);
 		configSection.set("chestz", chestZ);
@@ -226,50 +231,42 @@ public abstract class AbstractPlayerShopkeeper extends AbstractShopkeeper implem
 	}
 
 	@Override
-	public void setOwner(Player player) {
-		this.setOwner(player.getUniqueId(), player.getName());
+	public User getOwner() {
+		return owner;
 	}
 
 	@Override
-	public void setOwner(UUID ownerUUID, String ownerName) {
-		Validate.notNull(ownerUUID, "Owner uuid is null!");
-		Validate.notEmpty(ownerName, "Owner name is empty!");
+	public void setOwner(User newOwner) {
+		Validate.notNull(newOwner, "newOwner is null");
+		Validate.isTrue(newOwner.isValid(), "newOwner is invalid");
 		this.markDirty();
-		this.ownerUUID = ownerUUID;
-		this.ownerName = ownerName;
-		// TODO do this in a more abstract way
-		if (!Settings.allowRenamingOfPlayerNpcShops && this.getShopObject().getType() == DefaultShopObjectTypes.CITIZEN()) {
-			// update the npc's name:
-			((SKCitizensShopObject) this.getShopObject()).setName(ownerName);
-		} else if (this.getShopObject().getType() == DefaultShopObjectTypes.SIGN()) {
-			// update sign:
-			((SKSignShopObject) this.getShopObject()).updateSign();
-		}
+		this.owner = newOwner;
+
+		// Inform shop object:
+		this.getShopObject().onShopkeeperOwnerChanged();
 	}
 
 	@Override
-	public UUID getOwnerUUID() {
-		return ownerUUID;
+	public boolean isOwner(UUID playerId) {
+		Validate.notNull(playerId, "playerId is null");
+		return owner.getUniqueId().equals(playerId);
 	}
 
 	@Override
-	public String getOwnerName() {
-		return ownerName;
+	public boolean isOwner(User user) {
+		Validate.notNull(user, "user is null");
+		return this.isOwner(user.getUniqueId());
+	}
+	
+	@Override
+	public boolean isOwner(OfflinePlayer player) {
+		Validate.notNull(player, "player is null");
+		return this.isOwner(player.getUniqueId());
 	}
 
 	@Override
 	public String getOwnerString() {
-		return TextUtils.getPlayerString(ownerName, ownerUUID);
-	}
-
-	@Override
-	public boolean isOwner(Player player) {
-		return player.getUniqueId().equals(ownerUUID);
-	}
-
-	@Override
-	public Player getOwner() {
-		return Bukkit.getPlayer(ownerUUID);
+		return owner.toPrettyString();
 	}
 
 	@Override

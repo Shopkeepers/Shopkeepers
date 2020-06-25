@@ -19,6 +19,7 @@ import com.nisovin.shopkeepers.api.shopobjects.ShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.api.ui.UIRegistry;
+import com.nisovin.shopkeepers.api.user.UserManager;
 
 public final class ShopkeepersAPI {
 
@@ -73,6 +74,12 @@ public final class ShopkeepersAPI {
 	 */
 	public static boolean hasCreatePermission(Player player) {
 		return getPlugin().hasCreatePermission(player);
+	}
+
+	// USER MANAGER
+
+	public static UserManager getUserManager() {
+		return getPlugin().getUserManager();
 	}
 
 	// SHOP TYPES

@@ -10,8 +10,10 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 
+import com.nisovin.shopkeepers.api.shopkeeper.admin.AdminShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObject;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.ChunkCoords;
 
 /**
@@ -60,13 +62,6 @@ public interface ShopkeeperRegistry {
 	public Collection<? extends Shopkeeper> getAllShopkeepers();
 
 	/**
-	 * Gets all {@link Shopkeeper#isVirtual() virtual} shopkeepers.
-	 * 
-	 * @return an unmodifiable view on the virtual shopkeepers
-	 */
-	public Collection<? extends Shopkeeper> getVirtualShopkeepers();
-
-	/**
 	 * Gets the shopkeeper by its {@link Shopkeeper#getUniqueId() unique id}.
 	 * 
 	 * @param shopkeeperUniqueId
@@ -84,23 +79,53 @@ public interface ShopkeeperRegistry {
 	 */
 	public Shopkeeper getShopkeeperById(int shopkeeperId);
 
+	// VIRTUAL SHOPS
+
+	/**
+	 * Gets all {@link Shopkeeper#isVirtual() virtual} shopkeepers.
+	 * 
+	 * @return an unmodifiable view on the virtual shopkeepers
+	 */
+	public Collection<? extends Shopkeeper> getVirtualShopkeepers();
+
+	// ADMIN SHOPS
+
+	/**
+	 * Gets all {@link AdminShopkeeper admin shopkeepers}.
+	 * 
+	 * @return an unmodifiable view on all shopkeepers
+	 */
+	public Collection<? extends AdminShopkeeper> getAllAdminShopkeepers();
+
 	// PLAYER SHOPS
 
 	/**
-	 * Gets all player shopkeepers.
+	 * Gets all {@link PlayerShopkeeper player shopkeepers}.
 	 * 
 	 * @return an unmodifiable view on all shopkeepers
 	 */
 	public Collection<? extends PlayerShopkeeper> getAllPlayerShopkeepers();
 
 	/**
-	 * Gets the player shopkeepers owned by the specified player.
+	 * Gets the {@link PlayerShopkeeper player shopkeepers} owned by the specified player.
 	 * 
 	 * @param ownerUUID
 	 *            the owner uuid
-	 * @return an unmodifiable view on the player shopkeepers
+	 * @return an unmodifiable view on the player's shopkeepers
 	 */
 	public Collection<? extends PlayerShopkeeper> getPlayerShopkeepersByOwner(UUID ownerUUID);
+
+	/**
+	 * Gets the {@link PlayerShopkeeper player shopkeepers} owned by the specified {@link User}.
+	 * <p>
+	 * This behaves just like {@link #getPlayerShopkeepersByOwner(UUID)} but uses the {@link User#getUniqueId() User's
+	 * unique id}.
+	 * 
+	 * @param owner
+	 *            the owner
+	 * @return an unmodifiable view on the player's shopkeepers
+	 */
+	public Collection<? extends PlayerShopkeeper> getPlayerShopkeepersByOwner(User owner);
 
 	// BY NAME
 

@@ -1,13 +1,9 @@
 package com.nisovin.shopkeepers.util;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
@@ -30,32 +26,6 @@ import org.bukkit.util.Vector;
 public final class Utils {
 
 	private Utils() {
-	}
-
-	// note: doesn't work for primitive arrays
-	@SafeVarargs
-	public static <T> T[] concat(T[] array1, T... array2) {
-		if (array1 == null) return array2;
-		if (array2 == null) return array1;
-
-		int length1 = array1.length;
-		int length2 = array2.length;
-		T[] result = Arrays.copyOf(array1, length1 + length2);
-		System.arraycopy(array2, 0, result, length1, length2);
-		return result;
-	}
-
-	public static <T> Stream<T> stream(Iterable<T> iterable) {
-		if (iterable instanceof Collection) {
-			return ((Collection<T>) iterable).stream();
-		} else {
-			return StreamSupport.stream(iterable.spliterator(), false);
-		}
-	}
-
-	// Note: The returned Iterable can only be iterated once!
-	public static <T> Iterable<T> toIterable(Stream<T> stream) {
-		return stream::iterator;
 	}
 
 	public static void printRegisteredListeners(Event event) {

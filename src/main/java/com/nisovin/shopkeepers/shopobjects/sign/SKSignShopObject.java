@@ -21,6 +21,7 @@ import com.nisovin.shopkeepers.Settings;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.sign.SignShopObject;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopobjects.block.AbstractBlockShopObject;
 import com.nisovin.shopkeepers.ui.defaults.EditorHandler;
@@ -270,7 +271,9 @@ public class SKSignShopObject extends AbstractBlockShopObject implements SignSho
 		// line 2: owner name
 		String line2 = "";
 		if (shopkeeper instanceof PlayerShopkeeper) {
-			line2 = ((PlayerShopkeeper) shopkeeper).getOwnerName();
+			PlayerShopkeeper playerShopkeeper = (PlayerShopkeeper) shopkeeper;
+			User owner = playerShopkeeper.getOwner();
+			line2 = owner.getName();
 		}
 		sign.setLine(2, line2);
 
@@ -304,6 +307,12 @@ public class SKSignShopObject extends AbstractBlockShopObject implements SignSho
 		}
 
 		return false;
+	}
+
+	@Override
+	public void onShopkeeperOwnerChanged() {
+		// Update the sign:
+		this.updateSign();
 	}
 
 	// NAMING

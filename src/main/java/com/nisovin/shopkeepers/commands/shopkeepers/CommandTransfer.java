@@ -6,14 +6,15 @@ import org.bukkit.entity.Player;
 import com.nisovin.shopkeepers.Settings;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperFilter;
 import com.nisovin.shopkeepers.commands.arguments.TargetShopkeeperFallback;
+import com.nisovin.shopkeepers.commands.arguments.UserArgument;
 import com.nisovin.shopkeepers.commands.lib.Command;
 import com.nisovin.shopkeepers.commands.lib.CommandContextView;
 import com.nisovin.shopkeepers.commands.lib.CommandException;
 import com.nisovin.shopkeepers.commands.lib.CommandInput;
-import com.nisovin.shopkeepers.commands.lib.arguments.PlayerArgument;
 import com.nisovin.shopkeepers.util.PermissionUtils;
 import com.nisovin.shopkeepers.util.ShopkeeperUtils.TargetShopkeeperFilter;
 import com.nisovin.shopkeepers.util.TextUtils;
@@ -37,8 +38,12 @@ class CommandTransfer extends Command {
 				new ShopkeeperArgument(ARGUMENT_SHOPKEEPER, ShopkeeperFilter.PLAYER),
 				TargetShopkeeperFilter.PLAYER
 		));
-		this.addArgument(new PlayerArgument(ARGUMENT_NEW_OWNER)); // new owner has to be online
-		// TODO allow offline-player?
+		this.addArgument(new UserArgument(ARGUMENT_NEW_OWNER)); // only allows known users to be referred to
+		// TODO Allow referring to arbitrary players by uuid (i.e. create the user if required)? However, this would
+		// void any kind of validation whether the input uuid matches a known/valid user. Maybe check if the player has
+		// played on the server before then.
+		// TODO Allow referring to offline-players? Lookup could be done by uuid or asynchronously by name. However,
+		// Bukkit's getOfflinePlayer API is not really thread-safe.
 	}
 
 	@Override
@@ -47,7 +52,7 @@ class CommandTransfer extends Command {
 
 		PlayerShopkeeper shopkeeper = (PlayerShopkeeper) context.get(ARGUMENT_SHOPKEEPER);
 		assert shopkeeper != null;
-		Player newOwner = context.get(ARGUMENT_NEW_OWNER);
+		User newOwner = context.get(ARGUMENT_NEW_OWNER);
 		assert newOwner != null;
 
 		// check that the shop is owned by the executing player:

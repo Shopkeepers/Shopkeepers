@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -29,6 +30,7 @@ import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.admin.AdminShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.text.Text;
 
 /**
@@ -253,14 +255,14 @@ public class ShopkeeperUtils {
 
 		private final UUID playerUUID; // can be null
 		private final String playerName; // can be null
-		// Stores the player uuids and names of all shop owners found that match the given target player name. If this
-		// contains more than one entry then the player name is ambiguous.
-		private final Map<UUID, String> matchingShopOwners; // not null, can be empty
+		// Stores all found shop owners which match the given target player name. If this contains more than one entry
+		// then the player name is ambiguous.
+		private final Set<User> matchingShopOwners; // not null, can be empty
 		private final List<? extends PlayerShopkeeper> shops; // not null, can be empty
 
-		public OwnedPlayerShopsResult(UUID playerUUID, String playerName, Map<UUID, String> matchingShopOwners, List<? extends PlayerShopkeeper> shops) {
+		public OwnedPlayerShopsResult(UUID playerUUID, String playerName, Set<User> matchingShopOwners, List<? extends PlayerShopkeeper> shops) {
 			Validate.isTrue(playerUUID != null || playerName != null, "The player uuid and name are both null!");
-			Validate.notNull(matchingShopOwners, "Matching shop owners map is null!");
+			Validate.notNull(matchingShopOwners, "Matching shop owners is null!");
 			this.playerUUID = playerUUID;
 			this.playerName = playerName;
 			this.matchingShopOwners = matchingShopOwners;
@@ -271,11 +273,12 @@ public class ShopkeeperUtils {
 			return playerUUID;
 		}
 
+		// can return null if the player name is unknown:
 		public String getPlayerName() {
 			return playerName;
 		}
 
-		public Map<UUID, String> getMatchingShopOwners() {
+		public Set<User> getMatchingShopOwners() {
 			return matchingShopOwners;
 		}
 
@@ -290,6 +293,7 @@ public class ShopkeeperUtils {
 	// If shops are searched via target player name, a map of matching shop owners is returned, which stores the player
 	// uuids and names of all shop owners found that match the given target player name. If this contains more than one
 	// entry then the target player name is ambiguous. The result contains the shops of all those matching players then.
+	// TODO remove this and let callers handle this in 2 parts: Matching of Users, dealing with ambiguous matches, and then looking up shopkeepers by user. 
 	public static OwnedPlayerShopsResult getOwnedPlayerShops(UUID targetPlayerUUID, String targetPlayerName) {
 		Validate.isTrue(targetPlayerUUID != null || targetPlayerName != null, "The target player uuid and name are both null!");
 
@@ -301,8 +305,9 @@ public class ShopkeeperUtils {
 		for (Shopkeeper shopkeeper : ShopkeepersAPI.getShopkeeperRegistry().getAllShopkeepers()) {
 			if (shopkeeper instanceof PlayerShopkeeper) {
 				PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-				UUID shopOwnerUUID = playerShop.getOwnerUUID(); // not null
-				String shopOwnerName = playerShop.getOwnerName(); // not null
+				User shopOwner = playerShop.getOwner();
+				UUID shopOwnerUUID = shopOwner.getUniqueId(); // not null
+				// String shopOwnerName = shopOwner.getName(); // can be null // TODO owner name was previously assumed to never be null
 				if (targetPlayerUUID != null) {
 					// we search for shops with matching owner uuid:
 					if (targetPlayerUUID.equals(shopOwnerUUID)) {
@@ -315,7 +320,7 @@ public class ShopkeeperUtils {
 				} else {
 					assert targetPlayerName != null;
 					// check for matching name:
-					if (shopOwnerName.equalsIgnoreCase(targetPlayerName)) {
+					if (targetPlayerName.equalsIgnoreCase(shopOwnerName)) {
 						// Note: If there exist multiple players which match the given name, the result will include the
 						// shops of all of them.
 						shops.add(playerShop);

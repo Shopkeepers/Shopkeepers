@@ -19,6 +19,7 @@ debug: false
 #    names.
 # - 'item-migrations': Logs whenever a shopkeeper performs item migrations (eg.
 #    for trading offers).
+# - 'user-cache': Enables debug output related to the user cache.
 debug-options: []
 # Whether to report anonymous usage statistics to https://bStats.org
 # All reported information can be found here:
@@ -661,6 +662,14 @@ msg-command-shopkeeper-argument-no-player-shop: "&cShopkeeper '&e{argument}&c' i
 msg-ambiguous-player-name: "&cThere are multiple matches for the name '&e{name}&c'!"
 msg-ambiguous-player-name-entry: "&c  - '&e{name}&r&c' (&6{uuid}&c)"
 msg-ambiguous-player-name-more: "&c  - ...."
+
+msg-ambiguous-shopkeeper-name: "&cThere are multiple matches for the name '&e{name}&c'!"
+msg-ambiguous-shopkeeper-name-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-shopkeeper-name-more: "&c  - ...."
+
+msg-ambiguous-target-shopkeeper: "&cThere are multiple shopkeepers being targeted!"
+msg-ambiguous-target-shopkeeper-entry: "&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)"
+msg-ambiguous-target-shopkeeper-more: "&c  - ...."
 
 msg-command-help-title: "&9***** &8[&6Shopkeepers v{version}&8] &9*****"
 msg-command-help-usage-format: "&e{usage}"

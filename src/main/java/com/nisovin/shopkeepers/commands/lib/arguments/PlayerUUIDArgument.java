@@ -64,7 +64,7 @@ public class PlayerUUIDArgument extends ObjectUUIDArgument {
 	}
 
 	@Override
-	protected Iterable<UUID> getCompletionSuggestions(String idPrefix) {
-		return getDefaultCompletionSuggestions(idPrefix, (player) -> true);
+	protected Iterable<UUID> getCompletionSuggestions(String uuidPrefix) {
+		return getDefaultCompletionSuggestions(uuidPrefix, (player) -> true);
 	}
 }

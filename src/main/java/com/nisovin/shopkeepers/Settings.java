@@ -49,6 +49,8 @@ public class Settings {
 		public static final String ownerNameUpdates = "owner-name-updates";
 		// Logs whenever a shopkeeper performs item migrations (eg. for trading offers).
 		public static final String itemMigrations = "item-migrations";
+		// Enables debug output related to the user cache.
+		public static final String userCache = "user-cache";
 	}
 
 	public static boolean isDebugging() {
@@ -492,6 +494,14 @@ public class Settings {
 	public static Text msgAmbiguousPlayerName = Text.parse("&cThere are multiple matches for the name '&e{name}&c'!");
 	public static Text msgAmbiguousPlayerNameEntry = Text.parse("&c  - '&e{name}&r&c' (&6{uuid}&c)");
 	public static Text msgAmbiguousPlayerNameMore = Text.parse("&c  ....");
+
+	public static Text msgAmbiguousShopkeeperName = Text.parse("&cThere are multiple matches for the name '&e{name}&c'!");
+	public static Text msgAmbiguousShopkeeperNameEntry = Text.parse("&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)");
+	public static Text msgAmbiguousShopkeeperNameMore = Text.parse("&c  - ....");
+
+	public static Text msgAmbiguousTargetShopkeeper = Text.parse("&cThere are multiple shopkeepers being targeted!");
+	public static Text msgAmbiguousTargetShopkeeperEntry = Text.parse("&c  - &e{id})&c '&e{name}&r&c' (&6{uuid}&c)");
+	public static Text msgAmbiguousTargetShopkeeperMore = Text.parse("&c  - ....");
 
 	public static Text msgCommandHelpTitle = Text.parse("&9***** &8[&6Shopkeepers v{version}&8] &9*****");
 	public static Text msgCommandHelpUsageFormat = Text.parse("&e{usage}");

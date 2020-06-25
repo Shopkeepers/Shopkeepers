@@ -31,10 +31,13 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
+import com.nisovin.shopkeepers.api.shopkeeper.admin.AdminShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObject;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
+import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.ChunkCoords;
+import com.nisovin.shopkeepers.shopkeeper.admin.AbstractAdminShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObject;
 import com.nisovin.shopkeepers.shopobjects.block.AbstractBlockShopObjectType;
@@ -216,6 +219,24 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 	private final Map<String, WorldShopkeepers> shopkeepersByWorld = new LinkedHashMap<>();
 	private final Set<String> shopkeeperWorldsView = Collections.unmodifiableSet(shopkeepersByWorld.keySet());
 
+	// admin shopkeepers:
+	private int adminShopCount = 0;
+	// note: already unmodifiable
+	private final Set<AbstractAdminShopkeeper> allAdminShopkeepersView = new AbstractSet<AbstractAdminShopkeeper>() {
+		@Override
+		public Iterator<AbstractAdminShopkeeper> iterator() {
+			return getAllShopkeepers().stream()
+					.filter(shopkeeper -> shopkeeper instanceof AdminShopkeeper)
+					.map(shopkeeper -> (AbstractAdminShopkeeper) shopkeeper)
+					.iterator();
+		}
+
+		@Override
+		public int size() {
+			return adminShopCount;
+		}
+	};
+
 	// player shopkeepers:
 	private int playerShopCount = 0;
 	// note: already unmodifiable
@@ -271,6 +292,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		shopkeepersByWorld.clear();
 		virtualShopkeepers.clear();
 		activeShopkeepers.clear();
+		adminShopCount = 0;
 		playerShopCount = 0;
 	}
 
@@ -462,7 +484,9 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		}
 
 		// update player shop count:
-		if (shopkeeper instanceof PlayerShopkeeper) {
+		if (shopkeeper instanceof AdminShopkeeper) {
+			adminShopCount++;
+		} else if (shopkeeper instanceof PlayerShopkeeper) {
 			playerShopCount++;
 		}
 
@@ -527,7 +551,9 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		}
 
 		// update player shop count:
-		if (shopkeeper instanceof PlayerShopkeeper) {
+		if (shopkeeper instanceof AdminShopkeeper) {
+			adminShopCount--;
+		} else if (shopkeeper instanceof PlayerShopkeeper) {
 			playerShopCount--;
 		}
 
@@ -945,11 +971,6 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 	}
 
 	@Override
-	public Collection<? extends AbstractShopkeeper> getVirtualShopkeepers() {
-		return virtualShopkeepersView;
-	}
-
-	@Override
 	public AbstractShopkeeper getShopkeeperByUniqueId(UUID shopkeeperUniqueId) {
 		return shopkeepersByUUID.get(shopkeeperUniqueId);
 	}
@@ -957,6 +978,20 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 	@Override
 	public AbstractShopkeeper getShopkeeperById(int shopkeeperId) {
 		return shopkeepersById.get(shopkeeperId);
+	}
+
+	// VIRTUAL SHOPS
+
+	@Override
+	public Collection<? extends AbstractShopkeeper> getVirtualShopkeepers() {
+		return virtualShopkeepersView;
+	}
+
+	// ADMIN SHOPS
+
+	@Override
+	public Collection<? extends AbstractAdminShopkeeper> getAllAdminShopkeepers() {
+		return allAdminShopkeepersView;
 	}
 
 	// PLAYER SHOPS
@@ -976,7 +1011,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 				return getAllShopkeepers().stream()
 						.filter(shopkeeper -> shopkeeper instanceof PlayerShopkeeper)
 						.map(shopkeeper -> (AbstractPlayerShopkeeper) shopkeeper)
-						.filter(shopkeeper -> shopkeeper.getOwnerUUID().equals(ownerUUID));
+						.filter(shopkeeper -> shopkeeper.isOwner(ownerUUID));
 			}
 
 			@Override
@@ -989,6 +1024,12 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 				return this.createStream().mapToInt(shopkeeper -> 1).sum();
 			}
 		};
+	}
+
+	@Override
+	public Collection<? extends AbstractPlayerShopkeeper> getPlayerShopkeepersByOwner(User owner) {
+		Validate.notNull(owner, "owner is null");
+		return this.getPlayerShopkeepersByOwner(owner.getUniqueId());
 	}
 
 	// BY NAME

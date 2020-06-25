@@ -419,6 +419,11 @@ public class SKLivingShopObject<E extends LivingEntity> extends AbstractEntitySh
 		entity.teleport(spawnLocation);
 	}
 
+	@Override
+	public void onShopkeeperOwnerChanged() {
+		// The owner is not represented in this type of shop object.
+	}
+
 	// NAMING
 
 	@Override
