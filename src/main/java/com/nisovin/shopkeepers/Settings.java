@@ -164,7 +164,7 @@ public class Settings {
 			EntityType.ENDERMAN.name(),
 			EntityType.ZOMBIE.name(),
 			EntityType.ZOMBIE_VILLAGER.name(), // MC 1.11
-			EntityType.PIG_ZOMBIE.name(),
+			EntityType.PIGLIN.name(),
 			EntityType.HUSK.name(), // MC 1.11
 			EntityType.GIANT.name(),
 			EntityType.GHAST.name(),
