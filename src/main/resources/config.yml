@@ -688,6 +688,7 @@ msg-trade-setup-desc-book:
 - 'Bottom rows: Cost items'
 
 msg-list-admin-shops-header: "&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})"
+msg-list-all-shops-header: "&9There are &e{shopsCount} &9shops total: &e(Page {page} of {maxPage})"
 msg-list-player-shops-header: "&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})"
 msg-list-shops-entry: "  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}"
 

@@ -488,6 +488,7 @@ public class Settings {
 	public static List<String> msgTradeSetupDescBook = Arrays.asList("Sells book copies.", "Insert written and blank books", "into the chest.", "Left/Right click to adjust costs.", "Top row: Books being sold", "Bottom rows: Cost items");
 
 	public static Text msgListAdminShopsHeader = Text.parse("&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})");
+	public static Text msgListAllShopsHeader = Text.parse("&9There are &e{shopsCount} &9shops total: &e(Page {page} of {maxPage})");
 	public static Text msgListPlayerShopsHeader = Text.parse("&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})");
 	public static Text msgListShopsEntry = Text.parse("  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}");
 

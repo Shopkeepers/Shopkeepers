@@ -40,6 +40,7 @@ class CommandList extends Command {
 	private static final String ARGUMENT_PLAYER_NAME = "player:name";
 	private static final String ARGUMENT_PLAYER_UUID = "player:uuid";
 	private static final String ARGUMENT_ADMIN = "admin";
+	private static final String ARGUMENT_ALL = "all";
 	private static final String ARGUMENT_PAGE = "page";
 
 	private static final int ENTRIES_PER_PAGE = 8;
@@ -58,6 +59,7 @@ class CommandList extends Command {
 		// arguments:
 		this.addArgument(new FirstOfArgument("target", Arrays.asList(
 				new LiteralArgument(ARGUMENT_ADMIN),
+				new LiteralArgument(ARGUMENT_ALL),
 				new FirstOfArgument(ARGUMENT_PLAYER, Arrays.asList(
 						// TODO provide completions for known shop owners?
 						new PlayerUUIDArgument(ARGUMENT_PLAYER_UUID), // accepts any uuid
@@ -89,9 +91,11 @@ class CommandList extends Command {
 		CommandSender sender = input.getSender();
 		int page = context.get(ARGUMENT_PAGE);
 		boolean listAdminShops = context.has(ARGUMENT_ADMIN); // can be null
+		boolean listAllShops = context.has(ARGUMENT_ALL); // can be null
 		UUID targetPlayerUUID = context.get(ARGUMENT_PLAYER_UUID); // can be null
 		String targetPlayerName = context.get(ARGUMENT_PLAYER_NAME);
 		assert listAdminShops ^ (targetPlayerUUID != null ^ targetPlayerName != null); // xor
+		assert listAllShops ^ (targetPlayerUUID != null ^ targetPlayerName != null); // xor
 
 		List<? extends Shopkeeper> shops;
 		if (listAdminShops) {
@@ -106,6 +110,12 @@ class CommandList extends Command {
 				}
 			}
 			shops = adminShops;
+		} else if (listAllShops) {
+			this.checkPermission(sender, ShopkeepersPlugin.LIST_ADMIN_PERMISSION);
+			this.checkPermission(sender, ShopkeepersPlugin.LIST_OTHERS_PERMISSION);
+
+			shops = new ArrayList<>(shopkeeperRegistry.getAllShopkeepers());
+
 		} else {
 			// check if the target matches the sender player:
 			boolean targetOwnShops = false;
@@ -167,6 +177,12 @@ class CommandList extends Command {
 					"page", page,
 					"maxPage", maxPage
 			);
+		} else if (listAllShops) {
+			// listing all shops:
+			TextUtils.sendMessage(sender, Settings.msgListAllShopsHeader,
+					"shopsCount", shopsCount,
+					"page", page,
+					"maxPage", maxPage);
 		} else {
 			// listing player shops:
 			TextUtils.sendMessage(sender, Settings.msgListPlayerShopsHeader,
