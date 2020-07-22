@@ -26,6 +26,7 @@ Date format: (YYYY-MM-DD)
 * Fixed: The `shopkeeper.*` permission was missing some child permissions.
 * Removed: The legacy permissions `shopkeeper.player.normal`, `shopkeeper.villager`, `shopkeeper.witch` and `shopkeeper.creeper` have been removed. Use the corresponding replacement permissions instead.
 * Changed: All players have access to all mob types (permission `shopkeeper.entity.*`) by default now.
+* Added: The new 'all' argument for the `/shopkeeper list` command will list all shops now (admin and player shops). (Thanks to Mippy, PR 669)
 
 Internal changes:
 * Slightly changed how we cycle through the villager levels (badge colors).
