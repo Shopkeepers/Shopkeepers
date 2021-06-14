@@ -54,6 +54,7 @@ public class TradingPlayerShopTradingHandler extends PlayerShopTradingHandler {
 				|| !this.addItems(newContainerContents, tradingRecipe.getItem2(), tradeData.offeredItem2)) {
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientStorageSpace);
 			this.debugPreventedTrade(tradingPlayer, "The shop's container cannot hold the traded items.");
+			this.onInsufficientStorageSpace(tradeData);
 			return false;
 		}
 		return true;

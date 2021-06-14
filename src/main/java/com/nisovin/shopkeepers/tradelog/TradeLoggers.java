@@ -12,6 +12,7 @@ import org.bukkit.plugin.Plugin;
 
 import com.nisovin.shopkeepers.api.events.ShopkeeperTradeEvent;
 import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.tradelog.console.ConsoleTradeLogger;
 import com.nisovin.shopkeepers.tradelog.csv.CsvTradeLogger;
 import com.nisovin.shopkeepers.tradelog.data.TradeRecord;
 import com.nisovin.shopkeepers.util.Validate;
@@ -49,6 +50,9 @@ public class TradeLoggers implements Listener {
 		}
 		tradeMerger.onEnable();
 
+		if (Settings.logTradesToConsole) {
+			loggers.add(new ConsoleTradeLogger());
+		}
 		if (Settings.logTradesToCsv) {
 			loggers.add(new CsvTradeLogger(plugin));
 		}

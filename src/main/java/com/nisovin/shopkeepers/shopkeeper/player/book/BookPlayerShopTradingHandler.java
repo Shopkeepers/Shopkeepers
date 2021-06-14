@@ -87,6 +87,7 @@ public class BookPlayerShopTradingHandler extends PlayerShopTradingHandler {
 				if (ItemUtils.addItems(newContainerContents, Settings.createCurrencyItem(remaining)) != 0) {
 					TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientStorageSpace);
 					this.debugPreventedTrade(tradingPlayer, "The shop's container cannot hold the traded items.");
+					this.onInsufficientStorageSpace(tradeData);
 					return false;
 				}
 			}

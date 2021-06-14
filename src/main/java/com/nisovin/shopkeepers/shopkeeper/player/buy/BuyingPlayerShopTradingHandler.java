@@ -61,6 +61,7 @@ public class BuyingPlayerShopTradingHandler extends PlayerShopTradingHandler {
 		} else if (remaining < 0) {
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientStorageSpace);
 			this.debugPreventedTrade(tradingPlayer, "The shop's container does not have enough space to split large currency items.");
+			this.onInsufficientStorageSpace(tradeData);
 			return false;
 		}
 
@@ -73,6 +74,7 @@ public class BuyingPlayerShopTradingHandler extends PlayerShopTradingHandler {
 			if (ItemUtils.addItems(newContainerContents, receivedItem) != 0) {
 				TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientStorageSpace);
 				this.debugPreventedTrade(tradingPlayer, "The shop's container cannot hold the traded items.");
+				this.onInsufficientStorageSpace(tradeData);
 				return false;
 			}
 		}

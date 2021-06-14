@@ -110,6 +110,8 @@ public class ShulkerShop extends SKLivingShopObject<Shulker> {
 		};
 	}
 
-	// TODO Attached block face
-	// TODO Open state (Peek)
+	// TODO Attached block face (added in late Bukkit 1.16.5)
+	// (https://hub.spigotmc.org/stash/projects/SPIGOT/repos/bukkit/commits/1c0c52ae4faef8fa3261a9ad0a37cdb39a663237)
+	// TODO Open state (Peek) (added in late Bukkit 1.16.5)
+	// (https://hub.spigotmc.org/stash/projects/SPIGOT/repos/bukkit/commits/6d0965a550ac4c96b90f2d46cc63c7e5d580e8ad)
 }

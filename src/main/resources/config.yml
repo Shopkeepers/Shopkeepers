@@ -480,6 +480,9 @@ shop-owner-trade-notification-sound:
   sound: ENTITY_EXPERIENCE_ORB_PICKUP
   volume: 0.25
 
+#notify-shop-owners-about-insufficient-storage-space: false
+#notify-shop-owners-about-insufficient-stock: false
+
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Trade Log
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
@@ -512,13 +515,17 @@ trade-log-merge-duration-ticks: 300
 # reasons, the actual duration may dynamically vary by several ticks.
 trade-log-next-merge-timeout-ticks: 100
 
+# Whether to log all trades to the server log.
+log-trades-to-console: false
+
 # Whether to log all trades to CSV files inside the plugin folder.
 log-trades-to-csv: false
 
 # Whether to also log the metadata of items. This includes, for example, their
 # display name, lore, enchantments, etc. This data will be logged in Spigot's
 # YAML format. Enabling this setting can, however, noticeably increase the
-# storage space requirements.
+# storage space requirements. This setting has no effect when logging trades to
+# the console.
 log-item-metadata: false
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*

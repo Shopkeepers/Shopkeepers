@@ -48,6 +48,10 @@ public abstract class PlayerShopTradingHandler extends TradingHandler {
 		return true;
 	}
 
+	/**
+	 * Implementation note: If the trade is aborted due to insufficient storage space, this has to call
+	 * {@link #onInsufficientStorageSpace(TradeData)}.
+	 */
 	@Override
 	protected boolean prepareTrade(TradeData tradeData) {
 		if (!super.prepareTrade(tradeData)) return false;
@@ -86,6 +90,16 @@ public abstract class PlayerShopTradingHandler extends TradingHandler {
 		this.newContainerContents = containerInventory.getContents();
 
 		return true;
+	}
+
+	/**
+	 * This is called by when a trade attempt fails due to insufficient storage space.
+	 * 
+	 * @param tradeData
+	 *            the trade data
+	 */
+	protected void onInsufficientStorageSpace(TradeData tradeData) {
+		// TODO Inform the shop owner
 	}
 
 	@Override

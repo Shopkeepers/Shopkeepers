@@ -254,6 +254,13 @@ public class Messages extends Config {
 	public static Text tradeNotificationsDisabled = Text.parse("&aYou will no longer receive trade notifications during this game session.");
 	public static Text tradeNotificationsEnabled = Text.parse("&aYou will now receive trade notifications again.");
 
+	// Placeholders: General shop placeholders (see above).
+	// Additional placeholders: {missing_item}
+	// public static Text ownerNotificationInsufficientStock = Text.parse("&7Your shop &e{shop}&7 is short of
+	// &6{missing_item}&7!");
+	// public static Text ownerNotificationInsufficientStorage = Text.parse("&7Your shop &e{shop}&7 has insufficient
+	// storage space!");
+
 	public static Text shopkeeperCreated = Text.parse("&aShopkeeper created: &6{type} &7({description})\n{setupDesc}");
 
 	public static String shopSetupDescSelling = c("&e  Add items you want to sell to your container, then\n"
@@ -451,12 +458,12 @@ public class Messages extends Config {
 
 				// Load messages:
 				INSTANCE.load(languageConfig);
-
-				// Also update the derived settings:
-				Settings.onSettingsChanged();
 			} catch (Exception e) {
 				Log.warning("Could not load language file '" + languageFile.getName() + "'!", e);
 			}
+
+			// Also update the derived settings and call a config change event:
+			Settings.onSettingsChanged();
 		}
 	}
 

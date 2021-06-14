@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.configuration.Configuration;
@@ -24,6 +25,7 @@ import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.lib.Config;
 import com.nisovin.shopkeepers.config.lib.ConfigLoadException;
 import com.nisovin.shopkeepers.config.migration.ConfigMigrations;
+import com.nisovin.shopkeepers.events.ShopkeepersConfigChangedEvent;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.playershops.MaxShopsPermission;
 import com.nisovin.shopkeepers.playershops.PlayerShopsLimit;
@@ -252,14 +254,26 @@ public class Settings extends Config {
 	public static boolean notifyPlayersAboutTrades = false;
 	public static SoundEffect tradeNotificationSound = SoundEffect.EMPTY;
 
+	/*public static double tradeNotificationIntervalSeconds = 0.75D;
+	public static int tradeNotificationThrottleThreshold = 3;
+	public static int tradeNotificationThrottleThresholdPeriodSeconds = 60;
+	public static int tradeNotificationThrottledIntervalSeconds = 60;
+	public static int tradeNotificationThrottleResetSeconds = 60;
+	public static int tradeNotificationSummaryMaxEntries = 8;*/
+
 	public static boolean notifyShopOwnersAboutTrades = true;
 	public static SoundEffect shopOwnerTradeNotificationSound = new SoundEffect(Sound.ENTITY_EXPERIENCE_ORB_PICKUP).withVolume(0.25f);
+
+	// public static boolean notifyShopOwnersAboutInsufficientStorageSpace = false;
+	// public static boolean notifyShopOwnersAboutInsufficientStock = false;
 
 	/*
 	 * Trade Log
 	 */
 	public static int tradeLogMergeDurationTicks = 300; // 15 seconds
 	public static int tradeLogNextMergeTimeoutTicks = 100; // 5 seconds
+
+	public static boolean logTradesToConsole = false;
 
 	public static boolean logTradesToCsv = false;
 
@@ -408,6 +422,9 @@ public class Settings extends Config {
 
 		// Refresh async settings cache:
 		AsyncSettings.refresh();
+
+		// Call event to inform other components:
+		Bukkit.getPluginManager().callEvent(new ShopkeepersConfigChangedEvent());
 	}
 
 	// ITEMS
