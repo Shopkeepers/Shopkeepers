@@ -64,6 +64,8 @@ public class Settings extends Config {
 	public static boolean convertAllPlayerItems = true;
 	public static List<ItemData> convertPlayerItemsExceptions = new ArrayList<>();
 
+	public static ItemData placeholderItem = new ItemData(Material.NAME_TAG);
+
 	/*
 	 * Plugin Compatibility
 	 */
@@ -295,6 +297,8 @@ public class Settings extends Config {
 
 		public static ItemData namingItemData;
 
+		public static ItemData placeholderItem;
+
 		// Button items:
 		public static ItemData nameButtonItem;
 		public static ItemData containerButtonItem;
@@ -334,6 +338,7 @@ public class Settings extends Config {
 
 			// Ignore (clear) the display name, which is used to specify the new shopkeeper name, but keep the lore:
 			namingItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(nameItem.createItemStack(), null)));
+			placeholderItem = Settings.placeholderItem;
 
 			// Button items:
 			nameButtonItem = new ItemData(nameItem, Messages.buttonName, Messages.buttonNameLore);
@@ -611,6 +616,10 @@ public class Settings extends Config {
 			mobBehaviorTickPeriod = 1;
 		}
 		// Certain items cannot be of type AIR:
+		if (placeholderItem.getType() == Material.AIR) {
+			Log.warning(this.getLogPrefix() + "'placeholder-item' can not be AIR.");
+			placeholderItem = placeholderItem.withType(Material.PAPER);
+		}
 		if (shopCreationItem.getType() == Material.AIR) {
 			Log.warning(this.getLogPrefix() + "'shop-creation-item' can not be AIR.");
 			shopCreationItem = shopCreationItem.withType(Material.VILLAGER_SPAWN_EGG);

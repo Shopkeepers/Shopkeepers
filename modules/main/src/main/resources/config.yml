@@ -95,6 +95,9 @@ convert-player-items: false
 convert-all-player-items: true
 # Black- or whitelist of items affected by the 'convert-player-items' setting.
 convert-player-items-exceptions: []
+# This material type declares which items will be seen as placeholder items.
+# These can be named on an Anvil with the specific type.
+placeholder-item: NAME_TAG
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Plugin Compatibility

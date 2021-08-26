@@ -1,5 +1,9 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.config.lib.Config;
+import com.nisovin.shopkeepers.config.lib.ConfigHelper;
+import com.nisovin.shopkeepers.util.bukkit.ConfigUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -12,6 +16,8 @@ import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils.EnchantmentEntry;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.inventory.PotionUtils;
+
+import java.util.Objects;
 
 /**
  * Helper methods related to placeholder items.
@@ -46,7 +52,15 @@ public class PlaceholderItems {
 	 */
 	public static boolean isPlaceholderItemType(@ReadOnly ItemStack itemStack) {
 		if (itemStack == null) return false;
-		if (itemStack.getType() != Material.NAME_TAG) return false;
+		if (itemStack.getType() != Settings.placeholderItem.getType()) return false;
+		// TODO: is there an easier way for comparing current items name with the original one?
+		if (itemStack.hasItemMeta()) {
+			ItemMeta meta = itemStack.getItemMeta();
+			assert meta != null;
+			if (Settings.placeholderItem.getItemMeta().getDisplayName().equals(meta.getDisplayName())) {
+				return false;
+			}
+		}
 		return true;
 	}
 
