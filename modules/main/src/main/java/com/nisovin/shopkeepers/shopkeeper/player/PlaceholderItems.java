@@ -1,23 +1,17 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
-import com.nisovin.shopkeepers.config.Settings;
-import com.nisovin.shopkeepers.config.lib.Config;
-import com.nisovin.shopkeepers.config.lib.ConfigHelper;
-import com.nisovin.shopkeepers.util.bukkit.ConfigUtils;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
+import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils.EnchantmentEntry;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.inventory.PotionUtils;
-
-import java.util.Objects;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 /**
  * Helper methods related to placeholder items.
