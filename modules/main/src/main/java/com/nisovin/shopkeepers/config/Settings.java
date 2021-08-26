@@ -618,7 +618,7 @@ public class Settings extends Config {
 		// Certain items cannot be of type AIR:
 		if (placeholderItem.getType() == Material.AIR) {
 			Log.warning(this.getLogPrefix() + "'placeholder-item' can not be AIR.");
-			placeholderItem = placeholderItem.withType(Material.PAPER);
+			placeholderItem = placeholderItem.withType(Material.NAME_TAG);
 		}
 		if (shopCreationItem.getType() == Material.AIR) {
 			Log.warning(this.getLogPrefix() + "'shop-creation-item' can not be AIR.");
