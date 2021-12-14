@@ -95,9 +95,6 @@ convert-player-items: false
 convert-all-player-items: true
 # Black- or whitelist of items affected by the 'convert-player-items' setting.
 convert-player-items-exceptions: []
-# This material type declares which items will be seen as placeholder items.
-# These can be named on an Anvil with the specific type.
-placeholder-item: NAME_TAG
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Plugin Compatibility
@@ -389,6 +386,11 @@ previous-page-item: WRITABLE_BOOK
 next-page-item: WRITABLE_BOOK
 current-page-item: WRITABLE_BOOK
 trade-setup-item: PAPER
+
+# The item that players can rename and then use as a substitute for items they
+# don't yet have when setting up trades.
+# Set this to AIR to disable the use of placeholder items.
+placeholder-item: NAME_TAG
 
 # The item used for the set-name button, and the naming item (if enabled).
 name-item: NAME_TAG

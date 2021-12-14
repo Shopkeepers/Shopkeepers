@@ -1,5 +1,11 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
@@ -7,11 +13,6 @@ import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils.EnchantmentEntry;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.inventory.PotionUtils;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 /**
  * Helper methods related to placeholder items.
@@ -45,8 +46,7 @@ public class PlaceholderItems {
 	 * @return <code>true</code> if the item stack is of the type used by placeholder items
 	 */
 	public static boolean isPlaceholderItemType(@ReadOnly ItemStack itemStack) {
-		if (itemStack == null) return false;
-		if (itemStack.getType() != Settings.placeholderItem.getType()) return false;
+		if (Settings.placeholderItem.matches(itemStack)) return false;
 		// TODO: is there an easier way for comparing current items name with the original one?
 		if (itemStack.hasItemMeta()) {
 			ItemMeta meta = itemStack.getItemMeta();
