@@ -297,7 +297,7 @@ public class Settings extends Config {
 
 		public static ItemData namingItemData;
 
-		public static ItemData placeholderItem;
+		public static ItemData placeholderItemData;
 
 		// Button items:
 		public static ItemData nameButtonItem;
@@ -338,7 +338,7 @@ public class Settings extends Config {
 
 			// Ignore (clear) the display name, which is used to specify the new shopkeeper name, but keep the lore:
 			namingItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(nameItem.createItemStack(), null)));
-			placeholderItem = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(placeholderItem.createItemStack(), null)));
+			placeholderItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(placeholderItem.createItemStack(), null)));
 
 			// Button items:
 			nameButtonItem = new ItemData(nameItem, Messages.buttonName, Messages.buttonNameLore);

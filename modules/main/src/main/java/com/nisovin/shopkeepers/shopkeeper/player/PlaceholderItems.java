@@ -46,16 +46,7 @@ public class PlaceholderItems {
 	 * @return <code>true</code> if the item stack is of the type used by placeholder items
 	 */
 	public static boolean isPlaceholderItemType(@ReadOnly ItemStack itemStack) {
-		if (Settings.placeholderItem.matches(itemStack)) return false;
-		// TODO: is there an easier way for comparing current items name with the original one?
-		if (itemStack.hasItemMeta()) {
-			ItemMeta meta = itemStack.getItemMeta();
-			assert meta != null;
-			if (Settings.placeholderItem.getItemMeta().getDisplayName().equals(meta.getDisplayName())) {
-				return false;
-			}
-		}
-		return true;
+		return Settings.placeholderItem.matches(itemStack);
 	}
 
 	/**
