@@ -7,7 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
-import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils;
 import com.nisovin.shopkeepers.util.inventory.EnchantmentUtils.EnchantmentEntry;
@@ -46,7 +46,7 @@ public class PlaceholderItems {
 	 * @return <code>true</code> if the item stack is of the type used by placeholder items
 	 */
 	public static boolean isPlaceholderItemType(@ReadOnly ItemStack itemStack) {
-		return Settings.placeholderItem.matches(itemStack);
+		return DerivedSettings.placeholderItemData.matches(itemStack);
 	}
 
 	/**
