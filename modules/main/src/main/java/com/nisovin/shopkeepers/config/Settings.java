@@ -64,8 +64,6 @@ public class Settings extends Config {
 	public static boolean convertAllPlayerItems = true;
 	public static List<ItemData> convertPlayerItemsExceptions = new ArrayList<>();
 
-	public static ItemData placeholderItem = new ItemData(Material.NAME_TAG);
-
 	/*
 	 * Plugin Compatibility
 	 */
@@ -216,6 +214,8 @@ public class Settings extends Config {
 	public static ItemData currentPageItem = new ItemData(Material.WRITABLE_BOOK);
 	public static ItemData tradeSetupItem = new ItemData(Material.PAPER);
 
+	public static ItemData placeholderItem = new ItemData(Material.NAME_TAG);
+
 	public static ItemData nameItem = new ItemData(Material.NAME_TAG);
 
 	public static boolean enableContainerOptionOnPlayerShop = true;
@@ -295,9 +295,9 @@ public class Settings extends Config {
 
 		public static Charset fileCharset;
 
-		public static ItemData namingItemData;
-
 		public static ItemData placeholderItemData;
+
+		public static ItemData namingItemData;
 
 		// Button items:
 		public static ItemData nameButtonItem;
@@ -336,9 +336,11 @@ public class Settings extends Config {
 				fileCharset = StandardCharsets.UTF_8;
 			}
 
-			// Ignore (clear) the display name, which is used to specify the new shopkeeper name, but keep the lore:
-			namingItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(nameItem.createItemStack(), null)));
+			// Ignore (clear) the display name that is used to specify the substituted item type:
 			placeholderItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(placeholderItem.createItemStack(), null)));
+
+			// Ignore (clear) the display name that is used to specify the new shopkeeper name, but keep the lore:
+			namingItemData = new ItemData(UnmodifiableItemStack.of(ItemUtils.setDisplayName(nameItem.createItemStack(), null)));
 
 			// Button items:
 			nameButtonItem = new ItemData(nameItem, Messages.buttonName, Messages.buttonNameLore);
