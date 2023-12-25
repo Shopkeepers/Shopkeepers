@@ -1,4 +1,4 @@
-package com.nisovin.shopkeepers.compat.v1_20_R5;
+package com.nisovin.shopkeepers.compat.v1_20_R4;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -59,7 +59,7 @@ public final class NMSHandler implements NMSCallProvider {
 
 	@Override
 	public String getVersionId() {
-		return "1_20_R5";
+		return "1_20_R4";
 	}
 
 	public Class<?> getCraftMagicNumbersClass() {

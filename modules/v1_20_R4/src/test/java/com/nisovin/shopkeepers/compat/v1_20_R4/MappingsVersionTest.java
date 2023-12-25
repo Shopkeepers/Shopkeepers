@@ -1,4 +1,4 @@
-package com.nisovin.shopkeepers.compat.v1_20_R5;
+package com.nisovin.shopkeepers.compat.v1_20_R4;
 
 import static org.junit.Assert.*;
 

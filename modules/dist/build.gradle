@@ -14,7 +14,7 @@ def nmsModules = [
 	':shopkeepers-v1_19_R5',
 	':shopkeepers-v1_20_R2',
 	':shopkeepers-v1_20_R3',
-	':shopkeepers-v1_20_R5'
+	':shopkeepers-v1_20_R4'
 ]
 
 configurations {
