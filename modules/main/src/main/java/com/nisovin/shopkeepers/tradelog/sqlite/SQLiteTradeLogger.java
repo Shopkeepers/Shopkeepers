@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.sql.*;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Logs trades to an SQLite database.
@@ -57,85 +58,89 @@ public class SQLiteTradeLogger implements TradeLogger {
             + "trade_count) "
             + "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+    private final Plugin plugin;
     private final String connectionURL;
 
-    private boolean tableCreated = false;
+    private AtomicBoolean tableCreated = new AtomicBoolean(false);
 
     public SQLiteTradeLogger(Plugin plugin) {
         Validate.notNull(plugin, "plugin is null");
+        this.plugin = plugin;
         Path tradeLogsFolder = plugin.getDataFolder().toPath().resolve(TRADE_LOGS_FOLDER);
         this.connectionURL = "jdbc:sqlite:" + tradeLogsFolder.resolve(FILE_NAME);
 
-        tableCreated = createTable();
+        createTable();
     }
 
     private Connection getConnection() throws SQLException {
         return DriverManager.getConnection(connectionURL);
     }
 
-    private boolean createTable() {
-        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
-            statement.execute(CREATE_TABLE);
-            statement.execute(CREATE_SHOP_OWNER_INDEX);
-        } catch (SQLException e) {
-            Log.severe("Could not create trades table. Trades won't be logged.", e);
-            return false;
-        }
-
-        return true;
+    private void createTable() {
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
+                statement.execute(CREATE_TABLE);
+                statement.execute(CREATE_SHOP_OWNER_INDEX);
+                tableCreated.set(true);
+            } catch (SQLException e) {
+                Log.severe("Could not create trades table. Trades won't be logged.", e);
+            }
+        });
     }
 
     @Override
     public void logTrade(TradeRecord trade) {
-        if (!tableCreated) {
+        if (!tableCreated.get()) {
             return;
         }
 
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(INSERT_TRADE)) {
-            statement.setObject(1, trade.getTimestamp().atOffset(ZoneOffset.UTC)); // time (in UTC)
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection connection = getConnection();
+                 PreparedStatement statement = connection.prepareStatement(INSERT_TRADE)) {
+                statement.setObject(1, trade.getTimestamp().atOffset(ZoneOffset.UTC)); // time (in UTC)
 
-            statement.setString(2, trade.getPlayer().getUniqueId().toString()); // player_uuid
-            statement.setString(3, trade.getPlayer().getName()); // player_name
+                statement.setString(2, trade.getPlayer().getUniqueId().toString()); // player_uuid
+                statement.setString(3, trade.getPlayer().getName()); // player_name
 
-            statement.setString(4, trade.getShop().getUniqueId().toString()); // shop_uuid
-            statement.setString(5, trade.getShop().getTypeId()); // shop_type
-            statement.setString(6, trade.getShop().getWorldName()); // shop_world
-            statement.setInt(7, trade.getShop().getX()); // shop_x
-            statement.setInt(8, trade.getShop().getY()); // shop_y
-            statement.setInt(9, trade.getShop().getZ()); // shop_z
+                statement.setString(4, trade.getShop().getUniqueId().toString()); // shop_uuid
+                statement.setString(5, trade.getShop().getTypeId()); // shop_type
+                statement.setString(6, trade.getShop().getWorldName()); // shop_world
+                statement.setInt(7, trade.getShop().getX()); // shop_x
+                statement.setInt(8, trade.getShop().getY()); // shop_y
+                statement.setInt(9, trade.getShop().getZ()); // shop_z
 
-            if (trade.getShop().getOwner() != null) {
-                statement.setString(10, trade.getShop().getOwner().getUniqueId().toString()); // shop_owner_uuid
-                statement.setString(11, trade.getShop().getOwner().getName()); // shop_owner_name
-            } else {
-                statement.setString(10, null); // shop_owner_uuid
-                statement.setString(11, null); // shop_owner_name
+                if (trade.getShop().getOwner() != null) {
+                    statement.setString(10, trade.getShop().getOwner().getUniqueId().toString()); // shop_owner_uuid
+                    statement.setString(11, trade.getShop().getOwner().getName()); // shop_owner_name
+                } else {
+                    statement.setString(10, null); // shop_owner_uuid
+                    statement.setString(11, null); // shop_owner_name
+                }
+
+                statement.setString(12, trade.getItem1().getType().name()); // item_1_type
+                statement.setInt(13, trade.getItem1().getAmount()); // item_1_amount
+                statement.setString(14, getItemMetadata(trade.getItem1())); // item_1_metadata
+
+                if (trade.getItem2() != null) {
+                    statement.setString(15, trade.getItem2().getType().name()); // item_2_type
+                    statement.setInt(16, trade.getItem2().getAmount()); // item_2_amount
+                    statement.setString(17, this.getItemMetadata(trade.getItem2())); // item_2_metadata
+                } else {
+                    statement.setString(15, null); // item_2_type
+                    statement.setNull(16, Types.TINYINT); // item_2_amount
+                    statement.setString(17, null); // item_2_metadata
+                }
+
+                statement.setString(18, trade.getResultItem().getType().name()); // result_item_type
+                statement.setInt(19, trade.getResultItem().getAmount()); // result_item_amount
+                statement.setString(20, getItemMetadata(trade.getResultItem())); // result_item_metadata
+
+                statement.setInt(21, trade.getTradeCount()); // trade_count
+                statement.execute();
+            } catch (SQLException e) {
+                Log.severe("Could not not log trade.", e);
             }
-
-            statement.setString(12, trade.getItem1().getType().name()); // item_1_type
-            statement.setInt(13, trade.getItem1().getAmount()); // item_1_amount
-            statement.setString(14, getItemMetadata(trade.getItem1())); // item_1_metadata
-
-            if (trade.getItem2() != null) {
-                statement.setString(15, trade.getItem2().getType().name()); // item_2_type
-                statement.setInt(16, trade.getItem2().getAmount()); // item_2_amount
-                statement.setString(17, this.getItemMetadata(trade.getItem2())); // item_2_metadata
-            } else {
-                statement.setString(15, null); // item_2_type
-                statement.setNull(16, Types.TINYINT); // item_2_amount
-                statement.setString(17, null); // item_2_metadata
-            }
-
-            statement.setString(18, trade.getResultItem().getType().name()); // result_item_type
-            statement.setInt(19, trade.getResultItem().getAmount()); // result_item_amount
-            statement.setString(20, getItemMetadata(trade.getResultItem())); // result_item_metadata
-
-            statement.setInt(21, trade.getTradeCount()); // trade_count
-            statement.execute();
-        } catch (SQLException e) {
-            Log.severe("Could not not log trade.", e);
-        }
+        });
     }
 
     @Override
