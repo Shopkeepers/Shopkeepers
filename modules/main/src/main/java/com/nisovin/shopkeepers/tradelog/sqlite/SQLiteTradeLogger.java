@@ -59,7 +59,7 @@ public class SQLiteTradeLogger implements TradeLogger {
     private final Plugin plugin;
     private final String connectionURL;
 
-    private AtomicBoolean tableCreated = new AtomicBoolean(false);
+    private final AtomicBoolean tableCreated = new AtomicBoolean(false);
 
     public SQLiteTradeLogger(Plugin plugin) {
         Validate.notNull(plugin, "plugin is null");
