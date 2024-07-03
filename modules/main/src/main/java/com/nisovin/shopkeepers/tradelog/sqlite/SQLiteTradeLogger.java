@@ -46,8 +46,6 @@ public class SQLiteTradeLogger implements TradeLogger {
             + "result_item_metadata TEXT NOT NULL, "
             + "trade_count SMALLINT UNSIGNED NOT NULL"
             + ");";
-    private static final String CREATE_SHOP_OWNER_INDEX = "CREATE INDEX IF NOT EXISTS shop_owner_uuid_idx "
-            + "ON " + TABLE_NAME + " (shop_owner_uuid);";
     private static final String INSERT_TRADE = "INSERT INTO " + TABLE_NAME
             + "(time, "
             + "player_uuid, player_name, "
@@ -80,7 +78,6 @@ public class SQLiteTradeLogger implements TradeLogger {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
                 statement.execute(CREATE_TABLE);
-                statement.execute(CREATE_SHOP_OWNER_INDEX);
                 tableCreated.set(true);
             } catch (SQLException e) {
                 Log.severe("Could not create trades table. Trades won't be logged.", e);
