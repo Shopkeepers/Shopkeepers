@@ -4,6 +4,7 @@ import org.bukkit.NamespacedKey;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import com.nisovin.shopkeepers.util.bukkit.NamespacedKeyUtils;
 import com.nisovin.shopkeepers.util.data.serialization.DataSerializer;
 import com.nisovin.shopkeepers.util.data.serialization.InvalidDataException;
 import com.nisovin.shopkeepers.util.data.serialization.java.StringSerializers;
@@ -30,7 +31,7 @@ public final class NamespacedKeySerializers {
 		@Override
 		public NamespacedKey deserialize(Object data) throws InvalidDataException {
 			String keyString = StringSerializers.STRICT.deserialize(data);
-			@Nullable NamespacedKey key = NamespacedKey.fromString(keyString);
+			@Nullable NamespacedKey key = NamespacedKeyUtils.parse(keyString);
 			if (key == null) {
 				throw new InvalidDataException("Invalid namespaced key: '" + keyString + "'");
 			}
