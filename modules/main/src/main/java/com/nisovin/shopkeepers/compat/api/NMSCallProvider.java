@@ -16,6 +16,7 @@ import com.nisovin.shopkeepers.compat.CompatVersion;
 import com.nisovin.shopkeepers.compat.NMSManager;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
+import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
 import com.nisovin.shopkeepers.util.data.serialization.DataSerializer;
 import com.nisovin.shopkeepers.util.data.serialization.bukkit.KeyedSerializers;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
@@ -177,8 +178,16 @@ public interface NMSCallProvider {
 	}
 
 	public default Cat.Type cycleCatType(Cat.Type type, boolean backwards) {
-		// Not supported by default.
-		return type;
+		try {
+			// This is only supported on MC 1.20.3 and above. (for "compatibility mode")
+			Class<?> registryClass = Class.forName(Registry.class.getName());
+			Field catVariantField = registryClass.getField("CAT_VARIANT");
+			Object catVariantRegistry = catVariantField.get(null);
+			return (Cat.Type) (Object) RegistryUtils.cycleKeyedConstant((Registry<Keyed>)catVariantRegistry, (Keyed) (Object) type, backwards);
+		} catch (Throwable ex) {
+			// Not supported by default.
+			return type;
+		}
 	}
 
 	// MC 1.20.5 specific features
