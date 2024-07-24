@@ -1,7 +1,9 @@
 package com.nisovin.shopkeepers.compat.api;
 
+import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -15,10 +17,11 @@ import com.nisovin.shopkeepers.compat.NMSManager;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
 import com.nisovin.shopkeepers.util.data.serialization.DataSerializer;
-import com.nisovin.shopkeepers.util.data.serialization.java.EnumSerializers;
+import com.nisovin.shopkeepers.util.data.serialization.bukkit.KeyedSerializers;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
-import com.nisovin.shopkeepers.util.java.EnumUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
+
+import java.lang.reflect.Field;
 
 public interface NMSCallProvider {
 
@@ -160,8 +163,17 @@ public interface NMSCallProvider {
 	// TODO Remove this once we only support MC 1.20.3 and above.
 
 	public default DataSerializer<Cat.@NonNull Type> getCatTypeSerializer() {
-		// Not supported by default.
-		return null;
+		try {
+			// This is only supported on MC 1.20.3 and above. (for "compatibility mode")
+			Class<?> keyedType = Class.forName(Cat.Type.class.getName());
+			Class<?> registryClass = Class.forName(Registry.class.getName());
+			Field catVariantField = registryClass.getField("CAT_VARIANT");
+			Object catVariantRegistry = catVariantField.get(null);
+			return (DataSerializer<Cat.Type>) (Object) KeyedSerializers.forRegistry((Class<Keyed>)keyedType, (Registry<Keyed>) catVariantRegistry);
+		} catch (Throwable ex) {
+			// Not supported by default.
+			return null;
+		}
 	}
 
 	public default Cat.Type cycleCatType(Cat.Type type, boolean backwards) {
