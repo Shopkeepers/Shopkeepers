@@ -2,7 +2,6 @@ package com.nisovin.shopkeepers.commands.lib.arguments;
 
 import java.util.List;
 
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -63,7 +62,8 @@ public abstract class ObjectByIdArgument<@NonNull I, @NonNull O>
 	// implementation to ObjectByIdArgument#getCompletionSuggestions(String), which should take this
 	// argument's object filter into account.
 	protected abstract ObjectIdArgument<I> createIdArgument(
-			@UnknownInitialization ObjectByIdArgument<I, O> this,
+			// TODO Eclipse (2024-06): Cannot add type annotation here (@UnknownInitialization)
+			ObjectByIdArgument<I, O> this,
 			String name,
 			IdArgumentArgs args
 	);
