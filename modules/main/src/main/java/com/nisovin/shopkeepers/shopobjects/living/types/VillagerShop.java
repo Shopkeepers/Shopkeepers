@@ -41,14 +41,18 @@ import com.nisovin.shopkeepers.util.java.MathUtils;
 
 public class VillagerShop extends BabyableShop<@NonNull Villager> {
 
-	private static final String DATA_KEY_PROFESSION = "profession";
+	private static final Registry<Villager.@NonNull Profession> REGISTRY_VILLAGER_PROFESSION
+			= Unsafe.castNonNull(Registry.VILLAGER_PROFESSION);
+	private static final Registry<Villager.@NonNull Type> REGISTRY_VILLAGER_TYPE
+			= Unsafe.castNonNull(Registry.VILLAGER_TYPE);
+
 	public static final Property<@NonNull Profession> PROFESSION = new BasicProperty<@NonNull Profession>()
-			.dataKeyAccessor(DATA_KEY_PROFESSION, KeyedSerializers.forRegistry(Profession.class, Registry.VILLAGER_PROFESSION))
+			.dataKeyAccessor("profession", KeyedSerializers.forRegistry(Profession.class, REGISTRY_VILLAGER_PROFESSION))
 			.defaultValue(Profession.NONE)
 			.build();
 
 	public static final Property<Villager.@NonNull Type> VILLAGER_TYPE = new BasicProperty<Villager.@NonNull Type>()
-			.dataKeyAccessor("villagerType", KeyedSerializers.forRegistry(Villager.Type.class, Registry.VILLAGER_TYPE))
+			.dataKeyAccessor("villagerType", KeyedSerializers.forRegistry(Villager.Type.class, REGISTRY_VILLAGER_TYPE))
 			.defaultValue(Villager.Type.PLAINS)
 			.build();
 
@@ -163,9 +167,11 @@ public class VillagerShop extends BabyableShop<@NonNull Villager> {
 	}
 
 	public void cycleProfession(boolean backwards) {
-		this.setProfession(
-				RegistryUtils.cycleKeyedConstant(Registry.VILLAGER_PROFESSION, this.getProfession(), backwards)
-		);
+		this.setProfession(RegistryUtils.cycleKeyed(
+				REGISTRY_VILLAGER_PROFESSION,
+				this.getProfession(),
+				backwards
+		));
 	}
 
 	private void applyProfession() {
@@ -264,9 +270,11 @@ public class VillagerShop extends BabyableShop<@NonNull Villager> {
 	}
 
 	public void cycleVillagerType(boolean backwards) {
-		this.setVillagerType(
-				RegistryUtils.cycleKeyedConstant(Registry.VILLAGER_TYPE, this.getVillagerType(), backwards)
-		);
+		this.setVillagerType(RegistryUtils.cycleKeyed(
+				REGISTRY_VILLAGER_TYPE,
+				this.getVillagerType(),
+				backwards
+		));
 	}
 
 	private void applyVillagerType() {

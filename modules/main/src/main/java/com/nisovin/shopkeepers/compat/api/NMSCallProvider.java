@@ -1,11 +1,13 @@
 package com.nisovin.shopkeepers.compat.api;
 
-import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Cat;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Wolf;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -16,13 +18,8 @@ import com.nisovin.shopkeepers.compat.CompatVersion;
 import com.nisovin.shopkeepers.compat.NMSManager;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
-import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
-import com.nisovin.shopkeepers.util.data.serialization.DataSerializer;
-import com.nisovin.shopkeepers.util.data.serialization.bukkit.KeyedSerializers;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
-
-import java.lang.reflect.Field;
 
 public interface NMSCallProvider {
 
@@ -79,7 +76,7 @@ public interface NMSCallProvider {
 	 * This mimics Minecraft's item comparison: This checks if the item stacks are either both
 	 * empty, or of same type and the provided item stack's metadata contains all the contents of
 	 * the required item stack's metadata (with any list metadata being equal).
-	 *
+	 * 
 	 * @param provided
 	 *            the provided item stack
 	 * @param required
@@ -160,34 +157,18 @@ public interface NMSCallProvider {
 		// Not supported by default.
 	}
 
-	// MC 1.20.3 specific features
-	// TODO Remove this once we only support MC 1.20.3 and above.
+	// MC 1.20.4 specific features
+	// TODO Remove this once we only support MC 1.20.4 and above.
+	// Cat registry was added in 1.20.4. Was an enum before that. Enum removed in 1.21.
 
-	public default DataSerializer<Cat.@NonNull Type> getCatTypeSerializer() {
-		try {
-			// This is only supported on MC 1.20.3 and above. (for "compatibility mode")
-			Class<?> keyedType = Class.forName(Cat.Type.class.getName());
-			Class<?> registryClass = Class.forName(Registry.class.getName());
-			Field catVariantField = registryClass.getField("CAT_VARIANT");
-			Object catVariantRegistry = catVariantField.get(null);
-			return (DataSerializer<Cat.Type>) (Object) KeyedSerializers.forRegistry((Class<Keyed>)keyedType, (Registry<Keyed>) catVariantRegistry);
-		} catch (Throwable ex) {
-			// Not supported by default.
-			return null;
-		}
+	public default Cat.@Nullable Type getCatType(String typeName) {
+		// Not supported by default.
+		return null;
 	}
 
-	public default Cat.Type cycleCatType(Cat.Type type, boolean backwards) {
-		try {
-			// This is only supported on MC 1.20.3 and above. (for "compatibility mode")
-			Class<?> registryClass = Class.forName(Registry.class.getName());
-			Field catVariantField = registryClass.getField("CAT_VARIANT");
-			Object catVariantRegistry = catVariantField.get(null);
-			return (Cat.Type) (Object) RegistryUtils.cycleKeyedConstant((Registry<Keyed>)catVariantRegistry, (Keyed) (Object) type, backwards);
-		} catch (Throwable ex) {
-			// Not supported by default.
-			return type;
-		}
+	public default String cycleCatType(String typeName, boolean backwards) {
+		// Not supported by default.
+		return typeName;
 	}
 
 	// MC 1.20.5 specific features

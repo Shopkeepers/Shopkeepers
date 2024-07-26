@@ -1,18 +1,27 @@
 package com.nisovin.shopkeepers.compat;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.bukkit.Keyed;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.entity.Cat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.compat.api.NMSCallProvider;
+import com.nisovin.shopkeepers.util.bukkit.NamespacedKeyUtils;
+import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
 import com.nisovin.shopkeepers.util.bukkit.ServerUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
+import com.nisovin.shopkeepers.util.logging.Log;
 
 public final class FailedHandler implements NMSCallProvider {
 
@@ -33,6 +42,9 @@ public final class FailedHandler implements NMSCallProvider {
 
 	private final Class<?> obcCraftEntityClass;
 	private final Method obcGetHandleMethod;
+
+	// Bukkit
+	private final @Nullable Registry<@NonNull ?> catTypeRegistry;
 
 	public FailedHandler() throws Exception {
 		String cbPackage = ServerUtils.getCraftBukkitPackage();
@@ -62,6 +74,20 @@ public final class FailedHandler implements NMSCallProvider {
 
 		obcCraftEntityClass = Class.forName(cbPackage + ".entity.CraftEntity");
 		obcGetHandleMethod = obcCraftEntityClass.getDeclaredMethod("getHandle");
+
+		// Cat type:
+		// Registry was added in 1.20.4.
+		@Nullable Registry<@NonNull ?> catTypeRegistry = null;
+		try {
+			Field catVariantField = Registry.class.getField("CAT_VARIANT");
+			Object catVariantRegistry = catVariantField.get(null);
+			catTypeRegistry = (Registry<@NonNull ?>) catVariantRegistry;
+		} catch (Exception ex) {
+			// We still continue to enable the plugin, but applying and cycling the cat type is not
+			// supported:
+			Log.warning("Failed to initialize cat type compatibility mode. Cat type is not supported!");
+		}
+		this.catTypeRegistry = catTypeRegistry;
 	}
 
 	@Override
@@ -146,5 +172,34 @@ public final class FailedHandler implements NMSCallProvider {
 	@Override
 	public @Nullable String getItemTypeTranslationKey(Material material) {
 		return null; // Not supported.
+	}
+
+	// MC 1.20.4 specific features
+
+	@Override
+	public Cat.@Nullable Type getCatType(String typeName) {
+		@Nullable Registry<@NonNull ?> catTypeRegistry = this.catTypeRegistry;
+		if (catTypeRegistry == null) return null; // Not supported
+
+		@Nullable NamespacedKey key = NamespacedKeyUtils.parse(typeName);
+		if (key == null) return null; // Not recognized
+
+		return Unsafe.cast(catTypeRegistry.get(key)); // Null if not found
+	}
+
+	@Override
+	public String cycleCatType(String typeName, boolean backwards) {
+		@Nullable Registry<@NonNull ?> catTypeRegistry = this.catTypeRegistry;
+		if (catTypeRegistry == null) return typeName; // Not supported
+
+		Cat.@Nullable Type catType = this.getCatType(typeName);
+		if (catType == null) return typeName; // Current value not found
+
+		Keyed next = Unsafe.castNonNull(RegistryUtils.cycleKeyed(
+				catTypeRegistry,
+				Unsafe.castNonNull(catType),
+				backwards
+		));
+		return next.getKey().toString();
 	}
 }

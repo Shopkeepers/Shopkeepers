@@ -31,6 +31,8 @@ public final class NamespacedKeySerializers {
 		@Override
 		public NamespacedKey deserialize(Object data) throws InvalidDataException {
 			String keyString = StringSerializers.STRICT.deserialize(data);
+			// NamespacedKeyUtils.parse instead of NamespacedKey.fromString to also accept old
+			// uppercase enum names and interpret them as namespaced keys.
 			@Nullable NamespacedKey key = NamespacedKeyUtils.parse(keyString);
 			if (key == null) {
 				throw new InvalidDataException("Invalid namespaced key: '" + keyString + "'");

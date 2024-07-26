@@ -2,7 +2,12 @@ package com.nisovin.shopkeepers.ui.villager.editor;
 
 import java.util.List;
 
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.DyeColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.entity.AbstractVillager;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -54,6 +59,11 @@ import com.nisovin.shopkeepers.util.logging.Log;
  * An editor for regular villagers and wandering traders.
  */
 public final class VillagerEditorHandler extends AbstractEditorHandler {
+
+	private static final Registry<Villager.@NonNull Profession> REGISTRY_VILLAGER_PROFESSION
+			= Unsafe.castNonNull(Registry.VILLAGER_PROFESSION);
+	private static final Registry<Villager.@NonNull Type> REGISTRY_VILLAGER_TYPE
+			= Unsafe.castNonNull(Registry.VILLAGER_TYPE);
 
 	// We compare the recipes from the editor with the original recipes and keep the original
 	// recipes with their original internal data if the items have not changed.
@@ -561,7 +571,11 @@ public final class VillagerEditorHandler extends AbstractEditorHandler {
 				// replace the new trades with the old ones from the editor. But we try to preserve
 				// the old trades with their original data:
 				List<MerchantRecipe> previousRecipes = villager.getRecipes();
-				profession = RegistryUtils.cycleKeyedConstant(Registry.VILLAGER_PROFESSION, profession, backwards);
+				profession = RegistryUtils.cycleKeyed(
+						REGISTRY_VILLAGER_PROFESSION,
+						profession,
+						backwards
+				);
 				regularVillager.setProfession(profession);
 				// Restore previous trades with their original data:
 				villager.setRecipes(previousRecipes);
@@ -629,8 +643,8 @@ public final class VillagerEditorHandler extends AbstractEditorHandler {
 				}
 
 				boolean backwards = clickEvent.isRightClick();
-				villagerType = RegistryUtils.cycleKeyedConstant(
-						Registry.VILLAGER_TYPE,
+				villagerType = RegistryUtils.cycleKeyed(
+						REGISTRY_VILLAGER_TYPE,
 						villagerType,
 						backwards
 				);

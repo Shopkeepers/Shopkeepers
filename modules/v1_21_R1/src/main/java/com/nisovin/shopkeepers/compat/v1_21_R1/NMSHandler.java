@@ -2,7 +2,6 @@ package com.nisovin.shopkeepers.compat.v1_21_R1;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Objects;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -19,7 +18,18 @@ import org.bukkit.craftbukkit.v1_21_R1.entity.CraftVillager;
 import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftMerchant;
 import org.bukkit.craftbukkit.v1_21_R1.util.CraftMagicNumbers;
-import org.bukkit.entity.*;
+import org.bukkit.entity.AbstractVillager;
+import org.bukkit.entity.Axolotl;
+import org.bukkit.entity.Cat;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Frog;
+import org.bukkit.entity.GlowSquid;
+import org.bukkit.entity.Goat;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
+import org.bukkit.entity.Wolf;
 import org.bukkit.entity.Wolf.Variant;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -33,9 +43,8 @@ import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.compat.api.NMSCallProvider;
 import com.nisovin.shopkeepers.shopobjects.living.LivingEntityAI;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
+import com.nisovin.shopkeepers.util.bukkit.NamespacedKeyUtils;
 import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
-import com.nisovin.shopkeepers.util.data.serialization.DataSerializer;
-import com.nisovin.shopkeepers.util.data.serialization.bukkit.KeyedSerializers;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.CollectionUtils;
 import com.nisovin.shopkeepers.util.java.EnumUtils;
@@ -296,8 +305,11 @@ public final class NMSHandler implements NMSCallProvider {
 
 	@Override
 	public String cycleFrogVariant(String variantName, boolean backwards) {
-		Frog.Variant currentVariant = Objects.requireNonNull(Registry.FROG_VARIANT.get(NamespacedKey.minecraft(variantName)));
-		return RegistryUtils.cycleKeyedConstant(Registry.FROG_VARIANT, currentVariant, backwards).getKey().getKey();
+		Registry<Frog.@NonNull Variant> frogVariantRegistry = Unsafe.castNonNull(Registry.FROG_VARIANT);
+		Frog.@Nullable Variant currentVariant = Registry.FROG_VARIANT.get(NamespacedKey.minecraft(variantName));
+		if (currentVariant == null) return variantName; // Not found
+
+		return RegistryUtils.cycleKeyed(frogVariantRegistry, currentVariant, backwards).getKey().getKey();
 	}
 
 	@Override
@@ -327,16 +339,24 @@ public final class NMSHandler implements NMSCallProvider {
 		signSide.setGlowingText(glowingText);
 	}
 
-	// MC 1.20.3 specific features
+	// MC 1.20.4 specific features
 
+	// Registry instead of enum.
 	@Override
-	public DataSerializer<Cat.@NonNull Type> getCatTypeSerializer() {
-		return KeyedSerializers.forRegistry(Cat.Type.class, Registry.CAT_VARIANT);
+	public Cat.@Nullable Type getCatType(String typeName) {
+		@Nullable NamespacedKey key = NamespacedKeyUtils.parse(typeName);
+		if (key == null) return null; // Not recognized
+
+		return Registry.CAT_VARIANT.get(key); // Null if not found
 	}
 
 	@Override
-	public Cat.Type cycleCatType(Cat.Type type, boolean backwards) {
-		return RegistryUtils.cycleKeyedConstant(Registry.CAT_VARIANT, type, backwards);
+	public String cycleCatType(String typeName, boolean backwards) {
+		Cat.@Nullable Type catType = this.getCatType(typeName);
+		if (catType == null) return typeName; // Current value not found
+
+		Registry<Cat.@NonNull Type> catTypeRegistry = Unsafe.castNonNull(Registry.CAT_VARIANT);
+		return RegistryUtils.cycleKeyed(catTypeRegistry, catType, backwards).getKey().toString();
 	}
 
 	// MC 1.20.5 specific features

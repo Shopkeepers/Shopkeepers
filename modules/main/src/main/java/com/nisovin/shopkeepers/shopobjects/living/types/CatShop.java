@@ -2,7 +2,9 @@ package com.nisovin.shopkeepers.shopobjects.living.types;
 
 import java.util.List;
 
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Cat;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -25,10 +27,20 @@ import com.nisovin.shopkeepers.util.data.property.Property;
 import com.nisovin.shopkeepers.util.data.property.value.PropertyValue;
 import com.nisovin.shopkeepers.util.data.serialization.InvalidDataException;
 import com.nisovin.shopkeepers.util.data.serialization.java.EnumSerializers;
+import com.nisovin.shopkeepers.util.data.serialization.java.StringSerializers;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.EnumUtils;
 
 public class CatShop extends SittableShop<@NonNull Cat> {
+
+	// TODO MC 1.21: Removed cat type enum. Cat registry is only available in 1.20.4+.
+	// Handle as string until we only support 1.20.4+, so that even when running in compatibility
+	// mode, and we fail to setup the fallback compat provider for cat types, we still preserve the
+	// previously stored cat types (even if we are not able to apply display or cycle them).
+	public static final Property<@NonNull String> CAT_TYPE = new BasicProperty<@NonNull String>()
+			.dataKeyAccessor("catType", StringSerializers.STRICT_NON_EMPTY)
+			.defaultValue("TABBY")
+			.build();
 
 	public static final Property<@Nullable DyeColor> COLLAR_COLOR = new BasicProperty<@Nullable DyeColor>()
 			.dataKeyAccessor("collarColor", EnumSerializers.lenient(DyeColor.class))
@@ -36,7 +48,9 @@ public class CatShop extends SittableShop<@NonNull Cat> {
 			.defaultValue(null)
 			.build();
 
-	private PropertyValue<Cat.@NonNull Type> catTypeProperty;
+	private final PropertyValue<@NonNull String> catTypeProperty = new PropertyValue<>(CAT_TYPE)
+			.onValueChanged(Unsafe.initialized(this)::applyCatType)
+			.build(properties);
 	private final PropertyValue<@Nullable DyeColor> collarColorProperty = new PropertyValue<>(COLLAR_COLOR)
 			.onValueChanged(Unsafe.initialized(this)::applyCollarColor)
 			.build(properties);
@@ -53,15 +67,6 @@ public class CatShop extends SittableShop<@NonNull Cat> {
 	@Override
 	public void load(ShopObjectData shopObjectData) throws InvalidDataException {
 		super.load(shopObjectData);
-		if (catTypeProperty == null) {
-			Property<Cat.@NonNull Type> catType = new BasicProperty<Cat.@NonNull Type>()
-					.dataKeyAccessor("catType", NMSManager.getProvider().getCatTypeSerializer())
-					.defaultValue(Cat.Type.TABBY)
-					.build();
-			catTypeProperty = new PropertyValue<>(catType)
-					.onValueChanged(Unsafe.initialized(this)::applyCatType)
-					.build(properties);
-		}
 		catTypeProperty.load(shopObjectData);
 		collarColorProperty.load(shopObjectData);
 	}
@@ -90,11 +95,11 @@ public class CatShop extends SittableShop<@NonNull Cat> {
 
 	// CAT TYPE
 
-	public Cat.Type getCatType() {
+	public String getCatType() {
 		return catTypeProperty.getValue();
 	}
 
-	public void setCatType(Cat.Type catType) {
+	public void setCatType(String catType) {
 		catTypeProperty.setValue(catType);
 	}
 
@@ -105,12 +110,18 @@ public class CatShop extends SittableShop<@NonNull Cat> {
 	private void applyCatType() {
 		Cat entity = this.getEntity();
 		if (entity == null) return; // Not spawned
-		entity.setCatType(this.getCatType());
+
+		Cat.@Nullable Type catType = NMSManager.getProvider().getCatType(this.getCatType());
+		if (catType == null) return; // Not supported
+
+		entity.setCatType(catType);
 	}
 
 	private ItemStack getCatTypeEditorItem() {
 		ItemStack iconItem = new ItemStack(Material.LEATHER_CHESTPLATE);
-		switch (this.getCatType()) {
+		Cat.@Nullable Type catType = NMSManager.getProvider().getCatType(this.getCatType());
+		if (catType == null) catType = Cat.Type.TABBY;
+		switch (catType) {
 		case TABBY:
 			ItemUtils.setLeatherColor(iconItem, Color.BLACK.mixColors(Color.ORANGE));
 			break;

@@ -32,8 +32,11 @@ import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 
 public class ZombieVillagerShop extends ZombieShop<@NonNull ZombieVillager> {
 
+	private static final Registry<@NonNull Profession> REGISTRY_VILLAGER_PROFESSION
+			= Unsafe.castNonNull(Registry.VILLAGER_PROFESSION);
+
 	public static final Property<@NonNull Profession> PROFESSION = new BasicProperty<@NonNull Profession>()
-			.dataKeyAccessor("profession", KeyedSerializers.forRegistry(Profession.class, Registry.VILLAGER_PROFESSION))
+			.dataKeyAccessor("profession", KeyedSerializers.forRegistry(Profession.class, REGISTRY_VILLAGER_PROFESSION))
 			.defaultValue(Profession.NONE)
 			.build();
 
@@ -86,9 +89,11 @@ public class ZombieVillagerShop extends ZombieShop<@NonNull ZombieVillager> {
 	}
 
 	public void cycleProfession(boolean backwards) {
-		this.setProfession(
-				RegistryUtils.cycleKeyedConstant(Registry.VILLAGER_PROFESSION, this.getProfession(), backwards)
-		);
+		this.setProfession(RegistryUtils.cycleKeyed(
+				REGISTRY_VILLAGER_PROFESSION,
+				this.getProfession(),
+				backwards
+		));
 	}
 
 	private void applyProfession() {

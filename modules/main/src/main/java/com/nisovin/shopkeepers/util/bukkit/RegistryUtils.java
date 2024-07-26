@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Lists;
-import com.nisovin.shopkeepers.util.java.CollectionUtils;
-import com.nisovin.shopkeepers.util.java.PredicateUtils;
 import org.bukkit.Keyed;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.checkerframework.checker.nullness.qual.NonNull;
+
+import com.nisovin.shopkeepers.util.java.CollectionUtils;
+import com.nisovin.shopkeepers.util.java.PredicateUtils;
 
 public class RegistryUtils {
 
@@ -26,23 +26,24 @@ public class RegistryUtils {
 		return list;
 	}
 
-	public static <T extends @NonNull Keyed> @NonNull T cycleKeyedConstant(
+	public static <T extends @NonNull Keyed> @NonNull T cycleKeyed(
 			Registry<@NonNull T> registry,
 			@NonNull T current,
 			boolean backwards
 	) {
-		return cycleKeyedConstant(registry, current, backwards, PredicateUtils.alwaysTrue());
+		return cycleKeyed(registry, current, backwards, PredicateUtils.alwaysTrue());
 	}
 
 	// Cycled through all values but none got accepted: Returns current value.
-	public static <E extends @NonNull Keyed, T extends @NonNull E> T cycleKeyedConstant(
-			Registry<T> registry,
-			T current,
+	public static <T extends @NonNull Keyed> @NonNull T cycleKeyed(
+			Registry<@NonNull T> registry,
+			@NonNull T current,
 			boolean backwards,
-			Predicate<? super T> predicate
+			Predicate<? super @NonNull T> predicate
 	) {
-		List<@NonNull T> valuesList = Lists.newArrayList(registry.iterator());
-		return CollectionUtils.cycleValue(valuesList, false, current, backwards, predicate);
+		// TODO Cache the registry values?
+		List<@NonNull T> values = getValues(registry);
+		return CollectionUtils.cycleValue(values, current, backwards, predicate);
 	}
 
 	private RegistryUtils() {
