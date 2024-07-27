@@ -52,7 +52,7 @@ public class Settings extends Config {
 	/*
 	 * General Settings
 	 */
-	public static int configVersion = 6;
+	public static int configVersion = 7;
 	public static boolean debug = false;
 	// See DebugOptions for all available options.
 	public static List<@NonNull String> debugOptions = new ArrayList<>(0);
@@ -356,7 +356,7 @@ public class Settings extends Config {
 	public static int tradeLogMergeDurationTicks = 300; // 15 seconds
 	public static int tradeLogNextMergeTimeoutTicks = 100; // 5 seconds
 
-	public static boolean logTradesToCsv = false;
+	public static String tradeLogStorage = "";
 
 	public static boolean logItemMetadata = false;
 
