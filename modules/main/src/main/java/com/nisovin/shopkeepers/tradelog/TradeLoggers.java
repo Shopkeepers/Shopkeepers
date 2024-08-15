@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.tradelog;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nisovin.shopkeepers.tradelog.sqlite.SQLiteTradeLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -55,8 +56,13 @@ public class TradeLoggers implements Listener {
 		assert tradeMerger != null;
 		tradeMerger.onEnable();
 
-		if (Settings.logTradesToCsv) {
-			loggers.add(new CsvTradeLogger(plugin));
+		switch (Settings.tradeLogStorage) {
+			case "csv":
+				loggers.add(new CsvTradeLogger(plugin));
+				break;
+			case "sqlite":
+				loggers.add(new SQLiteTradeLogger(plugin));
+				break;
 		}
 
 		Bukkit.getPluginManager().registerEvents(this, plugin);

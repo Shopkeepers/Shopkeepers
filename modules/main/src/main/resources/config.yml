@@ -5,7 +5,7 @@
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
 # Determines the required config migrations. Do not edit manually!
-config-version: 7
+config-version: 8
 # The initial debugging state of the plugin.
 debug: false
 # Additional debugging options.
@@ -695,8 +695,11 @@ trade-log-merge-duration-ticks: 300
 # reasons, the actual duration may dynamically vary by several ticks.
 trade-log-next-merge-timeout-ticks: 100
 
-# Whether to log all trades to CSV files inside the plugin folder.
-log-trades-to-csv: false
+# Which storage type to use to log trades to files inside the plugin folder.
+# '' disables this and logs nothing.
+# 'csv' logs all trades to CSV files, categorized by date.
+# 'sqlite' logs all trades to a SQLite database.
+trade-log-storage: ''
 
 # Whether to also log the metadata of items. This includes, for example, their
 # display name, lore, enchantments, etc. This data will be logged in Spigot's

@@ -114,8 +114,8 @@ public class FeaturesChart extends Metrics.DrilldownPie {
 			);
 			addFeatureEntry(
 					allFeatures,
-					"log-trades-to-csv",
-					Settings.logTradesToCsv
+					"trade-log-storage",
+					Settings.tradeLogStorage
 			);
 			addFeatureEntry(
 					allFeatures,
