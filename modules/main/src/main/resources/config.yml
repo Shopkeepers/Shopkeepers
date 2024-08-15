@@ -667,6 +667,12 @@ shop-owner-trade-notification-sound:
 # Trade Log
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
+# The storage type to use for the trade log.
+# - 'DISABLED': Disables the logging of trades.
+# - 'SQLITE': Logs all trades to an SQLite database inside the plugin folder.
+# - 'CSV': Logs all trades to daily CSV files inside the plugin folder.
+trade-log-storage: 'DISABLED'
+
 # Players can trigger many equal trades in quick succession. For example, when
 # players trade by shift clicking the result slot, they can trigger up to 64
 # individual trades at once with a single click. And even when not shift
@@ -694,12 +700,6 @@ trade-log-merge-duration-ticks: 300
 # 'trade-log-merge-duration-ticks' effectively pointless. For performance
 # reasons, the actual duration may dynamically vary by several ticks.
 trade-log-next-merge-timeout-ticks: 100
-
-# Which storage type to use to log trades to files inside the plugin folder.
-# '' disables this and logs nothing.
-# 'csv' logs all trades to CSV files, categorized by date.
-# 'sqlite' logs all trades to a SQLite database.
-trade-log-storage: ''
 
 # Whether to also log the metadata of items. This includes, for example, their
 # display name, lore, enchantments, etc. This data will be logged in Spigot's

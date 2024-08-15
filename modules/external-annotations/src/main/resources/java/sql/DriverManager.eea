@@ -1,0 +1,37 @@
+class java/sql/DriverManager
+deregisterDriver
+ (Ljava/sql/Driver;)V
+ (L0java/sql/Driver;)V
+drivers
+ ()Ljava/util/stream/Stream<Ljava/sql/Driver;>;
+ ()L1java/util/stream/Stream<L1java/sql/Driver;>;
+getConnection
+ (Ljava/lang/String;)Ljava/sql/Connection;
+ (L1java/lang/String;)L1java/sql/Connection;
+getConnection
+ (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/sql/Connection;
+ (L1java/lang/String;L0java/lang/String;L0java/lang/String;)L1java/sql/Connection;
+getConnection
+ (Ljava/lang/String;Ljava/util/Properties;)Ljava/sql/Connection;
+ (L1java/lang/String;Ljava/util/Properties;)L1java/sql/Connection;
+getDriver
+ (Ljava/lang/String;)Ljava/sql/Driver;
+ (L1java/lang/String;)L1java/sql/Driver;
+getDrivers
+ ()Ljava/util/Enumeration<Ljava/sql/Driver;>;
+ ()L1java/util/Enumeration<L1java/sql/Driver;>;
+getDrivers
+ (Ljava/lang/Class<*>;)Ljava/util/List<Ljava/sql/Driver;>;
+ (L0java/lang/Class<*>;)L1java/util/List<L1java/sql/Driver;>;
+getLogWriter
+ ()Ljava/io/PrintWriter;
+ ()L0java/io/PrintWriter;
+registerDriver
+ (Ljava/sql/Driver;)V
+ (L1java/sql/Driver;)V
+registerDriver
+ (Ljava/sql/Driver;Ljava/sql/DriverAction;)V
+ (L1java/sql/Driver;L0java/sql/DriverAction;)V
+setLogWriter
+ (Ljava/io/PrintWriter;)V
+ (L0java/io/PrintWriter;)V

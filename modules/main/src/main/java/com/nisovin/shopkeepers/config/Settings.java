@@ -33,6 +33,7 @@ import com.nisovin.shopkeepers.playershops.MaxShopsPermission;
 import com.nisovin.shopkeepers.playershops.PlayerShopsLimit;
 import com.nisovin.shopkeepers.shopcreation.ShopCreationItem;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
+import com.nisovin.shopkeepers.tradelog.TradeLogStorageType;
 import com.nisovin.shopkeepers.util.bukkit.ConfigUtils;
 import com.nisovin.shopkeepers.util.bukkit.EntityUtils;
 import com.nisovin.shopkeepers.util.bukkit.SoundEffect;
@@ -347,10 +348,10 @@ public class Settings extends Config {
 	/*
 	 * Trade Log
 	 */
+	public static TradeLogStorageType tradeLogStorage = TradeLogStorageType.DISABLED;
+
 	public static int tradeLogMergeDurationTicks = 300; // 15 seconds
 	public static int tradeLogNextMergeTimeoutTicks = 100; // 5 seconds
-
-	public static String tradeLogStorage = "";
 
 	public static boolean logItemMetadata = false;
 
