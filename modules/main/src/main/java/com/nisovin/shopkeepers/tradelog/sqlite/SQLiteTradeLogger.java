@@ -9,7 +9,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.plugin.Plugin;
@@ -17,13 +16,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.tradelog.TradeLogUtils;
 import com.nisovin.shopkeepers.tradelog.TradeLogger;
 import com.nisovin.shopkeepers.tradelog.data.PlayerRecord;
 import com.nisovin.shopkeepers.tradelog.data.ShopRecord;
 import com.nisovin.shopkeepers.tradelog.data.TradeRecord;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
-import com.nisovin.shopkeepers.util.yaml.YamlUtils;
 
 /**
  * Logs trades to an SQLite database.
@@ -176,17 +175,10 @@ public class SQLiteTradeLogger implements TradeLogger {
 		// TODO Actually: Await any currently in-progress async tasks.
 	}
 
-	/**
-	 * See
-	 * {@link com.nisovin.shopkeepers.tradelog.csv.CsvTradeLogger#getItemMetadata(UnmodifiableItemStack)}.
-	 */
 	private String getItemMetadata(UnmodifiableItemStack itemStack) {
 		assert itemStack != null;
-		if (Settings.logItemMetadata) return "";
+		if (Settings.logItemMetadata) return ""; // Disabled
 
-		Map<String, Object> itemData = itemStack.serialize();
-		itemData.remove("type");
-		itemData.remove("amount");
-		return YamlUtils.toCompactYaml(itemData);
+		return TradeLogUtils.getItemMetadata(itemStack);
 	}
 }

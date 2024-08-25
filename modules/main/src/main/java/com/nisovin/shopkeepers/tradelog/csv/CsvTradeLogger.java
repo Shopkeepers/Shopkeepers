@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
@@ -28,6 +27,7 @@ import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.tradelog.TradeLogUtils;
 import com.nisovin.shopkeepers.tradelog.TradeLogger;
 import com.nisovin.shopkeepers.tradelog.data.PlayerRecord;
 import com.nisovin.shopkeepers.tradelog.data.ShopRecord;
@@ -44,7 +44,6 @@ import com.nisovin.shopkeepers.util.java.ThrowableUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.java.VoidCallable;
 import com.nisovin.shopkeepers.util.logging.Log;
-import com.nisovin.shopkeepers.util.yaml.YamlUtils;
 
 /**
  * Logs trades to CSV files.
@@ -340,34 +339,11 @@ public class CsvTradeLogger implements TradeLogger {
 		return tradeLogsFolder.resolve(fileName);
 	}
 
-	// Note: We log the item metadata in Yaml format. Since this is what Bukkit natively supports
-	// for serializing and deserializing ItemStacks, this ensures that we are able to load the data
-	// again and recreate the original ItemStack (if we ever wish to).
-	// An alternative would be to log it in Json format, which may have better library support
-	// across languages.
-	// However, Gson (the Json library included with the Minecraft server and Bukkit) will not
-	// properly preserve certain data types by default (at least not if we don't provide detailed
-	// custom deserializers for every type of data that we may want to deserialize, or a
-	// deserializer that replicates Yaml's parsing of certain primitive types, which is actually not
-	// that easily possible): For instance, if the numeric data type of a loaded Json number is
-	// unknown, Gson loads it as a double by default (without there being an easy way to change
-	// that). But since some parts of Bukkit's ItemStack deserialization have strict expectations
-	// regarding the type of data to deserialize, the deserialization from Json may fail for this
-	// data.
 	private String getItemMetadata(UnmodifiableItemStack itemStack) {
 		assert itemStack != null;
 		if (!logItemMetadata) return ""; // Disabled
 
-		// If the logging of item metadata is enabled, we not only store the item's ItemMeta (if it
-		// has any), but also its data version. We therefore serialize the complete item stack here,
-		// but then remove the item's type and amount again, since these properties are already
-		// getting stored separately.
-		Map<String, Object> itemData = itemStack.serialize(); // Assert: Modifiable map.
-		itemData.remove("type");
-		itemData.remove("amount");
-		// In order to ensure single-line CSV records, we format the Yaml compactly:
-		String yaml = YamlUtils.toCompactYaml(itemData);
-		return yaml;
+		return TradeLogUtils.getItemMetadata(itemStack);
 	}
 
 	private String toCSVRecord(TradeRecord trade) {
@@ -560,7 +536,6 @@ public class CsvTradeLogger implements TradeLogger {
 			// instead of a regular file.
 		}
 
-		// TODO Use the file encoding specified inside the config? Or add a separate setting?
 		boolean done = false;
 		try (Writer writer = FileUtils.newUnbufferedWriter(
 				logFile,
