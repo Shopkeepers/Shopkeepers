@@ -228,7 +228,7 @@ public abstract class SingletonTask {
 
 		// If an async execution is currently executing, acquiring the lock will wait for it to
 		// finish.
-		// If the async execution has not taken the lock yet, then its is either still pending to be
+		// If the async execution has not taken the lock yet, then it is either still pending to be
 		// started by the Scheduler on the main thread (which we are currently blocking), or it has
 		// already been started but not acquired the lock yet. In the latter case there may or may
 		// not already exist a worker thread for it, and it may or may not have checked its

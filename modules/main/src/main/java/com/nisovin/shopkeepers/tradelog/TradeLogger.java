@@ -5,6 +5,12 @@ import com.nisovin.shopkeepers.tradelog.data.TradeRecord;
 public interface TradeLogger {
 
 	/**
+	 * This is invoked once to perform any required one-time setup prior to the first trades being
+	 * logged.
+	 */
+	public void setup();
+
+	/**
 	 * Logs the given {@link TradeRecord}.
 	 * <p>
 	 * The actual writing to storage might happen asynchronously or in batches. Use {@link #flush()}

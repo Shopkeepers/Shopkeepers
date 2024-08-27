@@ -1,6 +1,5 @@
 package com.nisovin.shopkeepers.tradelog.sqlite;
 
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -9,27 +8,23 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
-import com.nisovin.shopkeepers.config.Settings;
-import com.nisovin.shopkeepers.tradelog.TradeLogUtils;
-import com.nisovin.shopkeepers.tradelog.TradeLogger;
+import com.nisovin.shopkeepers.tradelog.TradeLogStorageType;
+import com.nisovin.shopkeepers.tradelog.base.AbstractFileTradeLogger;
 import com.nisovin.shopkeepers.tradelog.data.PlayerRecord;
 import com.nisovin.shopkeepers.tradelog.data.ShopRecord;
 import com.nisovin.shopkeepers.tradelog.data.TradeRecord;
-import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
 
 /**
  * Logs trades to an SQLite database.
  */
-public class SQLiteTradeLogger implements TradeLogger {
+public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 
-	private static final String TRADE_LOGS_FOLDER = "trade-logs";
 	private static final String FILE_NAME = "trades.db";
 	private static final String TABLE_NAME = "trade";
 	// TODO SQlite has no data types (only storage classes). Also, we should probably not make
@@ -68,15 +63,13 @@ public class SQLiteTradeLogger implements TradeLogger {
 			+ "trade_count) "
 			+ "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-	private final Plugin plugin;
 	private final String connectionURL;
 
-	private final AtomicBoolean tableCreated = new AtomicBoolean(false);
+	private volatile @Nullable String setupFailureReason = null;
 
 	public SQLiteTradeLogger(Plugin plugin) {
-		Validate.notNull(plugin, "plugin is null");
-		this.plugin = plugin;
-		Path tradeLogsFolder = plugin.getDataFolder().toPath().resolve(TRADE_LOGS_FOLDER);
+		super(plugin, TradeLogStorageType.SQLITE);
+
 		this.connectionURL = "jdbc:sqlite:" + tradeLogsFolder.resolve(FILE_NAME);
 
 		this.createTable();
@@ -86,99 +79,125 @@ public class SQLiteTradeLogger implements TradeLogger {
 		return DriverManager.getConnection(connectionURL);
 	}
 
-	private void createTable() {
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-			try (	Connection connection = getConnection();
-					Statement statement = connection.createStatement()) {
-				statement.execute(CREATE_TABLE);
-				tableCreated.set(true);
-			} catch (SQLException e) {
-				Log.severe("Could not create trades table. Trades won't be logged.", e);
-			}
-		});
+	@Override
+	protected void asyncSetup() {
+		super.asyncSetup();
+
+		this.createTable();
 	}
 
 	@Override
-	public void logTrade(TradeRecord trade) {
-		// TODO Batch the incoming trades and commit them once the setup is done.
-		if (!tableCreated.get()) {
-			return;
+	protected void postSetup() {
+		var setupFailureReason = this.setupFailureReason;
+		if (setupFailureReason != null) {
+			this.disable(setupFailureReason);
+		}
+	}
+
+	private void createTable() {
+		try (	Connection connection = getConnection();
+				Statement statement = connection.createStatement()) {
+			statement.execute(CREATE_TABLE);
+		} catch (SQLException e) {
+			setupFailureReason = "Could not create table '" + TABLE_NAME + "'.";
+			Log.severe(logPrefix + setupFailureReason, e);
+		}
+	}
+
+	@Override
+	protected void writeTrades(SaveContext saveContext) throws Exception {
+		TradeRecord trade = saveContext.getNextUnsavedTrade();
+		if (trade == null) return; // There are no unsaved trades
+
+		boolean done = false;
+		// TODO Keep the connection open? Cache the PreparedStatement?
+		try (	Connection connection = this.getConnection();
+				PreparedStatement insertStatement = connection.prepareStatement(INSERT_TRADE)) {
+			do {
+				this.insertTrade(connection, insertStatement, trade);
+
+				// Trade successfully saved:
+				saveContext.onTradeSuccessfullySaved();
+
+				// Get the next trade to insert:
+				trade = saveContext.getNextUnsavedTrade();
+				if (trade == null) break; // There are no more trades to save
+			} while (true);
+
+			// We are about to close the connection:
+			done = true;
+		} catch (SQLException e) {
+			if (!done) {
+				throw e;
+			} else {
+				// Since all inserts completed successfully, we assume that the trades have been
+				// successfully saved. We therefore ignore any exceptions raised during the closing
+				// of the connection: The exception is still logged, but it does not trigger a retry
+				// of the trade log attempt.
+				Log.severe("Failed to close the database connection!", e);
+			}
+		}
+	}
+
+	private void insertTrade(
+			Connection connection,
+			PreparedStatement insertSatement,
+			TradeRecord trade
+	) throws SQLException {
+		Instant timestamp = trade.getTimestamp();
+		PlayerRecord player = trade.getPlayer();
+
+		ShopRecord shop = trade.getShop();
+		PlayerRecord shopOwner = shop.getOwner();
+		@Nullable String shopOwnerId = null;
+		@Nullable String shopOwnerName = null;
+		if (shopOwner != null) {
+			shopOwnerId = shopOwner.getUniqueId().toString();
+			shopOwnerName = shopOwner.getName();
 		}
 
-		// TODO Keep the connection open? Cache the PreparedStatement?
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-			try (	Connection connection = this.getConnection();
-					PreparedStatement statement = connection.prepareStatement(INSERT_TRADE)) {
-				Instant timestamp = trade.getTimestamp();
-				PlayerRecord player = trade.getPlayer();
+		UnmodifiableItemStack resultItem = trade.getResultItem();
+		UnmodifiableItemStack item1 = trade.getItem1();
+		UnmodifiableItemStack item2 = trade.getItem2(); // Can be null
+		@Nullable String item2Type = null;
+		@Nullable Integer item2Amount = null;
+		@Nullable String item2Metadata = null;
+		if (item2 != null) {
+			item2Type = item2.getType().name();
+			item2Amount = item2.getAmount();
+			item2Metadata = this.getItemMetadata(item2);
+		}
 
-				ShopRecord shop = trade.getShop();
-				PlayerRecord shopOwner = shop.getOwner();
-				@Nullable String shopOwnerId = null;
-				@Nullable String shopOwnerName = null;
-				if (shopOwner != null) {
-					shopOwnerId = shopOwner.getUniqueId().toString();
-					shopOwnerName = shopOwner.getName();
-				}
+		// TODO Store as UTC timestamp instead of as OffsetDateTime
+		insertSatement.setObject(1, timestamp.atOffset(ZoneOffset.UTC)); // Time in UTC
 
-				UnmodifiableItemStack resultItem = trade.getResultItem();
-				UnmodifiableItemStack item1 = trade.getItem1();
-				UnmodifiableItemStack item2 = trade.getItem2(); // Can be null
-				@Nullable String item2Type = null;
-				@Nullable Integer item2Amount = null;
-				@Nullable String item2Metadata = null;
-				if (item2 != null) {
-					item2Type = item2.getType().name();
-					item2Amount = item2.getAmount();
-					item2Metadata = this.getItemMetadata(item2);
-				}
+		insertSatement.setString(2, player.getUniqueId().toString()); // player_uuid
+		insertSatement.setString(3, player.getName()); // player_name
 
-				// TODO Store as UTC timestamp instead of as OffsetDateTime
-				statement.setObject(1, timestamp.atOffset(ZoneOffset.UTC)); // Time in UTC
+		insertSatement.setString(4, shop.getUniqueId().toString()); // shop_uuid
+		insertSatement.setString(5, shop.getTypeId()); // shop_type
+		insertSatement.setString(6, shop.getWorldName()); // shop_world
+		insertSatement.setInt(7, shop.getX()); // shop_x
+		insertSatement.setInt(8, shop.getY()); // shop_y
+		insertSatement.setInt(9, shop.getZ()); // shop_z
 
-				statement.setString(2, player.getUniqueId().toString()); // player_uuid
-				statement.setString(3, player.getName()); // player_name
+		insertSatement.setString(10, shopOwnerId); // shop_owner_uuid
+		insertSatement.setString(11, shopOwnerName); // shop_owner_name
 
-				statement.setString(4, shop.getUniqueId().toString()); // shop_uuid
-				statement.setString(5, shop.getTypeId()); // shop_type
-				statement.setString(6, shop.getWorldName()); // shop_world
-				statement.setInt(7, shop.getX()); // shop_x
-				statement.setInt(8, shop.getY()); // shop_y
-				statement.setInt(9, shop.getZ()); // shop_z
+		insertSatement.setString(12, item1.getType().name()); // item_1_type
+		insertSatement.setInt(13, item1.getAmount()); // item_1_amount
+		insertSatement.setString(14, this.getItemMetadata(item1)); // item_1_metadata
 
-				statement.setString(10, shopOwnerId); // shop_owner_uuid
-				statement.setString(11, shopOwnerName); // shop_owner_name
+		insertSatement.setString(15, item2Type); // item_2_type
+		insertSatement.setObject(16, item2Amount, Types.TINYINT); // item_2_amount
+		insertSatement.setString(17, item2Metadata); // item_2_metadata
 
-				statement.setString(12, item1.getType().name()); // item_1_type
-				statement.setInt(13, item1.getAmount()); // item_1_amount
-				statement.setString(14, this.getItemMetadata(item1)); // item_1_metadata
+		insertSatement.setString(18, resultItem.getType().name()); // result_item_type
+		insertSatement.setInt(19, resultItem.getAmount()); // result_item_amount
+		insertSatement.setString(20, this.getItemMetadata(resultItem)); // result_item_metadata
 
-				statement.setString(15, item2Type); // item_2_type
-				statement.setObject(16, item2Amount, Types.TINYINT); // item_2_amount
-				statement.setString(17, item2Metadata); // item_2_metadata
+		insertSatement.setInt(21, trade.getTradeCount()); // trade_count
 
-				statement.setString(18, resultItem.getType().name()); // result_item_type
-				statement.setInt(19, resultItem.getAmount()); // result_item_amount
-				statement.setString(20, this.getItemMetadata(resultItem)); // result_item_metadata
-
-				statement.setInt(21, trade.getTradeCount()); // trade_count
-				statement.executeUpdate();
-			} catch (SQLException e) {
-				Log.severe("Could not not log trade.", e);
-			}
-		});
-	}
-
-	@Override
-	public void flush() {
-		// Not needed: We commit all trades immediately.
-		// TODO Actually: Await any currently in-progress async tasks.
-	}
-
-	private String getItemMetadata(UnmodifiableItemStack itemStack) {
-		assert itemStack != null;
-		if (Settings.logItemMetadata) return ""; // Disabled
-
-		return TradeLogUtils.getItemMetadata(itemStack);
+		insertSatement.executeUpdate();
 	}
 }

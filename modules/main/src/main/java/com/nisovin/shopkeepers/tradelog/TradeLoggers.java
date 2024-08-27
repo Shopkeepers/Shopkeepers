@@ -68,6 +68,8 @@ public class TradeLoggers implements Listener {
 			break;
 		}
 
+		loggers.forEach(TradeLogger::setup);
+
 		Bukkit.getPluginManager().registerEvents(this, plugin);
 	}
 
