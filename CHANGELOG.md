@@ -4,6 +4,12 @@ Date format: (YYYY-MM-DD)
 ## v2.23.1 (TBA)
 ### Supported MC versions: 1.21.1, 1.21, 1.20.6
 
+* Add SQLite based trade log storage. (Thanks @akshualy)
+  * In the future, this can be used for additional features, such as offline trade notifications.
+  * Config: Add new setting `trade-log-storage`. Available values: `DISABLED` (default), `SQLITE` (recommended), `CSV`.
+  * Config: Add migration from the old `log-trades-to-csv` to the new `trade-log-storage` setting.
+  * Only one storage type can be selected: Logging trades to both CSV and the SQLite is not supported.
+  * Internal: Refactors to share most of the logic between the old CSV and the new SQLite trade loggers.
 * Config: Remove `file-encoding` setting: We use Bukkit to load the save data, which always expects the data to be UTF-8 encoded.
 
 ## v2.23.0 (2024-08-11)
