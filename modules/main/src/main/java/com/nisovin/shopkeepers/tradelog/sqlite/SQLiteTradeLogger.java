@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
-import java.time.ZoneOffset;
 
 import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -27,24 +26,25 @@ public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 
 	private static final String FILE_NAME = "trades.db";
 	private static final String TABLE_NAME = "trade";
-	// TODO SQlite has no data types (only storage classes). Also, we should probably not make
-	// assumptions here, e.g. about the max world name length.
+	// Note: SQLite does not have rigid data types, but storage classes and type affinity. The data
+	// types specified here are not enforced by SQLite or us, but only used to document the expected
+	// structure of the data.
 	private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
-			+ "time DATETIME NOT NULL, "
+			+ "timestamp VARCHAR(30) NOT NULL, " // ISO 8601 UTC date time with fractional seconds
 			+ "player_uuid CHARACTER(36) NOT NULL, "
 			+ "player_name VARCHAR(16) NOT NULL, "
-			+ "shop_uuid VARCHAR(36) NOT NULL, "
+			+ "shop_uuid CHARACTER(36) NOT NULL, "
 			+ "shop_type VARCHAR(32) NOT NULL, "
-			+ "shop_world VARCHAR(30), " // Null for virtual shops
-			+ "shop_x INTEGER NOT NULL, "
+			+ "shop_world VARCHAR(32), " // Null for virtual shops
+			+ "shop_x INTEGER NOT NULL, " // 0 for virtual shops
 			+ "shop_y INTEGER NOT NULL, "
 			+ "shop_z INTEGER NOT NULL, "
-			+ "shop_owner_uuid CHARACTER(36), " // Shop owner can be null for admin shops
+			+ "shop_owner_uuid CHARACTER(36), " // Shop owner, null for admin shops
 			+ "shop_owner_name VARCHAR(16), "
 			+ "item_1_type VARCHAR(64) NOT NULL, "
 			+ "item_1_amount TINYINT UNSIGNED NOT NULL, "
-			+ "item_1_metadata TEXT NOT NULL, "
-			+ "item_2_type VARCHAR(64), " // Second item is optional and thus can be null
+			+ "item_1_metadata TEXT NOT NULL, " // Empty string if the item has no metadata
+			+ "item_2_type VARCHAR(64), " // Second item is optional and can thus be null
 			+ "item_2_amount TINYINT UNSIGNED, "
 			+ "item_2_metadata TEXT, "
 			+ "result_item_type VARCHAR(64) NOT NULL, "
@@ -53,7 +53,7 @@ public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 			+ "trade_count SMALLINT UNSIGNED NOT NULL"
 			+ ");";
 	private static final String INSERT_TRADE = "INSERT INTO " + TABLE_NAME
-			+ "(time, "
+			+ "(timestamp, "
 			+ "player_uuid, player_name, "
 			+ "shop_uuid, shop_type, shop_world, shop_x, shop_y, shop_z, "
 			+ "shop_owner_uuid, shop_owner_name, "
@@ -114,7 +114,7 @@ public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 		try (	Connection connection = this.getConnection();
 				PreparedStatement insertStatement = connection.prepareStatement(INSERT_TRADE)) {
 			do {
-				this.insertTrade(connection, insertStatement, trade);
+				this.insertTrade(insertStatement, trade);
 
 				// Trade successfully saved:
 				saveContext.onTradeSuccessfullySaved();
@@ -139,11 +139,8 @@ public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 		}
 	}
 
-	private void insertTrade(
-			Connection connection,
-			PreparedStatement insertSatement,
-			TradeRecord trade
-	) throws SQLException {
+	private void insertTrade(PreparedStatement insertStatement, TradeRecord trade)
+			throws SQLException {
 		Instant timestamp = trade.getTimestamp();
 		PlayerRecord player = trade.getPlayer();
 
@@ -168,36 +165,35 @@ public class SQLiteTradeLogger extends AbstractFileTradeLogger {
 			item2Metadata = this.getItemMetadata(item2);
 		}
 
-		// TODO Store as UTC timestamp instead of as OffsetDateTime
-		insertSatement.setObject(1, timestamp.atOffset(ZoneOffset.UTC)); // Time in UTC
+		insertStatement.setString(1, timestamp.toString()); // timestamp as ISO UTC
 
-		insertSatement.setString(2, player.getUniqueId().toString()); // player_uuid
-		insertSatement.setString(3, player.getName()); // player_name
+		insertStatement.setString(2, player.getUniqueId().toString()); // player_uuid
+		insertStatement.setString(3, player.getName()); // player_name
 
-		insertSatement.setString(4, shop.getUniqueId().toString()); // shop_uuid
-		insertSatement.setString(5, shop.getTypeId()); // shop_type
-		insertSatement.setString(6, shop.getWorldName()); // shop_world
-		insertSatement.setInt(7, shop.getX()); // shop_x
-		insertSatement.setInt(8, shop.getY()); // shop_y
-		insertSatement.setInt(9, shop.getZ()); // shop_z
+		insertStatement.setString(4, shop.getUniqueId().toString()); // shop_uuid
+		insertStatement.setString(5, shop.getTypeId()); // shop_type
+		insertStatement.setString(6, shop.getWorldName()); // shop_world
+		insertStatement.setInt(7, shop.getX()); // shop_x
+		insertStatement.setInt(8, shop.getY()); // shop_y
+		insertStatement.setInt(9, shop.getZ()); // shop_z
 
-		insertSatement.setString(10, shopOwnerId); // shop_owner_uuid
-		insertSatement.setString(11, shopOwnerName); // shop_owner_name
+		insertStatement.setString(10, shopOwnerId); // shop_owner_uuid
+		insertStatement.setString(11, shopOwnerName); // shop_owner_name
 
-		insertSatement.setString(12, item1.getType().name()); // item_1_type
-		insertSatement.setInt(13, item1.getAmount()); // item_1_amount
-		insertSatement.setString(14, this.getItemMetadata(item1)); // item_1_metadata
+		insertStatement.setString(12, item1.getType().name()); // item_1_type
+		insertStatement.setInt(13, item1.getAmount()); // item_1_amount
+		insertStatement.setString(14, this.getItemMetadata(item1)); // item_1_metadata
 
-		insertSatement.setString(15, item2Type); // item_2_type
-		insertSatement.setObject(16, item2Amount, Types.TINYINT); // item_2_amount
-		insertSatement.setString(17, item2Metadata); // item_2_metadata
+		insertStatement.setString(15, item2Type); // item_2_type
+		insertStatement.setObject(16, item2Amount, Types.TINYINT); // item_2_amount
+		insertStatement.setString(17, item2Metadata); // item_2_metadata
 
-		insertSatement.setString(18, resultItem.getType().name()); // result_item_type
-		insertSatement.setInt(19, resultItem.getAmount()); // result_item_amount
-		insertSatement.setString(20, this.getItemMetadata(resultItem)); // result_item_metadata
+		insertStatement.setString(18, resultItem.getType().name()); // result_item_type
+		insertStatement.setInt(19, resultItem.getAmount()); // result_item_amount
+		insertStatement.setString(20, this.getItemMetadata(resultItem)); // result_item_metadata
 
-		insertSatement.setInt(21, trade.getTradeCount()); // trade_count
+		insertStatement.setInt(21, trade.getTradeCount()); // trade_count
 
-		insertSatement.executeUpdate();
+		insertStatement.executeUpdate();
 	}
 }
