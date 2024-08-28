@@ -19,7 +19,8 @@ public class ConfigMigration8 implements ConfigMigration {
 		addSetting(
 				configData,
 				"trade-log-storage",
-				logTradesToCsv ? TradeLogStorageType.CSV : TradeLogStorageType.DISABLED
+				logTradesToCsv ? TradeLogStorageType.CSV.name()
+						: TradeLogStorageType.DISABLED.name()
 		);
 	}
 }
