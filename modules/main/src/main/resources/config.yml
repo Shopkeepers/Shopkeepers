@@ -216,6 +216,12 @@ protect-containers: true
 # or pushing those minecarts into a protected region.
 # Item movement will always be allowed if the container protection is disabled.
 prevent-item-movement: true
+# Whether to prevent copper golems from interacting with protected copper chest
+# shop containers. If you disable this, you or your players will have to somehow
+# else protect the copper chest shop containers from unauthorized access by
+# players placing copper golems nearby. This setting has no effect if the
+# container protection is disabled.
+prevent-copper-golem-access: true
 # Whether to delete player shopkeepers when their container is broken.
 delete-shopkeeper-on-break-container: false
 

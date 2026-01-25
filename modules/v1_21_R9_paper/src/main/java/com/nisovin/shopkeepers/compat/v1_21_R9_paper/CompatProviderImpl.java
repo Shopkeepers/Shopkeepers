@@ -32,6 +32,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
 import org.bukkit.entity.Villager;
 import org.bukkit.entity.ZombieNautilus;
+import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MainHand;
@@ -43,8 +44,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Dynamic;
+import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.compat.CompatProvider;
+import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.shopobjects.entity.base.EntityAI;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
@@ -80,6 +83,9 @@ import net.minecraft.world.item.trading.MerchantOffers;
 
 public final class CompatProviderImpl implements CompatProvider {
 
+	// Public static for access in tests.
+	public static final String VERSION_ID = "1_21_R9_paper";
+
 	private static final Map<Class<?>, RegistryKey<?>> CLASS_TO_REGISTRY_KEY = new HashMap<>();
 
 	static {
@@ -110,18 +116,34 @@ public final class CompatProviderImpl implements CompatProvider {
 		}
 	}
 
+	private final CopperChestProtectionListener copperChestProtectionListener;
+
 	private final TagParser<Tag> tagParser = Unsafe.castNonNull(TagParser.create(NbtOps.INSTANCE));
 
 	private final Field craftItemStackHandleField;
 
 	public CompatProviderImpl() throws Exception {
+		copperChestProtectionListener = new CopperChestProtectionListener(SKShopkeepersPlugin.getInstance());
 		craftItemStackHandleField = CraftItemStack.class.getDeclaredField("handle");
 		craftItemStackHandleField.setAccessible(true);
 	}
 
 	@Override
 	public String getVersionId() {
-		return "1_21_R9_paper";
+		return VERSION_ID;
+	}
+
+	@Override
+	public void onEnable() {
+		var plugin = SKShopkeepersPlugin.getInstance();
+		if (Settings.protectContainers && Settings.preventCopperGolemAccess) {
+			Bukkit.getPluginManager().registerEvents(copperChestProtectionListener, plugin);
+		}
+	}
+
+	@Override
+	public void onDisable() {
+		HandlerList.unregisterAll(copperChestProtectionListener);
 	}
 
 	public Class<?> getCraftMagicNumbersClass() {

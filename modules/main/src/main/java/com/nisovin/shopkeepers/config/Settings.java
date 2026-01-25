@@ -119,6 +119,7 @@ public class Settings extends Config {
 
 	public static boolean protectContainers = true;
 	public static boolean preventItemMovement = true;
+	public static boolean preventCopperGolemAccess = true;
 	public static boolean deleteShopkeeperOnBreakContainer = false;
 
 	public static int playerShopkeeperInactiveDays = 0;

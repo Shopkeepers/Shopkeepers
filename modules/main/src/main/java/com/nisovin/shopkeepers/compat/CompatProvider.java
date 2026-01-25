@@ -56,10 +56,14 @@ public interface CompatProvider {
 
 	// This does not return null.
 	public default CompatVersion getCompatVersion() {
-		CompatVersion compatVersion = Compat.getCompatVersion(this.getVersionId());
+		return getCompatVersion(this.getVersionId());
+	}
+
+	public static CompatVersion getCompatVersion(String versionId) {
+		CompatVersion compatVersion = Compat.getCompatVersion(versionId);
 		// Not finding the compat version indicates a bug.
 		return Validate.State.notNull(compatVersion, "Could not find CompatVersion for '"
-				+ this.getVersionId() + "'!");
+				+ versionId + "'!");
 	}
 
 	public void overwriteLivingEntityAI(LivingEntity entity);
