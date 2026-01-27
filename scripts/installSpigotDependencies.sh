@@ -20,7 +20,7 @@ buildSpigotIfMissing() {
   fi
   if [ "$2" = "remapped" ]; then classifier="-remapped-mojang"; fi
 
-  jarPath=$"$HOME/.m2/repository/org/bukkit/craftbukkit/$1-R0.1-SNAPSHOT/craftbukkit-$1-R0.1-SNAPSHOT${classifier}.jar"
+  jarPath=$"$HOME/.m2/repository/org/bukkit/craftbukkit/$1-SNAPSHOT/craftbukkit-$1-SNAPSHOT${classifier}.jar"
   if [ -f "${jarPath}" ]; then
     installedImplementationVersion=$(unzip -p "${jarPath}" 'META-INF/MANIFEST.MF' | grep -oP '(?<=^Implementation-Version: )[^\n\r]*')
     installedBuildNumber=$(echo "${installedImplementationVersion}" | grep -oP '^\d+(?=-)')
@@ -59,11 +59,11 @@ source installJDK.sh 21
 #    exit 0
 #fi
 
-buildSpigotIfMissing 1.21.5 remapped
-buildSpigotIfMissing 1.21.6 remapped
+buildSpigotIfMissing 1.21.5-R0.1 remapped 1.21.5
+buildSpigotIfMissing 1.21.6-R0.1 remapped 1.21.6
 # Note: 1.21.7 was replaced by 1.21.8 and can no longer be built. But the server is identical to 1.21.8.
-buildSpigotIfMissing 1.21.8 remapped
-buildSpigotIfMissing 1.21.10 remapped
-buildSpigotIfMissing 1.21.11 remapped
+buildSpigotIfMissing 1.21.8-R0.1 remapped 1.21.8
+buildSpigotIfMissing 1.21.10-R0.1 remapped 1.21.10
+buildSpigotIfMissing 1.21.11-R0.2 remapped 1.21.11
 
 popd
