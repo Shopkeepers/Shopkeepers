@@ -66,6 +66,7 @@ Date format: (YYYY-MM-DD)
 * Internal: Update code to make use of the new 1.21.5 Bukkit base version.
 * Internal: Refactors to simplify adding entity-based shopkeepers for non-living entity types.
 * Build: Add additional compilation step targeting the Paper API to verify that only Paper-compatible parts of the Bukkit API are used in the plugin's API and main modules.
+* Build: Bump the 1.21.11 Bukkit dependency to 1.21.11-R0.2. R0.1 should also still work.
 
 **Message changes:**  
 * Changed `creation-item-selected`.
