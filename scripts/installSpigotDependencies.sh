@@ -3,8 +3,9 @@
 pushd "$(dirname "$BASH_SOURCE")"
 
 # $1: Spigot MC version to build
-# $2: "remapped" to check for a remapped server jar
-# $3: Optional: The specific Spigot build number to build. If unset, we use $1 for this.
+# $2: The Spigot version revision to check for in the cache.
+# $3: "remapped" to check for a remapped server jar
+# $4: Optional: The specific Spigot build number to build. If unset, we use $1 for this.
 buildSpigotIfMissing() {
   local buildVersion="$1"
   local versionString="$1"
@@ -14,20 +15,20 @@ buildSpigotIfMissing() {
   local installedBuildNumber=""
   local build="yes"
 
-  if [ -n "$3" ]; then
-    buildVersion="$3"
-    versionString="$1 ($3)"
+  if [ -n "$4" ]; then
+    buildVersion="$4"
+    versionString="$1 ($4)"
   fi
-  if [ "$2" = "remapped" ]; then classifier="-remapped-mojang"; fi
+  if [ "$3" = "remapped" ]; then classifier="-remapped-mojang"; fi
 
-  jarPath=$"$HOME/.m2/repository/org/bukkit/craftbukkit/$1-SNAPSHOT/craftbukkit-$1-SNAPSHOT${classifier}.jar"
+  jarPath=$"$HOME/.m2/repository/org/bukkit/craftbukkit/$1-$2-SNAPSHOT/craftbukkit-$1-$2-SNAPSHOT${classifier}.jar"
   if [ -f "${jarPath}" ]; then
     installedImplementationVersion=$(unzip -p "${jarPath}" 'META-INF/MANIFEST.MF' | grep -oP '(?<=^Implementation-Version: )[^\n\r]*')
     installedBuildNumber=$(echo "${installedImplementationVersion}" | grep -oP '^\d+(?=-)')
     echo "Maven repository: Found Spigot $1 (${installedImplementationVersion}) (#${installedBuildNumber})"
 
-    if [ -n "$3" ]; then
-      if [ "${installedBuildNumber}" = "$3" ]; then
+    if [ -n "$4" ]; then
+      if [ "${installedBuildNumber}" = "$4" ]; then
         build="no"
       fi
     else
@@ -59,11 +60,11 @@ source installJDK.sh 21
 #    exit 0
 #fi
 
-buildSpigotIfMissing 1.21.5-R0.1 remapped 1.21.5
-buildSpigotIfMissing 1.21.6-R0.1 remapped 1.21.6
+buildSpigotIfMissing 1.21.5 R0.1 remapped
+buildSpigotIfMissing 1.21.6 R0.1 remapped
 # Note: 1.21.7 was replaced by 1.21.8 and can no longer be built. But the server is identical to 1.21.8.
-buildSpigotIfMissing 1.21.8-R0.1 remapped 1.21.8
-buildSpigotIfMissing 1.21.10-R0.1 remapped 1.21.10
-buildSpigotIfMissing 1.21.11-R0.2 remapped 1.21.11
+buildSpigotIfMissing 1.21.8 R0.1 remapped
+buildSpigotIfMissing 1.21.10 R0.1 remapped
+buildSpigotIfMissing 1.21.11 R0.2 remapped
 
 popd
