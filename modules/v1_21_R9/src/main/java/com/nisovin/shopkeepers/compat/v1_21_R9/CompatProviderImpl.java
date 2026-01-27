@@ -17,7 +17,6 @@ import org.bukkit.craftbukkit.v1_21_R7.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_21_R7.entity.CraftVillager;
 import org.bukkit.craftbukkit.v1_21_R7.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_21_R7.inventory.CraftMerchant;
-import org.bukkit.craftbukkit.v1_21_R7.util.CraftMagicNumbers;
 import org.bukkit.entity.AbstractVillager;
 import org.bukkit.entity.CopperGolem;
 import org.bukkit.entity.Entity;
@@ -31,6 +30,7 @@ import org.bukkit.entity.Pose;
 import org.bukkit.entity.Villager;
 import org.bukkit.entity.ZombieNautilus;
 import org.bukkit.entity.memory.MemoryKey;
+import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MainHand;
@@ -43,8 +43,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Dynamic;
+import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.compat.CompatProvider;
+import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.shopobjects.entity.base.EntityAI;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
@@ -53,6 +55,7 @@ import com.nisovin.shopkeepers.util.data.container.DataContainer;
 import com.nisovin.shopkeepers.util.inventory.ItemStackComponentsData;
 import com.nisovin.shopkeepers.util.inventory.ItemStackMetaTag;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
+import com.nisovin.shopkeepers.util.java.ClassUtils;
 import com.nisovin.shopkeepers.util.java.EnumUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
@@ -74,22 +77,40 @@ import net.minecraft.world.item.trading.MerchantOffers;
 
 public final class CompatProviderImpl implements CompatProvider {
 
+	// Public static for access in tests.
+	public static final String VERSION_ID = "1_21_R9";
+
+	private final CopperChestProtectionListener copperChestProtectionListener;
+
 	private final TagParser<Tag> tagParser = Unsafe.castNonNull(TagParser.create(NbtOps.INSTANCE));
 
 	private final Field craftItemStackHandleField;
 
 	public CompatProviderImpl() throws Exception {
+		copperChestProtectionListener = new CopperChestProtectionListener(SKShopkeepersPlugin.getInstance());
 		craftItemStackHandleField = CraftItemStack.class.getDeclaredField("handle");
 		craftItemStackHandleField.setAccessible(true);
 	}
 
 	@Override
 	public String getVersionId() {
-		return "1_21_R9";
+		return VERSION_ID;
 	}
 
-	public Class<?> getCraftMagicNumbersClass() {
-		return CraftMagicNumbers.class;
+	@Override
+	public void onEnable() {
+		var plugin = SKShopkeepersPlugin.getInstance();
+		// 1.21.11-R0.1 did not yet have the event.
+		if (Settings.protectContainers
+				&& Settings.preventCopperGolemAccess
+				&& ClassUtils.getClassOrNull("org.bukkit.event.entity.EntityTargetBlockEvent") != null) {
+			Bukkit.getPluginManager().registerEvents(copperChestProtectionListener, plugin);
+		}
+	}
+
+	@Override
+	public void onDisable() {
+		HandlerList.unregisterAll(copperChestProtectionListener);
 	}
 
 	@Override

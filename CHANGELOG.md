@@ -60,7 +60,7 @@ Date format: (YYYY-MM-DD)
 * Fix: Bat shopkeepers are awake now unless they have a solid block above them.
 * Fix: Prevent copper golems from accessing protected copper chest shop containers.
   * Config: Add setting `prevent-copper-golem-access` (default: `true`) that controls whether to prevent copper golems from accessing protected copper chest shop containers.
-  * Note: This only works on Paper servers currently, because Spigot is missing the necessary API for this. On Spigot, players will need to place their copper shop chests somewhere where they cannot be accessed by nearby copper golems placed by other players.
+  * Note: On Spigot servers, this is only supported on the very latest builds. On older 1.21.9 to 1.21.11 server versions, players will need to place their copper shop chests somewhere where they cannot be accessed by nearby copper golems placed by other players.
 * Server assumption tests: Extend the tested item data.
 * API: Add `SelectableTypeRegistry#canBeSelected`.
 * Internal: Update code to make use of the new 1.21.5 Bukkit base version.
