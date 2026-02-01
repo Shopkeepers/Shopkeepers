@@ -30,7 +30,8 @@ public class CopperChestProtectionListener implements Listener {
 			return;
 		}
 
+		// Set the target to null instead of canceling the event to allow the copper golem to
+		// continue to target other chests:
 		e.setTarget(null);
-		e.setCancelled(true);
 	}
 }
