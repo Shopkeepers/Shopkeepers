@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -84,7 +85,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	protected final BaseEntityShopObjectCreationContext context;
 	private final BaseEntityShopObjectType<?> shopObjectType;
 
-	private @Nullable E entity;
+	private volatile @Nullable E entity;
 	private @Nullable Location lastSpawnLocation = null;
 	private int respawnAttempts = 0;
 	private boolean debuggingSpawn = false;
@@ -238,21 +239,27 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	/**
 	 * Any clean up that needs to happen for the entity. The entity might not be fully setup yet.
 	 */
-	protected void cleanUpEntity() {
+	protected void cleanUpEntity(@Nullable Runnable callback) {
 		Entity entity = Unsafe.assertNonNull(this.entity);
 
-		// Disable AI:
-		this.cleanupAI();
+		SchedulerUtils.runTaskOrOmit(entity, () -> {
+			// Disable AI:
+			this.cleanupAI();
 
-		// Remove metadata again:
-		ShopkeeperMetadata.remove(entity);
+			// Remove metadata again:
+			ShopkeeperMetadata.remove(entity);
 
-		// Remove the entity (if it hasn't been removed already):
-		if (!entity.isDead()) {
-			entity.remove();
-		}
+			// Remove the entity (if it hasn't been removed already):
+			if (!entity.isDead()) {
+				entity.remove();
+			}
 
-		this.entity = null;
+			this.entity = null;
+
+			if (callback != null) {
+				callback.run();
+			}
+		});
 	}
 
 	@SuppressWarnings("unchecked")
@@ -361,7 +368,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 					+ ", debug -> " + debug);
 
 			// Reset the entity:
-			this.cleanUpEntity();
+			this.cleanUpEntity(null);
 
 			// Debug entity spawning:
 			if (debug) {
@@ -450,11 +457,12 @@ public abstract class BaseEntityShopObject<E extends Entity>
 		if (entity == null) return;
 
 		// Clean up entity:
-		this.cleanUpEntity();
-		lastSpawnLocation = null;
+		this.cleanUpEntity(() -> {
+			lastSpawnLocation = null;
 
-		// Inform about the object id change:
-		this.onIdChanged();
+			// Inform about the object id change:
+			this.onIdChanged();
+		});
 	}
 
 	@Override

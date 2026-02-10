@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
@@ -332,10 +333,11 @@ public class EntityAI implements Listener {
 		activeGravityChunksCount = 0;
 		activeGravityEntityCount = 0;
 
-		totalTimings.reset();
-		activationTimings.reset();
-		gravityTimings.reset();
-		aiTimings.reset();
+		// TODO: folia - Fix timings
+//		totalTimings.reset();
+//		activationTimings.reset();
+//		gravityTimings.reset();
+//		aiTimings.reset();
 	}
 
 	public int getEntityCount() {
@@ -414,9 +416,10 @@ public class EntityAI implements Listener {
 			currentlyRunning = true;
 
 			// Start timings:
-			totalTimings.start();
-			gravityTimings.startPaused();
-			aiTimings.startPaused();
+			// TODO: folia - Fix timings
+//			totalTimings.start();
+//			gravityTimings.startPaused();
+//			aiTimings.startPaused();
 
 			// Freshly determine active chunks/entities (near players) every AI_ACTIVATION_TICK_RATE
 			// ticks:
@@ -427,10 +430,12 @@ public class EntityAI implements Listener {
 			// Process entities:
 			processEntities();
 
+
 			// Stop timings:
-			totalTimings.stop();
-			gravityTimings.stop();
-			aiTimings.stop();
+			// TODO: folia - Fix timings
+//			totalTimings.stop();
+//			gravityTimings.stop();
+//			aiTimings.stop();
 
 			currentlyRunning = false;
 		}
@@ -439,7 +444,7 @@ public class EntityAI implements Listener {
 	// CHUNK ACTIVATIONS
 
 	private void updateChunkActivations() {
-		activationTimings.start();
+		//activationTimings.start(); // TODO: folia - Fix timings
 
 		// Deactivate all chunks:
 		chunks.values().forEach(chunkData -> {
@@ -457,7 +462,7 @@ public class EntityAI implements Listener {
 			});
 		}
 
-		activationTimings.stop();
+		//activationTimings.stop(); // TODO: folia - Fix timings
 	}
 
 	// Note: This only activates chunks around the player, but does not deactivate any chunks that
@@ -566,22 +571,20 @@ public class EntityAI implements Listener {
 		activeGravityEntityCount = 0;
 
 		if (activeAIChunksCount == 0 && activeGravityChunksCount == 0) {
-			// There is no need to process any entities if there are no chunks with active AI or
-			// gravity:
 			return;
 		}
 
-		chunks.values().forEach(this::processEntities);
+		chunks.values().forEach(chunkData -> processEntities(chunkData));
 	}
+
 
 	private void processEntities(ChunkData chunkData) {
 		assert chunkData != null;
 		if (!chunkData.activeGravity && !chunkData.activeAI) {
-			// There is no need to process the chunk's entities:
 			return;
 		}
 
-		chunkData.entities.forEach(this::processEntity);
+		chunkData.entities.forEach(entityData -> processEntity(entityData));
 	}
 
 	private void processEntity(EntityData entityData) {
@@ -590,6 +593,7 @@ public class EntityAI implements Listener {
 		// Unexpected: The shop object is supposed to unregister itself from the AI system when it
 		// despawns its entity.
 		if (entity == null) return;
+
 		SchedulerUtils.runTaskOrOmit(entity, () -> {
 			// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
 			// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
@@ -608,20 +612,20 @@ public class EntityAI implements Listener {
 			ChunkData chunkData = entityData.chunkData;
 
 			// Process gravity:
-			gravityTimings.resume();
+			//gravityTimings.resume(); // TODO: folia - Fix timings
 			if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
 				activeGravityEntityCount++;
 				this.processGravity(entityData);
 			}
-			gravityTimings.pause();
+			//gravityTimings.pause(); // TODO: folia - Fix timings
 
 			// Process AI:
-			aiTimings.resume();
+			// aiTimings.resume(); // TODO: folia - Fix timings
 			if (chunkData.activeAI) {
 				activeAIEntityCount++;
 				this.processAI(entityData);
 			}
-			aiTimings.pause();
+			//aiTimings.pause(); // TODO: folia - Fix timings
 		});
 	}
 
