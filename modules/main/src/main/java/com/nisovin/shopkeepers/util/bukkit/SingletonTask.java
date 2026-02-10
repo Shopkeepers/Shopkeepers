@@ -101,7 +101,7 @@ public abstract class SingletonTask {
 	 * @return <code>true</code> if an execution is in progress
 	 */
 	public final boolean isRunning() {
-		assert Bukkit.isPrimaryThread(); // TODO: folia
+		//assert Bukkit.isPrimaryThread(); // TODO: folia
 		return (state != State.NOT_RUNNING);
 	}
 
@@ -111,7 +111,7 @@ public abstract class SingletonTask {
 	 * @return <code>true</code> if there is an execution that is currently being post-processed
 	 */
 	public final boolean isPostProcessing() {
-		assert Bukkit.isPrimaryThread(); // TODO: folia
+		//assert Bukkit.isPrimaryThread(); // TODO: folia
 		return (state == State.SYNC_CALLBACK);
 	}
 
@@ -126,15 +126,15 @@ public abstract class SingletonTask {
 	}
 
 	private boolean isWithinSyncExecution() {
-		assert Bukkit.isPrimaryThread(); // TODO: folia
+		//assert Bukkit.isPrimaryThread(); // TODO: folia
 		return (state == State.PREPARING)
 				|| (asyncTask == null && state == State.EXECUTING)
 				|| (state == State.SYNC_CALLBACK);
 	}
 
 	private void validateMainThreadAndNotWithinExecution() {
-		Validate.State.isTrue(Bukkit.isPrimaryThread(), // TODO: folia
-				"This operation has to be called from the main thread!");
+//		Validate.State.isTrue(Bukkit.isPrimaryThread(), // TODO: folia
+//				"This operation has to be called from the main thread!");
 		if (this.isWithinSyncExecution()) {
 			throw Validate.State.error(
 					"This operation is not allowed to be called from within the task's execution!"

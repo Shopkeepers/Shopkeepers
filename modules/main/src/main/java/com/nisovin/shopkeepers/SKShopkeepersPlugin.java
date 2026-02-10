@@ -475,12 +475,14 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 	@Override
 	public void onDisable() {
-		// Wait for async tasks to complete:
-		SchedulerUtils.awaitAsyncTasksCompletion(
-				this,
-				ASYNC_TASKS_TIMEOUT_SECONDS,
-				this.getLogger()
-		);
+		if (!foliaLib.isFolia()) {
+			// Wait for async tasks to complete:
+			SchedulerUtils.awaitAsyncTasksCompletion(
+					this,
+					ASYNC_TASKS_TIMEOUT_SECONDS,
+					this.getLogger()
+			);
+		}
 
 		// Disable UI system:
 		uiSystem.onDisable();
@@ -552,7 +554,6 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 		// Event debugger:
 		eventDebugger.onDisable();
-
 		// Compat module:
 		if (Compat.hasProvider()) {
 			Compat.getProvider().onDisable();
@@ -562,6 +563,16 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		foliaLib.getScheduler().cancelAllTasks();
 
 		InternalShopkeepersAPI.disable();
+
+		if (foliaLib.isFolia()) {
+			// Wait for async tasks to complete:
+			SchedulerUtils.awaitAsyncTasksCompletion(
+					this,
+					ASYNC_TASKS_TIMEOUT_SECONDS,
+					this.getLogger()
+			);
+		}
+
 		plugin = null;
 	}
 
