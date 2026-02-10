@@ -542,7 +542,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	}
 
 	// True if the entity was respawned.
-	private boolean respawnInactiveEntity() {
+	private void respawnInactiveEntity() {
 		assert !this.isActive();
 		if (skipRespawnAttemptsIfPeaceful) {
 			// Null if the world is not loaded:
@@ -552,7 +552,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 				Log.debug(DebugOptions.regularTickActivities, () -> shopkeeper.getLocatedLogPrefix()
 						+ this.getEntityType() + " is missing. "
 						+ "Skipping respawn attempt due to peaceful difficulty.");
-				return false;
+				return;
 			} else {
 				skipRespawnAttemptsIfPeaceful = false;
 			}
@@ -590,25 +590,26 @@ public abstract class BaseEntityShopObject<E extends Entity>
 			this.despawn();
 
 			if (skipRespawnAttemptsIfPeaceful) {
-				return false;
+				return;
 			}
 		}
 
 		Log.debug(() -> shopkeeper.getLocatedLogPrefix() + this.getEntityType()
 				+ " is missing. Attempting respawn.");
 
-		boolean spawned = this.spawn(); // This will load the chunk if necessary
-		if (!spawned) {
-			// TODO Maybe add a setting to remove shopkeeper if it can't be spawned a certain amount
-			// of times?
-			Log.debug("  Respawn failed");
-			respawnAttempts += 1;
-			if (respawnAttempts >= MAX_RESPAWN_ATTEMPTS) {
-				// Throttle the rate at which we attempt to respawn the entity:
-				this.throttleTickRate();
-			}
-		} // Else: respawnAttempts and tick rate got reset.
-		return spawned;
+		SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+			boolean spawned = this.spawn(); // This will load the chunk if necessary
+			if (!spawned) {
+				// TODO Maybe add a setting to remove shopkeeper if it can't be spawned a certain amount
+				// of times?
+				Log.debug("  Respawn failed");
+				respawnAttempts += 1;
+				if (respawnAttempts >= MAX_RESPAWN_ATTEMPTS) {
+					// Throttle the rate at which we attempt to respawn the entity:
+					this.throttleTickRate();
+				}
+			} // Else: respawnAttempts and tick rate got reset.
+		});
 	}
 
 	// This is not only relevant when gravity is enabled, but also to react to other plugins

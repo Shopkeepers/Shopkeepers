@@ -2,7 +2,9 @@ package com.nisovin.shopkeepers.shopobjects.block.base;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -212,7 +214,7 @@ public abstract class BaseBlockShopObject extends AbstractBlockShopObject {
 	@Override
 	public CompletableFuture<Boolean> move() {
 		if (!this.isSpawned()) return CompletableFuture.completedFuture(false);
-		return CompletableFuture.completedFuture(this.respawn());
+		return this.respawn();
 	}
 
 	// TICKING
@@ -242,10 +244,12 @@ public abstract class BaseBlockShopObject extends AbstractBlockShopObject {
 					+ "Block is missing! Attempting respawn.");
 			// Cleanup any previously spawned block, and then respawn:
 			this.despawn();
-			boolean success = this.spawn();
-			if (!success) {
-				Log.warning(shopkeeper.getLocatedLogPrefix() + "Block could not be spawned!");
-			}
+			SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+				boolean success = this.spawn();
+				if (!success) {
+					Log.warning(shopkeeper.getLocatedLogPrefix() + "Block could not be spawned!");
+				}
+			});
 		}
 	}
 

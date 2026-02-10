@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -87,7 +89,10 @@ public class ShopkeeperSpawner {
 		);
 		this.spawnQueue = new ShopkeeperSpawnQueue(
 				plugin,
-				Unsafe.initialized(this)::doSpawnShopkeeper
+				abstractShopkeeper -> SchedulerUtils.runTaskOrOmit(
+						abstractShopkeeper.getLocation(),
+						() -> Unsafe.initialized(this).doSpawnShopkeeper(abstractShopkeeper)
+				)
 		);
 	}
 
@@ -216,7 +221,9 @@ public class ShopkeeperSpawner {
 		// In order to not have players wait for newly created shopkeepers, teleported shopkeepers,
 		// or loaded shopkeepers after plugin/storage reloads, we don't use the spawn queue in those
 		// cases, but spawn the shopkeeper immediately.
-		this.spawnShopkeeper(shopkeeper, true);
+		SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+			this.spawnShopkeeper(shopkeeper, true);
+		});
 	}
 
 	/**
@@ -379,7 +386,9 @@ public class ShopkeeperSpawner {
 		// immediately (e.g. if it was previously only queued to be spawned). But if the new world
 		// is currently being saved, it might actually need to be despawned first and then wait for
 		// the world save respawn. This method takes care of these aspects:
-		this.spawnShopkeeper(shopkeeper, true);
+		SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+			this.spawnShopkeeper(shopkeeper, true);
+		});
 	}
 
 	// Returns true on success.
@@ -506,9 +515,9 @@ public class ShopkeeperSpawner {
 			this.updateSpawnState(shopkeeper, State.SPAWNING);
 		});
 
-		int spawned = 0;
-		int awaitingWorldSaveRespawn = 0;
-		boolean dirty = false;
+		AtomicInteger spawned = new AtomicInteger();
+		AtomicInteger awaitingWorldSaveRespawn = new AtomicInteger();
+		AtomicBoolean dirty = new AtomicBoolean(false);
 		for (AbstractShopkeeper shopkeeper : shopkeepers) {
 			AbstractShopObject shopObject = shopkeeper.getShopObject();
 			AbstractShopObjectType<?> objectType = shopObject.getType();
@@ -538,43 +547,46 @@ public class ShopkeeperSpawner {
 			assert chunkCoords.equals(shopkeeper.getLastChunkCoords());
 			assert shopkeeper.isActive();
 
-			// Spawn the shopkeeper:
-			// This also updates the shopkeeper's spawn state.
-			SpawnResult result = this.spawnShopkeeper(shopkeeper, spawnImmediately);
-			switch (result) {
-			case SPAWNED:
-			case QUEUED:
-				spawned++;
-				break;
-			case AWAITING_WORLD_SAVE_RESPAWN:
-			case DESPAWNED_AND_AWAITING_WORLD_SAVE_RESPAWN:
-				awaitingWorldSaveRespawn++;
-				break;
-			default:
-				break;
-			}
+			SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+				// Spawn the shopkeeper:
+				// This also updates the shopkeeper's spawn state.
+				SpawnResult result = this.spawnShopkeeper(shopkeeper, spawnImmediately);
+				switch (result) {
+					case SPAWNED:
+					case QUEUED:
+						spawned.getAndIncrement();
+						break;
+					case AWAITING_WORLD_SAVE_RESPAWN:
+					case DESPAWNED_AND_AWAITING_WORLD_SAVE_RESPAWN:
+						awaitingWorldSaveRespawn.getAndIncrement();
+						break;
+					default:
+						break;
+				}
 
-			// Check if the shopkeeper has been marked as dirty:
-			if (shopkeeper.isDirty()) {
-				dirty = true;
-			}
-		}
+				// Check if the shopkeeper has been marked as dirty:
+				if (shopkeeper.isDirty()) {
+					dirty.set(true);
+				}
 
-		int spawnedFinal = spawned;
-		Log.debug(DebugOptions.shopkeeperActivation,
-				() -> "  Actually spawned: " + spawnedFinal + (spawnImmediately ? "" : " (queued)"));
 
-		if (awaitingWorldSaveRespawn > 0) {
-			int awaitingWorldSaveRespawnFinal = awaitingWorldSaveRespawn;
-			Log.debug(DebugOptions.shopkeeperActivation,
-					() -> "  Skipped due to a pending respawn after world save: "
-							+ awaitingWorldSaveRespawnFinal
-			);
-		}
+				int spawnedFinal = spawned.get();
+				Log.debug(DebugOptions.shopkeeperActivation,
+						() -> "  Actually spawned: " + spawnedFinal + (spawnImmediately ? "" : " (queued)"));
 
-		// If dirty, trigger a delayed save:
-		if (dirty) {
-			plugin.getShopkeeperStorage().saveDelayed();
+				if (awaitingWorldSaveRespawn.get() > 0) {
+					int awaitingWorldSaveRespawnFinal = awaitingWorldSaveRespawn.get();
+					Log.debug(DebugOptions.shopkeeperActivation,
+							() -> "  Skipped due to a pending respawn after world save: "
+									+ awaitingWorldSaveRespawnFinal
+					);
+				}
+
+				// If dirty, trigger a delayed save:
+				if (dirty.get()) {
+					plugin.getShopkeeperStorage().saveDelayed();
+				}
+			});
 		}
 	}
 
