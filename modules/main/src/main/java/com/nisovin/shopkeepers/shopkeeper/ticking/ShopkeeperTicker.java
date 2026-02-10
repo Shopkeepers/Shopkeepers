@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.scheduler.BukkitRunnable;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.debug.DebugOptions;
@@ -221,12 +221,12 @@ public class ShopkeeperTicker {
 		new ShopkeeperTickTask().start();
 	}
 
-	private final class ShopkeeperTickTask extends BukkitRunnable {
+	private final class ShopkeeperTickTask implements Runnable {
 
 		private static final int PERIOD = TICKING_PERIOD_TICKS / TICKING_GROUPS;
 
 		void start() {
-			this.runTaskTimer(plugin, PERIOD, PERIOD);
+			SchedulerUtils.runAsyncTaskTimerOrOmit(this, PERIOD, PERIOD);
 		}
 
 		@Override

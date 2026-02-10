@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +23,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -189,7 +190,7 @@ public class EntityAI implements Listener {
 	// Index for fast removal: Shop object -> EntityData
 	private final Map<BaseEntityShopObject<?>, EntityData> shopObjects = new HashMap<>();
 
-	private @Nullable BukkitTask aiTask = null;
+	private @Nullable WrappedTask aiTask = null;
 	private boolean currentlyRunning = false;
 
 	// Statistics:
@@ -380,8 +381,7 @@ public class EntityAI implements Listener {
 
 		// Start AI task:
 		int tickPeriod = Settings.entityBehaviorTickPeriod;
-		aiTask = Bukkit.getScheduler().runTaskTimer(
-				plugin,
+		aiTask = SchedulerUtils.runAsyncTaskTimerOrOmit(
 				new TickTask(),
 				tickPeriod,
 				tickPeriod
@@ -452,7 +452,9 @@ public class EntityAI implements Listener {
 		// Activate chunks around online players:
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			assert player != null;
-			this.activateNearbyChunks(player);
+			SchedulerUtils.runTaskOrOmit(player, () -> {
+				this.activateNearbyChunks(player);
+			});
 		}
 
 		activationTimings.stop();
@@ -493,7 +495,7 @@ public class EntityAI implements Listener {
 
 	private void activateNearbyChunksDelayed(Player player) {
 		if (!player.isOnline()) return; // Player is no longer online
-		Bukkit.getScheduler().runTask(plugin, new ActivateNearbyChunksDelayedTask(player));
+		SchedulerUtils.runTaskOrOmit(player, new ActivateNearbyChunksDelayedTask(player));
 	}
 
 	private class ActivateNearbyChunksDelayedTask implements Runnable {
@@ -585,42 +587,42 @@ public class EntityAI implements Listener {
 	private void processEntity(EntityData entityData) {
 		assert entityData != null;
 		Entity entity = entityData.shopObject.getEntity();
-
 		// Unexpected: The shop object is supposed to unregister itself from the AI system when it
 		// despawns its entity.
 		if (entity == null) return;
+		SchedulerUtils.runTaskOrOmit(entity, () -> {
+			// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
+			// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
+			// its chunk being unloaded. So there should be no need to check for that here.
+			// TODO Actually, if the entity moved into a different chunk and we did not update its
+			// location in the chunk index yet, it may already have been unloaded but still getting
+			// ticked here. However, this is not the case currently, since all shopkeeper entities are
+			// stationary (unless some other plugin teleports them).
+			if (entity.isDead()) {
+				// Some plugin might have removed the entity. The shop object will remove the entity's
+				// entry once it recognizes that the entity has been removed. Until then, we simply skip
+				// it here.
+				return;
+			}
 
-		// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
-		// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
-		// its chunk being unloaded. So there should be no need to check for that here.
-		// TODO Actually, if the entity moved into a different chunk and we did not update its
-		// location in the chunk index yet, it may already have been unloaded but still getting
-		// ticked here. However, this is not the case currently, since all shopkeeper entities are
-		// stationary (unless some other plugin teleports them).
-		if (entity.isDead()) {
-			// Some plugin might have removed the entity. The shop object will remove the entity's
-			// entry once it recognizes that the entity has been removed. Until then, we simply skip
-			// it here.
-			return;
-		}
+			ChunkData chunkData = entityData.chunkData;
 
-		ChunkData chunkData = entityData.chunkData;
+			// Process gravity:
+			gravityTimings.resume();
+			if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
+				activeGravityEntityCount++;
+				this.processGravity(entityData);
+			}
+			gravityTimings.pause();
 
-		// Process gravity:
-		gravityTimings.resume();
-		if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
-			activeGravityEntityCount++;
-			this.processGravity(entityData);
-		}
-		gravityTimings.pause();
-
-		// Process AI:
-		aiTimings.resume();
-		if (chunkData.activeAI) {
-			activeAIEntityCount++;
-			this.processAI(entityData);
-		}
-		aiTimings.pause();
+			// Process AI:
+			aiTimings.resume();
+			if (chunkData.activeAI) {
+				activeAIEntityCount++;
+				this.processAI(entityData);
+			}
+			aiTimings.pause();
+		});
 	}
 
 	// GRAVITY

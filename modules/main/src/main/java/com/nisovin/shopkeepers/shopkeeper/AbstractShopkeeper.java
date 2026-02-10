@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -1301,9 +1302,9 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	 */
 	protected void onClosed() {
 		UISessionManager.getInstance()
-				.abortUISessionsForContextDelayed(this, DefaultUITypes.TRADING());
+				.abortUISessionsForContextDelayed(this.getLocation(), this, DefaultUITypes.TRADING());
 		UISessionManager.getInstance()
-				.abortUISessionsForContextDelayed(this, DefaultUITypes.HIRING());
+				.abortUISessionsForContextDelayed(this.getLocation(), this, DefaultUITypes.HIRING());
 	}
 
 	// NAMING
@@ -1872,7 +1873,14 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 		if (!this.isTicking()) return;
 
 		// Tick the shop object:
-		shopObject.onTick();
+		Location loc = this.getLocation();
+		if (loc != null) {
+			SchedulerUtils.runTaskOrOmit(loc, () -> {
+				shopObject.onTick();
+			});
+		} else {
+			shopObject.onTick();
+		}
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package com.nisovin.shopkeepers.world;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -78,11 +79,11 @@ public class ForcingEntityTeleporter implements Listener {
 	 *            the destination location
 	 * @return the result of the teleport
 	 */
-	public boolean teleport(Entity entity, Location toLocation) {
+	public CompletableFuture<Boolean> teleport(Entity entity, Location toLocation) {
 		this.nextTeleportEntityUuid = entity.getUniqueId();
 		this.toLocation = toLocation;
 
-		boolean result = entity.teleport(toLocation);
+		CompletableFuture<Boolean> result = SKShopkeepersPlugin.getInstance().getFoliaLib().getScheduler().teleportAsync(entity, toLocation);
 
 		// This reset is required if the teleport did not actually trigger an event (e.g. on Spigot
 		// instead of Paper servers):
