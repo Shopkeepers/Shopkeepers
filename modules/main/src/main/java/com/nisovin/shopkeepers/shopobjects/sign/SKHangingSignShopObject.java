@@ -67,7 +67,10 @@ public class SKHangingSignShopObject extends BaseBlockShopObject implements Hang
 			.onValueChanged(Unsafe.initialized(this)::applySignType)
 			.build(properties);
 	private final PropertyValue<Boolean> wallSignProperty = new PropertyValue<>(WALL_SIGN)
-			.onValueChanged(Unsafe.initialized(this)::respawn)
+			.onValueChanged(() -> Unsafe.initialized(this).respawn().exceptionally(e -> {
+				// optional logging/handling
+				return false;
+			}))
 			.build(properties);
 	private final PropertyValue<Boolean> glowingTextProperty = new PropertyValue<>(GLOWING_TEXT)
 			.onValueChanged(Unsafe.initialized(this)::applyGlowingText)

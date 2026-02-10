@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -432,10 +433,14 @@ public abstract class AbstractShopObject implements ShopObject {
 	 * 
 	 * @return <code>true</code> if the shop object was successfully respawned
 	 */
-	public final boolean respawn() {
-		if (!this.isSpawned()) return false;
-		this.despawn();
-		return this.spawn();
+	public final CompletableFuture<Boolean> respawn() {
+		if (!this.isSpawned()) return CompletableFuture.completedFuture(false);
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		SchedulerUtils.runTaskOrOmit(this.getLocation(), () -> {
+			this.despawn();
+			future.complete(this.spawn());
+		});
+		return future;
 	}
 
 	@Override

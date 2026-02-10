@@ -99,9 +99,9 @@ public final class SchedulerUtils {
 		return runTaskLaterOrOmit(entity.getLocation(), task, 0L);
 	}
 
-	public static @Nullable WrappedTask runTaskOrOmit(Location location, Runnable task) {
+	public static @Nullable WrappedTask runTaskOrOmit(@Nullable Location location, Runnable task) {
 		validatePluginTask(task);
-		if (isMainThread(location)) {
+		if (location == null || isMainThread(location)) {
 			task.run();
 			return null;
 		}
