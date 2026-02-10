@@ -3,13 +3,13 @@ package com.nisovin.shopkeepers.tradelog.base;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
@@ -63,7 +63,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 
 	private List<TradeRecord> pending = new ArrayList<>();
 	private final SaveTask saveTask;
-	private @Nullable BukkitTask delayedSaveTask = null;
+	private @Nullable CompletableFuture<Void> delayedSaveTask = null;
 	// This is reset to the current configuration value prior to every save. This ensures that the
 	// value of this setting remains constant during the save and does not differ for the items of
 	// the trades that are being saved as part of the same batch.
@@ -160,8 +160,8 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 	 *            the reason
 	 */
 	protected final void disable(String reason) {
-		if (!SchedulerUtils.isMainThread()) {
-			throw new IllegalStateException("This must be called from the server's main thread!");
+		if (!SchedulerUtils.isGlobalThread()) {
+			throw new IllegalStateException("This must be called from the server's main/global thread!");
 		}
 
 		Log.severe(logPrefix + "Disabled (trades won't be logged)! Reason: " + reason);
@@ -209,8 +209,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 			return;
 		}
 
-		delayedSaveTask = SchedulerUtils.runTaskLaterOrOmit(
-				plugin,
+		delayedSaveTask = SchedulerUtils.runTaskLaterGloballyOrOmit(
 				new DelayedSaveTask(),
 				DELAYED_SAVE_TICKS
 		);
@@ -226,7 +225,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 
 	private void cancelDelayedSave() {
 		if (delayedSaveTask != null) {
-			delayedSaveTask.cancel();
+			delayedSaveTask.cancel(true);
 			delayedSaveTask = null;
 		}
 	}

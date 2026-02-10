@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
@@ -96,7 +97,7 @@ public class ShopkeeperSpawner {
 
 		Bukkit.getPluginManager().registerEvents(listener, plugin);
 
-		Bukkit.getScheduler().runTaskLater(plugin, new CheckUnspawnableShopkeepersTask(), 5L);
+		SchedulerUtils.runAsyncTaskLaterOrOmit(new CheckUnspawnableShopkeepersTask(), 5L);
 	}
 
 	private class CheckUnspawnableShopkeepersTask implements Runnable {
@@ -829,7 +830,7 @@ public class ShopkeeperSpawner {
 			if (deleteUnspawnableShopkeepers) {
 				// Delete those shopkeepers:
 				for (Shopkeeper shopkeeper : unspawnableShopkeepers) {
-					shopkeeper.delete();
+					shopkeeper.delete(); // runs synchronously
 				}
 
 				// Save:

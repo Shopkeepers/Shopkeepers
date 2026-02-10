@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.shopobjects.entity.base;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Difficulty;
@@ -457,15 +458,15 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	}
 
 	@Override
-	public boolean move() {
+	public CompletableFuture<Boolean> move() {
 		Entity entity = this.entity;
-		if (entity == null) return false; // Ignore if not spawned
+		if (entity == null) return CompletableFuture.completedFuture(false); // Ignore if not spawned
 
 		Location spawnLocation = this.getSpawnLocation();
-		if (spawnLocation == null) return false;
+		if (spawnLocation == null) return CompletableFuture.completedFuture(false);
 
 		this.lastSpawnLocation = spawnLocation;
-		boolean teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter()
+		CompletableFuture<Boolean> teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter()
 				.teleport(entity, spawnLocation);
 
 		// Inform the AI system:

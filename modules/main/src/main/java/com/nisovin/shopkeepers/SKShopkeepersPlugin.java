@@ -8,6 +8,9 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import com.nisovin.shopkeepers.util.bukkit.WrappedExecutor;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.util.FoliaLibOptions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -79,6 +82,8 @@ import com.nisovin.shopkeepers.world.ForcingEntityTeleporter;
 
 public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepersPlugin {
 
+	private static final FoliaLibOptions FOLIA_LIB_OPTIONS = new FoliaLibOptions();
+
 	private static final Set<? extends String> SKIP_PRELOADING_CLASSES = Collections.unmodifiableSet(
 			new HashSet<>(Arrays.asList(
 					// Skip classes that interact with optional dependencies:
@@ -102,8 +107,9 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 	}
 
 	// Utilities:
-	private final Executor syncExecutor = SchedulerUtils.createSyncExecutor(Unsafe.initialized(this));
-	private final Executor asyncExecutor = SchedulerUtils.createAsyncExecutor(Unsafe.initialized(this));
+	private final FoliaLib foliaLib = new FoliaLib(Unsafe.initialized(this), FOLIA_LIB_OPTIONS);
+	private final WrappedExecutor syncExecutor = SchedulerUtils.createSyncExecutor();
+	private final Executor asyncExecutor = SchedulerUtils.createAsyncExecutor();
 
 	private final ForcingEntitySpawner forcingEntitySpawner = new ForcingEntitySpawner(Unsafe.initialized(this));
 	private final ForcingEntityTeleporter forcingEntityTeleporter = new ForcingEntityTeleporter(Unsafe.initialized(this));
@@ -553,7 +559,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		}
 
 		HandlerList.unregisterAll(this);
-		Bukkit.getScheduler().cancelTasks(this);
+		foliaLib.getScheduler().cancelAllTasks();
 
 		InternalShopkeepersAPI.disable();
 		plugin = null;
@@ -588,7 +594,12 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 	// UTILITIES
 
-	public Executor getSyncExecutor() {
+
+	public FoliaLib getFoliaLib() {
+		return foliaLib;
+	}
+
+	public WrappedExecutor getSyncExecutor() {
 		return syncExecutor;
 	}
 
@@ -801,5 +812,10 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 	public @Nullable TradingHistoryProvider getTradingHistoryProvider() {
 		return tradeLoggers.getTradingHistoryProvider();
+	}
+
+
+	static {
+		FOLIA_LIB_OPTIONS.disableNotifications();
 	}
 }

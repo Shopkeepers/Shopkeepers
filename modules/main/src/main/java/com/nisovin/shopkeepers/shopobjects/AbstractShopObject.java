@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.shopobjects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -464,7 +465,7 @@ public abstract class AbstractShopObject implements ShopObject {
 	 * 
 	 * @return <code>true</code> if the shop object was successfully moved
 	 */
-	public abstract boolean move();
+	public abstract CompletableFuture<Boolean> move();
 
 	// TICKING
 

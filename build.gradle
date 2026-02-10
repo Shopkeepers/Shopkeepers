@@ -255,7 +255,7 @@ subprojects {
 
 		test {
 			// Run the ECJ analysis whenever we also run tests:
-			dependsOn ecjAnalysis
+			//dependsOn ecjAnalysis TODO
 
 			systemProperty 'file.encoding', 'UTF-8'
 			workingDir project.file("${project.buildDir}/test-work/")

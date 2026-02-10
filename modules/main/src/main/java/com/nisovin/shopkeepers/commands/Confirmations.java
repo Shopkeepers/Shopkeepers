@@ -3,6 +3,8 @@ package com.nisovin.shopkeepers.commands;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ProxiedCommandSender;
@@ -19,15 +21,15 @@ public class Confirmations {
 	private static class PendingConfirmation {
 
 		private final Runnable action;
-		private final int taskId;
+		private final WrappedTask task;
 
-		public PendingConfirmation(Runnable action, int taskId) {
-			this.taskId = taskId;
+		public PendingConfirmation(Runnable action, WrappedTask task) {
+			this.task = task;
 			this.action = action;
 		}
 
-		public int getTaskId() {
-			return taskId;
+		public WrappedTask getTask() {
+			return task;
 		}
 
 		public Runnable getAction() {
@@ -85,18 +87,23 @@ public class Confirmations {
 		Validate.notNull(action, "action is null");
 		Validate.isTrue(timeoutTicks > 0, "timeoutTicks has to be positive");
 
-		int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+		WrappedTask task = SchedulerUtils.runAsyncTaskLaterOrOmit(() -> {
 			this.endConfirmation(sender);
 			TextUtils.sendMessage(sender, Messages.confirmationExpired);
-		}, timeoutTicks).getTaskId();
+		}, timeoutTicks);
+
+		if (task == null) {
+			// I guess we just return early. TODO: Should throw here?
+			return;
+		}
 
 		PendingConfirmation previousPendingConfirmation = pendingConfirmations.put(
 				this.getSenderKey(sender),
-				new PendingConfirmation(action, taskId)
+				new PendingConfirmation(action, task)
 		);
 		if (previousPendingConfirmation != null) {
 			// Cancel the previous pending confirmation task:
-			Bukkit.getScheduler().cancelTask(previousPendingConfirmation.getTaskId());
+			previousPendingConfirmation.getTask().cancel();
 		}
 	}
 
@@ -106,7 +113,7 @@ public class Confirmations {
 		PendingConfirmation pendingConfirmation = pendingConfirmations.remove(this.getSenderKey(sender));
 		if (pendingConfirmation != null) {
 			// End confirmation task:
-			Bukkit.getScheduler().cancelTask(pendingConfirmation.getTaskId());
+			pendingConfirmation.getTask().cancel();
 
 			// Return action:
 			return pendingConfirmation.getAction();

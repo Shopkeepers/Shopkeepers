@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -342,6 +343,19 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 	) {
 		assert shopkeeper != null && shopkeeper.isValid() && cause != null;
 
+		Location loc = shopkeeper.getLocation();
+		if (loc != null) {
+			SchedulerUtils.runOnMainThreadOrOmit(loc, () -> {
+				doRemoveShopkeeper(shopkeeper, cause);
+			});
+		} else {
+			doRemoveShopkeeper(shopkeeper, cause);
+		}
+
+
+	}
+
+	private void doRemoveShopkeeper(AbstractShopkeeper shopkeeper, ShopkeeperRemoveEvent.Cause cause) {
 		// Call event:
 		Bukkit.getPluginManager().callEvent(new ShopkeeperRemoveEvent(shopkeeper, cause));
 

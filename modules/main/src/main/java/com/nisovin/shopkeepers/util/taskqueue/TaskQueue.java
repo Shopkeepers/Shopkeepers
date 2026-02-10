@@ -3,10 +3,10 @@ package com.nisovin.shopkeepers.util.taskqueue;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import org.bukkit.Bukkit;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -69,7 +69,7 @@ public abstract class TaskQueue<@NonNull T> implements TaskQueueStatistics {
 	private final int workUnitsPerExecution;
 	private final Queue<@NonNull T> pending = new ArrayDeque<>();
 	private int maxPending = 0;
-	private @Nullable BukkitTask task = null;
+	private @Nullable WrappedTask task = null;
 
 	/**
 	 * Creates a new {@link TaskQueue}.
@@ -188,7 +188,7 @@ public abstract class TaskQueue<@NonNull T> implements TaskQueueStatistics {
 		}
 
 		// Start new task:
-		task = Bukkit.getScheduler().runTaskTimer(plugin, this.createTask(), 1, taskPeriodTicks);
+		task = SchedulerUtils.runAsyncTaskTimerOrOmit(this.createTask(), 1, taskPeriodTicks);
 	}
 
 	private void stopTask() {

@@ -17,6 +17,8 @@ repositories {
 	maven { url = 'https://repo.glaremasters.me/repository/towny/' }
 	// Towny alternative (needs a different group id), VaultAPI
 	maven { url = 'https://jitpack.io' }
+	// FoliaLib
+	maven { url = 'https://repo.tcoded.com/releases' }
 }
 
 configurations {
@@ -44,8 +46,10 @@ dependencies {
 	(compileOnly libs.citizens.main) { transitive = false }
 	compileOnly libs.vault.api
 	compileOnly libs.bstats.bukkit
+	compileOnly libs.folialib
 
 	shaded libs.bstats.bukkit
+	shaded libs.folialib
 }
 
 processResources {
@@ -95,6 +99,7 @@ shadowJar {
 		include(dependency(libs.bstats.bukkit.get()))
 	}*/
 	relocate 'org.bstats.bukkit', "${project.group}.libs.bstats"
+	relocate 'com.tcoded.folialib', "${project.group}.libs.folialib"
 }
 
 configureShadowArtifacts(project)
