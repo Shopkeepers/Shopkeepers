@@ -1,7 +1,11 @@
 # Changelog
 Date format: (YYYY-MM-DD)  
 
-## v2.26.0 (TBA)
+## v2.26.1 (TBA)
+### Supported MC versions: 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
+
+
+## v2.26.0 (2026-02-21)
 ### Supported MC versions: 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
 * Permission: Add `shopkeeper.create` (default: `op`).
@@ -24,7 +28,7 @@ Date format: (YYYY-MM-DD)
   * Placing end crystal shops in the end is disabled by default, because they can for example affect dragon fights.
 * Config: Rename some settings, since they might also affect non-mob entities.
   * Rename `silence-living-shop-entities` to `silence-shop-entities`.
-  * Rename `mobe-behavior-tick-period` to `entity-behavior-tick-period`.
+  * Rename `mob-behavior-tick-period` to `entity-behavior-tick-period`.
   * The config is automatically migrated (version `10`).
 * Disable the gravity for flying mobs.
   * Certain mobs can now be placed in the air without dropping to the ground due to gravity: Allay, bat, bee, chicken, blaze, ender dragon, ghast, happy ghast, parrot, phantom, vex, wither.
