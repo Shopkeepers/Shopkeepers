@@ -200,6 +200,9 @@ public class SKLivingShopObject<E extends LivingEntity>
 		if (entity instanceof Raider raider) {
 			raider.setCanJoinRaid(false);
 		}
+
+		this.updatePotionEffects();
+		this.applyEquipment();
 	}
 
 	@Override

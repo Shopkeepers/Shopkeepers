@@ -4,6 +4,7 @@ Date format: (YYYY-MM-DD)
 ## v2.26.1 (TBA)
 ### Supported MC versions: 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
+* Fix: Since the last update, mob equipment and default potion effects were no longer applied on spawn.
 
 ## v2.26.0 (2026-02-21)
 ### Supported MC versions: 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
