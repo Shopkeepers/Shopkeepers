@@ -18,6 +18,7 @@ towny = "0.98.1.0"
 citizens = "2.0.30-SNAPSHOT"
 vault = "1.7.1"
 bstats = "1.5"
+folialib = "0.5.1"
 
 junit = "4.13.1"
 hamcrest = "1.3"
@@ -40,6 +41,7 @@ towny = { module = "com.palmergames.bukkit.towny:towny", version.ref = "towny" }
 citizens-main = { module = "net.citizensnpcs:citizens-main", version.ref = "citizens" }
 vault-api = { module = "com.github.MilkBowl:VaultAPI", version.ref = "vault" }
 bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
+folialib = { module = "com.tcoded:FoliaLib", version.ref = "folialib" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 hamcrest = { module = "org.hamcrest:hamcrest-library", version.ref = "hamcrest" }

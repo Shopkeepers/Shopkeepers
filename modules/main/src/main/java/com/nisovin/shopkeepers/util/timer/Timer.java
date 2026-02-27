@@ -19,12 +19,12 @@ public class Timer implements Timings {
 	private long maxTimeNanos = 0L;
 
 	// Current timing:
-	private boolean started = false;
-	private boolean paused = false;
-	private long startTimeNanos;
-	private long elapsedTimeNanos;
+	private volatile boolean started = false;
+	private volatile boolean paused = false;
+	private volatile long startTimeNanos;
+	private volatile long elapsedTimeNanos;
 
-	private boolean stateErrorEncountered = false;
+	private volatile boolean stateErrorEncountered = false;
 
 	public Timer() {
 	}

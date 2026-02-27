@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.function.Predicate;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -16,7 +18,6 @@ import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -303,8 +304,7 @@ public class ShopkeeperChunkActivator {
 
 		void start() {
 			assert !chunkData.isActive() && !chunkData.isActivationDelayed();
-			BukkitTask task = Bukkit.getScheduler().runTaskLater(
-					plugin,
+			WrappedTask task = SchedulerUtils.runAsyncTaskLaterOrOmit(
 					this,
 					CHUNK_ACTIVATION_DELAY_TICKS
 			);
@@ -321,7 +321,7 @@ public class ShopkeeperChunkActivator {
 
 	void activatePendingNearbyChunksDelayed(Player player) {
 		assert player != null;
-		Bukkit.getScheduler().runTask(plugin, new ActivatePendingNearbyChunksTask(player));
+		SchedulerUtils.runTaskOrOmit(player, new ActivatePendingNearbyChunksTask(player));
 	}
 
 	private class ActivatePendingNearbyChunksTask implements Runnable {

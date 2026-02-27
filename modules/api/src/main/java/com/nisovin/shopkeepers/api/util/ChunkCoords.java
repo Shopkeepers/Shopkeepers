@@ -252,18 +252,6 @@ public class ChunkCoords {
 		return false;
 	}
 
-	/**
-	 * Gets the {@link Chunk} if it is loaded.
-	 * 
-	 * @return the chunk if it is loaded, or <code>null</code>
-	 */
-	public @Nullable Chunk getChunk() {
-		World world = this.getWorld();
-		if (world != null && world.isChunkLoaded(chunkX, chunkZ)) {
-			return world.getChunkAt(chunkX, chunkZ);
-		}
-		return null;
-	}
 
 	@Override
 	public int hashCode() {

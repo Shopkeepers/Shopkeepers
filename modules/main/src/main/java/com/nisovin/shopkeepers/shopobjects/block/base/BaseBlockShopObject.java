@@ -1,7 +1,10 @@
 package com.nisovin.shopkeepers.shopobjects.block.base;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -18,6 +21,7 @@ import com.nisovin.shopkeepers.shopobjects.block.AbstractBlockShopObject;
 import com.nisovin.shopkeepers.util.java.CyclicCounter;
 import com.nisovin.shopkeepers.util.java.RateLimiter;
 import com.nisovin.shopkeepers.util.logging.Log;
+import org.checkerframework.checker.units.qual.C;
 
 /**
  * Extension of {@link AbstractBlockShopObject} with additional common block spawning and setup
@@ -208,8 +212,8 @@ public abstract class BaseBlockShopObject extends AbstractBlockShopObject {
 	}
 
 	@Override
-	public boolean move() {
-		if (!this.isSpawned()) return false;
+	public CompletableFuture<Boolean> move() {
+		if (!this.isSpawned()) return CompletableFuture.completedFuture(false);
 		return this.respawn();
 	}
 
@@ -240,11 +244,12 @@ public abstract class BaseBlockShopObject extends AbstractBlockShopObject {
 					+ "Block is missing! Attempting respawn.");
 			// Cleanup any previously spawned block, and then respawn:
 			this.despawn();
-			boolean success = this.spawn();
-			if (!success) {
-				Log.warning(shopkeeper.getLocatedLogPrefix() + "Block could not be spawned!");
-			}
-			return;
+			SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+				boolean success = this.spawn();
+				if (!success) {
+					Log.warning(shopkeeper.getLocatedLogPrefix() + "Block could not be spawned!");
+				}
+			});
 		}
 	}
 

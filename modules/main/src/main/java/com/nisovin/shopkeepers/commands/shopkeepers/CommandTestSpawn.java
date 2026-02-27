@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -180,15 +183,25 @@ class CommandTestSpawn extends PlayerCommand {
 
 		// Respawn the shopkeepers:
 		long spawnStartNanos = System.nanoTime();
-		int failedToSpawn = 0;
+		AtomicInteger failedToSpawn = new AtomicInteger();
 		for (AbstractShopkeeper shopkeeper : shopkeepers) {
-			boolean success = shopkeeper.getShopObject().spawn();
-			if (!success) {
-				failedToSpawn++;
+			Location location = shopkeeper.getLocation();
+			if (location != null) {
+				SchedulerUtils.runTaskOrOmit(location, () -> {
+					boolean success = shopkeeper.getShopObject().spawn();
+					if (!success) {
+						failedToSpawn.getAndIncrement();
+					}
+				});
+			} else {
+				boolean success = shopkeeper.getShopObject().spawn();
+				if (!success) {
+					failedToSpawn.getAndIncrement();
+				}
 			}
 		}
 		result.spawnTimeNanos = System.nanoTime() - spawnStartNanos;
-		result.failedToSpawn = failedToSpawn;
+		result.failedToSpawn = failedToSpawn.get();
 		return result;
 	}
 }

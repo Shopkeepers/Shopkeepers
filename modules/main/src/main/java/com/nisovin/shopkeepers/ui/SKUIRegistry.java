@@ -65,6 +65,6 @@ public class SKUIRegistry extends AbstractTypeRegistry<AbstractUIType>
 	@Override
 	public void abortUISessionsDelayed(Shopkeeper shopkeeper) {
 		Validate.notNull(shopkeeper, "shopkeeper is null");
-		UISessionManager.getInstance().abortUISessionsForContextDelayed(shopkeeper);
+		UISessionManager.getInstance().abortUISessionsForContextDelayed(shopkeeper.getLocation(), shopkeeper);
 	}
 }

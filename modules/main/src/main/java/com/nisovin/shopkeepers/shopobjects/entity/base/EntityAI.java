@@ -7,7 +7,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +24,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -189,7 +191,7 @@ public class EntityAI implements Listener {
 	// Index for fast removal: Shop object -> EntityData
 	private final Map<BaseEntityShopObject<?>, EntityData> shopObjects = new HashMap<>();
 
-	private @Nullable BukkitTask aiTask = null;
+	private @Nullable WrappedTask aiTask = null;
 	private boolean currentlyRunning = false;
 
 	// Statistics:
@@ -331,10 +333,11 @@ public class EntityAI implements Listener {
 		activeGravityChunksCount = 0;
 		activeGravityEntityCount = 0;
 
-		totalTimings.reset();
-		activationTimings.reset();
-		gravityTimings.reset();
-		aiTimings.reset();
+		// TODO: folia - Fix timings
+//		totalTimings.reset();
+//		activationTimings.reset();
+//		gravityTimings.reset();
+//		aiTimings.reset();
 	}
 
 	public int getEntityCount() {
@@ -380,8 +383,7 @@ public class EntityAI implements Listener {
 
 		// Start AI task:
 		int tickPeriod = Settings.entityBehaviorTickPeriod;
-		aiTask = Bukkit.getScheduler().runTaskTimer(
-				plugin,
+		aiTask = SchedulerUtils.runAsyncTaskTimerOrOmit(
 				new TickTask(),
 				tickPeriod,
 				tickPeriod
@@ -414,9 +416,10 @@ public class EntityAI implements Listener {
 			currentlyRunning = true;
 
 			// Start timings:
-			totalTimings.start();
-			gravityTimings.startPaused();
-			aiTimings.startPaused();
+			// TODO: folia - Fix timings
+//			totalTimings.start();
+//			gravityTimings.startPaused();
+//			aiTimings.startPaused();
 
 			// Freshly determine active chunks/entities (near players) every AI_ACTIVATION_TICK_RATE
 			// ticks:
@@ -427,10 +430,12 @@ public class EntityAI implements Listener {
 			// Process entities:
 			processEntities();
 
+
 			// Stop timings:
-			totalTimings.stop();
-			gravityTimings.stop();
-			aiTimings.stop();
+			// TODO: folia - Fix timings
+//			totalTimings.stop();
+//			gravityTimings.stop();
+//			aiTimings.stop();
 
 			currentlyRunning = false;
 		}
@@ -439,7 +444,7 @@ public class EntityAI implements Listener {
 	// CHUNK ACTIVATIONS
 
 	private void updateChunkActivations() {
-		activationTimings.start();
+		//activationTimings.start(); // TODO: folia - Fix timings
 
 		// Deactivate all chunks:
 		chunks.values().forEach(chunkData -> {
@@ -452,10 +457,12 @@ public class EntityAI implements Listener {
 		// Activate chunks around online players:
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			assert player != null;
-			this.activateNearbyChunks(player);
+			SchedulerUtils.runTaskOrOmit(player, () -> {
+				this.activateNearbyChunks(player);
+			});
 		}
 
-		activationTimings.stop();
+		//activationTimings.stop(); // TODO: folia - Fix timings
 	}
 
 	// Note: This only activates chunks around the player, but does not deactivate any chunks that
@@ -493,7 +500,7 @@ public class EntityAI implements Listener {
 
 	private void activateNearbyChunksDelayed(Player player) {
 		if (!player.isOnline()) return; // Player is no longer online
-		Bukkit.getScheduler().runTask(plugin, new ActivateNearbyChunksDelayedTask(player));
+		SchedulerUtils.runTaskOrOmit(player, new ActivateNearbyChunksDelayedTask(player));
 	}
 
 	private class ActivateNearbyChunksDelayedTask implements Runnable {
@@ -564,63 +571,62 @@ public class EntityAI implements Listener {
 		activeGravityEntityCount = 0;
 
 		if (activeAIChunksCount == 0 && activeGravityChunksCount == 0) {
-			// There is no need to process any entities if there are no chunks with active AI or
-			// gravity:
 			return;
 		}
 
-		chunks.values().forEach(this::processEntities);
+		chunks.values().forEach(chunkData -> processEntities(chunkData));
 	}
+
 
 	private void processEntities(ChunkData chunkData) {
 		assert chunkData != null;
 		if (!chunkData.activeGravity && !chunkData.activeAI) {
-			// There is no need to process the chunk's entities:
 			return;
 		}
 
-		chunkData.entities.forEach(this::processEntity);
+		chunkData.entities.forEach(entityData -> processEntity(entityData));
 	}
 
 	private void processEntity(EntityData entityData) {
 		assert entityData != null;
 		Entity entity = entityData.shopObject.getEntity();
-
 		// Unexpected: The shop object is supposed to unregister itself from the AI system when it
 		// despawns its entity.
 		if (entity == null) return;
 
-		// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
-		// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
-		// its chunk being unloaded. So there should be no need to check for that here.
-		// TODO Actually, if the entity moved into a different chunk and we did not update its
-		// location in the chunk index yet, it may already have been unloaded but still getting
-		// ticked here. However, this is not the case currently, since all shopkeeper entities are
-		// stationary (unless some other plugin teleports them).
-		if (entity.isDead()) {
-			// Some plugin might have removed the entity. The shop object will remove the entity's
-			// entry once it recognizes that the entity has been removed. Until then, we simply skip
-			// it here.
-			return;
-		}
+		SchedulerUtils.runTaskOrOmit(entity, () -> {
+			// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
+			// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
+			// its chunk being unloaded. So there should be no need to check for that here.
+			// TODO Actually, if the entity moved into a different chunk and we did not update its
+			// location in the chunk index yet, it may already have been unloaded but still getting
+			// ticked here. However, this is not the case currently, since all shopkeeper entities are
+			// stationary (unless some other plugin teleports them).
+			if (entity.isDead()) {
+				// Some plugin might have removed the entity. The shop object will remove the entity's
+				// entry once it recognizes that the entity has been removed. Until then, we simply skip
+				// it here.
+				return;
+			}
 
-		ChunkData chunkData = entityData.chunkData;
+			ChunkData chunkData = entityData.chunkData;
 
-		// Process gravity:
-		gravityTimings.resume();
-		if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
-			activeGravityEntityCount++;
-			this.processGravity(entityData);
-		}
-		gravityTimings.pause();
+			// Process gravity:
+			//gravityTimings.resume(); // TODO: folia - Fix timings
+			if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
+				activeGravityEntityCount++;
+				this.processGravity(entityData);
+			}
+			//gravityTimings.pause(); // TODO: folia - Fix timings
 
-		// Process AI:
-		aiTimings.resume();
-		if (chunkData.activeAI) {
-			activeAIEntityCount++;
-			this.processAI(entityData);
-		}
-		aiTimings.pause();
+			// Process AI:
+			// aiTimings.resume(); // TODO: folia - Fix timings
+			if (chunkData.activeAI) {
+				activeAIEntityCount++;
+				this.processAI(entityData);
+			}
+			//aiTimings.pause(); // TODO: folia - Fix timings
+		});
 	}
 
 	// GRAVITY

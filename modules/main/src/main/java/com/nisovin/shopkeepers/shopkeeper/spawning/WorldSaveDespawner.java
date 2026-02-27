@@ -1,10 +1,10 @@
 package com.nisovin.shopkeepers.shopkeeper.spawning;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import org.bukkit.Bukkit;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.World;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -105,7 +105,7 @@ class WorldSaveDespawner {
 	class RespawnShopkeepersAfterWorldSaveTask implements Runnable {
 
 		private final WorldData worldData;
-		private @Nullable BukkitTask task;
+		private @Nullable CompletableFuture<Void> task;
 
 		RespawnShopkeepersAfterWorldSaveTask(WorldData worldData) {
 			assert worldData != null;
@@ -114,7 +114,7 @@ class WorldSaveDespawner {
 
 		void start() {
 			assert !worldData.isWorldSaveRespawnPending();
-			this.task = Bukkit.getScheduler().runTask(plugin, this);
+			this.task = SchedulerUtils.runTaskGloballyOrOmit(this);
 			worldData.setWorldSaveRespawnTask(this);
 		}
 
@@ -135,7 +135,7 @@ class WorldSaveDespawner {
 
 		public void cancel() {
 			if (task != null) {
-				task.cancel();
+				task.cancel(true);
 				task = null;
 				worldData.setWorldSaveRespawnTask(null);
 				this.onCancelled();

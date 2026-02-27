@@ -3,8 +3,10 @@ package com.nisovin.shopkeepers.shopobjects.entity.base;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -83,7 +85,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	protected final BaseEntityShopObjectCreationContext context;
 	private final BaseEntityShopObjectType<?> shopObjectType;
 
-	private @Nullable E entity;
+	private volatile @Nullable E entity;
 	private @Nullable Location lastSpawnLocation = null;
 	private int respawnAttempts = 0;
 	private boolean debuggingSpawn = false;
@@ -237,21 +239,27 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	/**
 	 * Any clean up that needs to happen for the entity. The entity might not be fully setup yet.
 	 */
-	protected void cleanUpEntity() {
+	protected void cleanUpEntity(@Nullable Runnable callback) {
 		Entity entity = Unsafe.assertNonNull(this.entity);
 
-		// Disable AI:
-		this.cleanupAI();
+		SchedulerUtils.runTaskOrOmit(entity, () -> {
+			// Disable AI:
+			this.cleanupAI();
 
-		// Remove metadata again:
-		ShopkeeperMetadata.remove(entity);
+			// Remove metadata again:
+			ShopkeeperMetadata.remove(entity);
 
-		// Remove the entity (if it hasn't been removed already):
-		if (!entity.isDead()) {
-			entity.remove();
-		}
+			// Remove the entity (if it hasn't been removed already):
+			if (!entity.isDead()) {
+				entity.remove();
+			}
 
-		this.entity = null;
+			this.entity = null;
+
+			if (callback != null) {
+				callback.run();
+			}
+		});
 	}
 
 	@SuppressWarnings("unchecked")
@@ -360,7 +368,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 					+ ", debug -> " + debug);
 
 			// Reset the entity:
-			this.cleanUpEntity();
+			this.cleanUpEntity(null);
 
 			// Debug entity spawning:
 			if (debug) {
@@ -449,23 +457,24 @@ public abstract class BaseEntityShopObject<E extends Entity>
 		if (entity == null) return;
 
 		// Clean up entity:
-		this.cleanUpEntity();
-		lastSpawnLocation = null;
+		this.cleanUpEntity(() -> {
+			lastSpawnLocation = null;
 
-		// Inform about the object id change:
-		this.onIdChanged();
+			// Inform about the object id change:
+			this.onIdChanged();
+		});
 	}
 
 	@Override
-	public boolean move() {
+	public CompletableFuture<Boolean> move() {
 		Entity entity = this.entity;
-		if (entity == null) return false; // Ignore if not spawned
+		if (entity == null) return CompletableFuture.completedFuture(false); // Ignore if not spawned
 
 		Location spawnLocation = this.getSpawnLocation();
-		if (spawnLocation == null) return false;
+		if (spawnLocation == null) return CompletableFuture.completedFuture(false);
 
 		this.lastSpawnLocation = spawnLocation;
-		boolean teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter()
+		CompletableFuture<Boolean> teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter()
 				.teleport(entity, spawnLocation);
 
 		// Inform the AI system:
@@ -533,7 +542,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 	}
 
 	// True if the entity was respawned.
-	private boolean respawnInactiveEntity() {
+	private void respawnInactiveEntity() {
 		assert !this.isActive();
 		if (skipRespawnAttemptsIfPeaceful) {
 			// Null if the world is not loaded:
@@ -543,7 +552,7 @@ public abstract class BaseEntityShopObject<E extends Entity>
 				Log.debug(DebugOptions.regularTickActivities, () -> shopkeeper.getLocatedLogPrefix()
 						+ this.getEntityType() + " is missing. "
 						+ "Skipping respawn attempt due to peaceful difficulty.");
-				return false;
+				return;
 			} else {
 				skipRespawnAttemptsIfPeaceful = false;
 			}
@@ -581,25 +590,26 @@ public abstract class BaseEntityShopObject<E extends Entity>
 			this.despawn();
 
 			if (skipRespawnAttemptsIfPeaceful) {
-				return false;
+				return;
 			}
 		}
 
 		Log.debug(() -> shopkeeper.getLocatedLogPrefix() + this.getEntityType()
 				+ " is missing. Attempting respawn.");
 
-		boolean spawned = this.spawn(); // This will load the chunk if necessary
-		if (!spawned) {
-			// TODO Maybe add a setting to remove shopkeeper if it can't be spawned a certain amount
-			// of times?
-			Log.debug("  Respawn failed");
-			respawnAttempts += 1;
-			if (respawnAttempts >= MAX_RESPAWN_ATTEMPTS) {
-				// Throttle the rate at which we attempt to respawn the entity:
-				this.throttleTickRate();
-			}
-		} // Else: respawnAttempts and tick rate got reset.
-		return spawned;
+		SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+			boolean spawned = this.spawn(); // This will load the chunk if necessary
+			if (!spawned) {
+				// TODO Maybe add a setting to remove shopkeeper if it can't be spawned a certain amount
+				// of times?
+				Log.debug("  Respawn failed");
+				respawnAttempts += 1;
+				if (respawnAttempts >= MAX_RESPAWN_ATTEMPTS) {
+					// Throttle the rate at which we attempt to respawn the entity:
+					this.throttleTickRate();
+				}
+			} // Else: respawnAttempts and tick rate got reset.
+		});
 	}
 
 	// This is not only relevant when gravity is enabled, but also to react to other plugins

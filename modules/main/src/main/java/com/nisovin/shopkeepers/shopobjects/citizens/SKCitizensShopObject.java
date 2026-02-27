@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.shopobjects.citizens;
 
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -628,7 +629,7 @@ public class SKCitizensShopObject extends AbstractEntityShopObject implements Ci
 	// TODO Use De/SpawnReason PendingRespawn/Respawn for respawns?
 
 	@Override
-	public boolean move() {
+	public CompletableFuture<Boolean> move() {
 		// TODO If the NPC or the shopkeeper's world is not loaded currently, the NPC remains at its
 		// previous location, and it may update the shopkeeper's location back to its current
 		// location once the NPC is loaded. I.e. moving the shopkeeper will have no effect then.
@@ -636,19 +637,19 @@ public class SKCitizensShopObject extends AbstractEntityShopObject implements Ci
 		// the NPC's location has changed in the meantime as well (e.g. externally or while the
 		// Shopkeepers plugin was not enabled)?
 		NPC npc = this.getNPC();
-		if (npc == null) return false;
+		if (npc == null) return CompletableFuture.completedFuture(false);
 
 		Location spawnLocation = this.getSpawnLocation();
-		if (spawnLocation == null) return false;
+		if (spawnLocation == null) return CompletableFuture.completedFuture(false);
 
 		if (npc.isSpawned()) {
 			npc.teleport(spawnLocation, TeleportCause.PLUGIN);
 			// For simplicity, we assume that the teleport succeeded:
-			return true;
+			return CompletableFuture.completedFuture(true);
 		} else {
 			// TODO This also changes the NPC's spawn state (similar to Citizens own teleport
 			// command though).
-			return npc.spawn(spawnLocation, SpawnReason.PLUGIN);
+			return CompletableFuture.completedFuture(npc.spawn(spawnLocation, SpawnReason.PLUGIN));
 		}
 	}
 
