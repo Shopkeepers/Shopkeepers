@@ -35,6 +35,7 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperLoadException;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperSnapshot;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.shopobjects.virtual.VirtualShopObject;
 import com.nisovin.shopkeepers.api.shopobjects.virtual.VirtualShopObjectType;
@@ -459,7 +460,8 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 		ShopType<?> shopType = this.getAndValidateShopType(shopkeeperData);
 		assert shopType != null;
 
-		this._setOpen(shopkeeperData.get(OPEN));
+		// Note: If the shop is forced open, this will mark the shopkeeper as dirty.
+		this.setOpen(shopkeeperData.get(OPEN));
 		this._setName(shopkeeperData.get(NAME));
 
 		// Optional shop object data:
@@ -1284,11 +1286,32 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 
 	@Override
 	public void setOpen(boolean open) {
+		// Note: We do not track if the shop was closed via the API or by the shop owner. Also, we
+		// do not know whether the server admin also wants to automatically re-open player shops
+		// restored from a previously saved snapshot. Consequently, the force-open-player-shops
+		// setting also affects the closing of shops via the API and the restoration of snapshots.
+		if (!open
+				&& this.getType() instanceof PlayerShopType
+				&& !Settings.enableClosingOfPlayerShops
+				&& Settings.forceOpenPlayerShops) {
+			open = true;
+			Log.debug(this.getLogPrefix()
+					+ "Forcefully re-opened due to 'force-open-player-shops' setting!");
+			// Note: We always mark the shopkeeper as dirty here, even if the current open state has
+			// not changed, to ensure that any change to the open state loaded from the shopkeeper's
+			// data is persisted.
+		}
+
 		this._setOpen(open);
 		this.markDirty();
 	}
 
 	private void _setOpen(boolean open) {
+		// Only call onClosed if the current value actually changed:
+		if (this.open == open) {
+			return;
+		}
+
 		this.open = open;
 
 		if (!open) {

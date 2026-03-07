@@ -523,6 +523,19 @@ shop-information-item: 'minecraft:paper'
 # Set this to AIR to disable the use of placeholder items.
 placeholder-item: 'minecraft:paper'
 
+# Whether to allow shop owners to close their shops.
+enable-closing-of-player-shops: true
+# When enable-closing-of-player-shops is disabled, this controls whether to automatically re-open
+# any currently closed player shops. This has no effect if enable-closing-of-player-shops is
+# enabled.
+# However, since we do not track whether a shop was closed by a shop owner or via the API, this also
+# effectively disables the closing of player shops via the API or when restoring shop snapshots. If
+# you want shops to still be closable via the API or when restoring snapshots, you can temporarily
+# enable this setting after having disabled enable-closing-of-player-shops, restart the server to
+# update all player shops, and then disable this setting again. However, be aware that the open
+# state in any previously captured shop snapshots is not automatically updated: This setting is only
+# taken into account at the time a snapshot is restored.
+force-open-player-shops: true
 # The editor items to represent the shop's open and closed states.
 shop-open-item: 'minecraft:green_banner'
 shop-closed-item: 'minecraft:red_banner'

@@ -146,7 +146,11 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 		ConfirmationUI.requestConfirmation(player, config);
 	}
 
-	protected Button createOpenButton() {
+	protected @Nullable Button createOpenButton() {
+		if (shopkeeper.getType() instanceof PlayerShopType && !Settings.enableClosingOfPlayerShops) {
+			return null;
+		}
+
 		return new ActionButton() {
 			@Override
 			public @Nullable ItemStack getIcon(EditorView editorView) {
