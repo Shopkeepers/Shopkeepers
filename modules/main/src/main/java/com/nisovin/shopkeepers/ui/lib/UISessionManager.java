@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.plugin.Plugin;
@@ -295,27 +296,35 @@ public final class UISessionManager {
 		this.getUISessionsForContext(contextObject, uiType).forEach(View::abort);
 	}
 
-	public void abortUISessionsForContextDelayed(Object contextObject) {
+	public void abortUISessionsForContextDelayed(@Nullable Location location, Object contextObject) {
 		Validate.notNull(contextObject, "context is null");
 
 		// Deactivate currently active UIs for this subject:
 		this.deactivateUIsForContext(contextObject);
 
-		SchedulerUtils.runTaskOrOmit(plugin, () -> {
+		if (location != null) {
+			SchedulerUtils.runTaskOrOmit(location, () -> {
+				this.abortUISessionsForContext(contextObject);
+			});
+		} else {
 			this.abortUISessionsForContext(contextObject);
-		});
+		}
 	}
 
-	public void abortUISessionsForContextDelayed(Object contextObject, UIType uiType) {
+	public void abortUISessionsForContextDelayed(@Nullable Location location, Object contextObject, UIType uiType) {
 		Validate.notNull(contextObject, "context is null");
 		Validate.notNull(uiType, "uiType is null");
 
 		// Deactivate currently active UIs for this subject:
 		this.deactivateUIsForContext(contextObject, uiType);
 
-		SchedulerUtils.runTaskOrOmit(plugin, () -> {
+		if (location != null) {
+			SchedulerUtils.runTaskOrOmit(location, () -> {
+				this.abortUISessionsForContext(contextObject, uiType);
+			});
+		} else {
 			this.abortUISessionsForContext(contextObject, uiType);
-		});
+		}
 	}
 
 	private void deactivateUIsForContext(Object contextObject) {

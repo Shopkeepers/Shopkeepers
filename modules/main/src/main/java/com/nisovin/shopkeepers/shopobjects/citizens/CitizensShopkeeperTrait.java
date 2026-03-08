@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.shopobjects.citizens;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -134,7 +135,7 @@ public class CitizensShopkeeperTrait extends Trait {
 
 		// Giving citizens some time to properly initialize the trait and NPC:
 		// Also: Shopkeeper creation by a player is handled after trait attachment.
-		Bukkit.getScheduler().runTaskLater(SKShopkeepersPlugin.getInstance(), () -> {
+		SchedulerUtils.runAsyncTaskLaterOrOmit(() -> {
 			// Create a new shopkeeper if there isn't one already for this NPC (without creator):
 			this.createShopkeeperIfMissing(null);
 		}, 5L);
@@ -142,93 +143,94 @@ public class CitizensShopkeeperTrait extends Trait {
 
 	// Creator can be null.
 	private void createShopkeeperIfMissing(@Nullable Player creator) {
-		NPC npc = this.getNPC();
-		if (npc == null || !npc.hasTrait(CitizensShopkeeperTrait.class)) {
-			// The trait is no longer attached to the NPC. Has it already been removed again? We
-			// skip creating a shopkeeper for this no longer attached trait:
-			return;
-		}
-
-		if (this.getShopkeeper() != null) {
-			// There is already a shopkeeper for this NPC. The trait was probably re-attached after
-			// a reload of Citizens.
-			return;
-		}
-
-		if (!SKShopkeepersPlugin.isPluginEnabled()) {
-			// The Shopkeepers plugin is not enabled currently:
-			return;
-		}
-		ShopkeepersPlugin plugin = ShopkeepersPlugin.getInstance();
-
-		Log.debug(() -> "Creating shopkeeper for Citizens NPC " + CitizensShops.getNPCIdString(npc)
-				+ (creator != null ? " and player '" + creator.getName() + "'" : ""));
-
-		Location location;
 		Entity entity = npc.getEntity();
-		if (entity != null) {
-			location = entity.getLocation();
-		} else {
-			location = npc.getStoredLocation(); // Can be null
-		}
+		assert entity != null;
+		SchedulerUtils.runTaskOrOmit(entity, () -> {
+			NPC npc = this.getNPC();
+			if (npc == null || !npc.hasTrait(CitizensShopkeeperTrait.class)) {
+				// The trait is no longer attached to the NPC. Has it already been removed again? We
+				// skip creating a shopkeeper for this no longer attached trait:
+				return;
+			}
 
-		String shopkeeperCreationError = null; // Null indicates success
-		if (location != null) {
-			ShopCreationData creationData = AdminShopCreationData.create(
-					creator,
-					DefaultShopTypes.ADMIN_REGULAR(),
-					DefaultShopObjectTypes.CITIZEN(),
-					location,
-					null
-			);
-			creationData.setValue(SKCitizensShopObject.CREATION_DATA_NPC_UUID_KEY, npc.getUniqueId());
+			if (this.getShopkeeper() != null) {
+				// There is already a shopkeeper for this NPC. The trait was probably re-attached after
+				// a reload of Citizens.
+				return;
+			}
 
-			Shopkeeper shopkeeper = null;
-			if (creator != null) {
-				// Handle shopkeeper creation by player:
-				shopkeeper = plugin.handleShopkeeperCreation(creationData);
+			if (!SKShopkeepersPlugin.isPluginEnabled()) {
+				// The Shopkeepers plugin is not enabled currently:
+				return;
+			}
+			ShopkeepersPlugin plugin = ShopkeepersPlugin.getInstance();
+
+			Log.debug(() -> "Creating shopkeeper for Citizens NPC " + CitizensShops.getNPCIdString(npc)
+					+ (creator != null ? " and player '" + creator.getName() + "'" : ""));
+
+			Location location;
+			Entity npcEntity = npc.getEntity();
+			if (npcEntity != null) {
+				location = npcEntity.getLocation();
 			} else {
-				// Create shopkeeper directly (without available creator):
-				ShopkeeperRegistry shopkeeperRegistry = plugin.getShopkeeperRegistry();
-				try {
-					shopkeeper = shopkeeperRegistry.createShopkeeper(creationData);
-					assert shopkeeper != null;
+				location = npc.getStoredLocation(); // Can be null
+			}
 
-					// Save:
-					shopkeeper.save();
-				} catch (ShopkeeperCreateException e) {
-					// Some issue identified during shopkeeper creation (possibly hinting to a bug):
-					Log.warning("Failed to create the shopkeeper for Citizens NPC "
-							+ CitizensShops.getNPCIdString(npc) + "!", e);
+			String shopkeeperCreationError = null; // Null indicates success
+			if (location != null) {
+				ShopCreationData creationData = AdminShopCreationData.create(
+						creator,
+						DefaultShopTypes.ADMIN_REGULAR(),
+						DefaultShopObjectTypes.CITIZEN(),
+						location,
+						null
+				);
+				creationData.setValue(SKCitizensShopObject.CREATION_DATA_NPC_UUID_KEY, npc.getUniqueId());
+
+				Shopkeeper shopkeeper = null;
+				if (creator != null) {
+					// Handle shopkeeper creation by player:
+					shopkeeper = plugin.handleShopkeeperCreation(creationData);
+				} else {
+					// Create shopkeeper directly (without available creator):
+					ShopkeeperRegistry shopkeeperRegistry = plugin.getShopkeeperRegistry();
+					try {
+						shopkeeper = shopkeeperRegistry.createShopkeeper(creationData);
+						assert shopkeeper != null;
+
+						// Save:
+						shopkeeper.save();
+					} catch (ShopkeeperCreateException e) {
+						// Some issue identified during shopkeeper creation (possibly hinting to a bug):
+						Log.warning("Failed to create the shopkeeper for Citizens NPC "
+								+ CitizensShops.getNPCIdString(npc) + "!", e);
+					}
 				}
-			}
 
-			if (shopkeeper == null) {
-				// Shopkeeper creation failed:
+				if (shopkeeper == null) {
+					// Shopkeeper creation failed:
+					// TODO Translation?
+					shopkeeperCreationError = "Shopkeeper creation via the Citizens trait failed."
+							+ " Removing the trait again.";
+				}
+			} else {
+				// NPC did not provide any location. We cannot create a shopkeeper without location.
 				// TODO Translation?
-				shopkeeperCreationError = "Shopkeeper creation via the Citizens trait failed."
-						+ " Removing the trait again.";
-			}
-		} else {
-			// NPC did not provide any location. We cannot create a shopkeeper without location.
-			// TODO Translation?
-			shopkeeperCreationError = "Shopkeeper creation via the Citizens trait failed due to"
-					+ " missing NPC location. Removing the trait again.";
-		}
-
-		if (shopkeeperCreationError != null) {
-			// Shopkeeper creation failed:
-			Log.warning(shopkeeperCreationError);
-			if (creator != null) {
-				TextUtils.sendMessage(creator, ChatColor.RED + shopkeeperCreationError);
+				shopkeeperCreationError = "Shopkeeper creation via the Citizens trait failed due to"
+						+ " missing NPC location. Removing the trait again.";
 			}
 
-			// Note: We don't trigger a save of the NPC data when the trait is manually added, so we
-			// also don't trigger a save when we remove the trait again here.
-			Bukkit.getScheduler().runTask(
-					plugin,
-					() -> npc.removeTrait(CitizensShopkeeperTrait.class)
-			);
-		}
+			if (shopkeeperCreationError != null) {
+				// Shopkeeper creation failed:
+				Log.warning(shopkeeperCreationError);
+				if (creator != null) {
+					TextUtils.sendMessage(creator, ChatColor.RED + shopkeeperCreationError);
+				}
+
+				// Note: We don't trigger a save of the NPC data when the trait is manually added, so we
+				// also don't trigger a save when we remove the trait again here.
+				npc.removeTrait(CitizensShopkeeperTrait.class);
+			}
+		});
 	}
 }

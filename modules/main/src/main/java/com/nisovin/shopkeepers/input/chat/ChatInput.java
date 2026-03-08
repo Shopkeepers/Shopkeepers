@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.input.chat;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -60,6 +61,6 @@ public class ChatInput extends InputManager<String> implements Listener {
 		String message = event.getMessage();
 
 		// Process the request on the server's main thread:
-		Bukkit.getScheduler().runTask(plugin, () -> request.onInput(message));
+		SchedulerUtils.runTaskOrOmit(player, () -> request.onInput(message));
 	}
 }

@@ -2,6 +2,8 @@ package com.nisovin.shopkeepers.shopkeeper.spawning;
 
 import java.util.function.Consumer;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
@@ -91,10 +93,21 @@ public class ShopkeeperSpawnQueue extends TaskQueue<AbstractShopkeeper> {
 
 	@Override
 	protected void process(AbstractShopkeeper shopkeeper) {
-		// Reset the shopkeeper's 'queued' state:
-		this.resetQueued(shopkeeper);
+		Location location = shopkeeper.getLocation();
+		if (location != null) {
+			SchedulerUtils.runTaskOrOmit(location, () -> {
+				// Reset the shopkeeper's 'queued' state:
+				this.resetQueued(shopkeeper);
 
-		// Spawn the shopkeeper:
-		spawner.accept(shopkeeper);
+				// Spawn the shopkeeper:
+				spawner.accept(shopkeeper);
+			});
+		} else {
+			// Reset the shopkeeper's 'queued' state:
+			this.resetQueued(shopkeeper);
+
+			// Spawn the shopkeeper:
+			spawner.accept(shopkeeper);
+		}
 	}
 }

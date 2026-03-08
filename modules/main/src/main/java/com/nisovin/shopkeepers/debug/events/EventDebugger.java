@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.debug.events;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -24,7 +25,7 @@ public class EventDebugger {
 		if (Settings.debug) {
 			// Register debug listener if enabled:
 			// Run delayed to also catch events / event listeners of other plugins.
-			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			SchedulerUtils.runAsyncTaskLaterOrOmit(() -> {
 				boolean logAllEvent = Debug.isDebugging(DebugOptions.logAllEvents);
 				boolean printListeners = Debug.isDebugging(DebugOptions.printListeners);
 				if (logAllEvent || printListeners) {
