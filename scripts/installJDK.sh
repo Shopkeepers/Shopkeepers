@@ -21,6 +21,9 @@ case "$1" in
   21)
     JDK_VERSION="21.0.3-tem"
     ;;
+  25)
+    JDK_VERSION="25.0.2-tem"
+    ;;
   *)
     JDK_VERSION=$1
     ;;

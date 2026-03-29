@@ -29,7 +29,7 @@ jar {
 }
 
 // Separate Jar task for the remapped output, which is for exampled used by the dist module:
-// Note: It shouldn't really be necessary to extend the Jar task here, but this simpifies defining
+// Note: It shouldn't really be necessary to extend the Jar task here, but this simplifies defining
 // the output jar based on the normal Jar tasks' archiveFile, and referencing this output jar in the
 // artifacts configuration, which is referenced by other projects during the configuration phase,
 // without observing errors due to the archiveFile being accessed during the configuration phase

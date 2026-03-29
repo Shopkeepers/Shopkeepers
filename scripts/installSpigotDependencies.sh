@@ -19,9 +19,10 @@ buildSpigotIfMissing() {
     buildVersion="$4"
     versionString="$1 ($4)"
   fi
+
   if [ "$3" = "remapped" ]; then classifier="-remapped-mojang"; fi
 
-  jarPath=$"$HOME/.m2/repository/org/bukkit/craftbukkit/$1-$2-SNAPSHOT/craftbukkit-$1-$2-SNAPSHOT${classifier}.jar"
+  jarPath="$HOME/.m2/repository/org/bukkit/craftbukkit/$1-$2-SNAPSHOT/craftbukkit-$1-$2-SNAPSHOT${classifier}.jar"
   if [ -f "${jarPath}" ]; then
     installedImplementationVersion=$(unzip -p "${jarPath}" 'META-INF/MANIFEST.MF' | grep -oP '(?<=^Implementation-Version: )[^\n\r]*')
     installedBuildNumber=$(echo "${installedImplementationVersion}" | grep -oP '^\d+(?=-)')
@@ -37,7 +38,12 @@ buildSpigotIfMissing() {
   fi
 
   if [ "${build}" = "yes" ]; then
-    ./installSpigot.sh "${buildVersion}"
+    local buildArgs=("${buildVersion}")
+    if [ "$3" = "remapped" ]; then
+      buildArgs+=("remapped")
+    fi
+
+    ./installSpigot.sh "${buildArgs[@]}"
   else
     echo "Not building Spigot ${versionString} because it is already in our Maven repository"
   fi
@@ -66,5 +72,10 @@ buildSpigotIfMissing 1.21.6 R0.1 remapped
 buildSpigotIfMissing 1.21.8 R0.1 remapped
 buildSpigotIfMissing 1.21.10 R0.1 remapped
 buildSpigotIfMissing 1.21.11 R0.2 remapped
+
+# The following versions require JDK 25 to build:
+source installJDK.sh 25
+
+buildSpigotIfMissing 26.1 R0.1
 
 popd

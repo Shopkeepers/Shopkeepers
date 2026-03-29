@@ -1,0 +1,51 @@
+apply plugin: 'java-library'
+apply plugin: 'org.checkerframework'
+apply plugin: 'eclipse'
+
+// Every project using this script must declare this version BEFORE applying this script:
+/*ext {
+	craftbukkitVersion = 'UNSPECIFIED'
+}*/
+
+if (!project.hasProperty('craftbukkitVersion')) {
+	throw new GradleException("Property 'craftbukkitVersion' must be defined before applying this script.")
+}
+
+dependencies {
+	implementation project(':shopkeepers-main')
+	implementation ("org.bukkit:craftbukkit:${craftbukkitVersion}") {
+		// Already included in craftbukkit.
+		exclude group: 'org.spigotmc', module: 'minecraft-server'
+	}
+
+	testImplementation libs.junit
+	testImplementation libs.asm
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+// Produces a non-remapped output jar. Used by the test module, but also the dist module now:
+jar {
+}
+
+configurations {
+	create("remapped") {
+		canBeConsumed = true
+		canBeResolved = false
+		attributes {
+			attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+			attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+		}
+	}
+}
+
+artifacts {
+	// No remapping needed anymore, so we can use the output of the normal Jar task.
+	remapped tasks.named('jar').map { it.archiveFile }
+}
+
+// Note: The compat modules are not published as standalone artifacts, but are shaded into the final plugin jar.

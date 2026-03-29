@@ -333,6 +333,7 @@ public final class SoundEffect {
 	 * @return <code>true</code> if this sound effect is disabled
 	 */
 	public boolean isDisabled() {
+		var soundName = this.soundName;
 		return (soundName != null && soundName.isEmpty())
 				|| (volume != null && volume <= MIN_VOLUME);
 	}
