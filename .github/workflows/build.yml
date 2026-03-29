@@ -15,30 +15,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0  # SonarCloud: Shallow clones should be disabled for a better relevancy of analysis
     - name: Set up JDK 21
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'zulu'
     - name: Cache Maven packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/*.gradle*', '**/libs.versions.toml', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-m2
     - name: Cache Gradle packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.gradle/caches
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/libs.versions.toml', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle
     - name: Cache Jabba JDK installations
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.jabba
         key: ${{ runner.os }}-jabba-${{ hashFiles('**/*.sh') }}
@@ -46,7 +46,7 @@ jobs:
           ${{ runner.os }}-jabba
     - name: Cache SonarCloud packages
       if: github.event_name != 'pull_request'
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
@@ -63,6 +63,6 @@ jobs:
     - name: Stage artifacts for upload
       run: mkdir staging && cp build/*.jar staging
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: staging

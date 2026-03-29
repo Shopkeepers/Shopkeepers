@@ -11,6 +11,7 @@ Date format: (YYYY-MM-DD)
   * Note: Since we do not track whether a shop was closed by the shop owner or the API, this also effectively disables the closing of player shops via the API or when restoring shop snapshots. If you want shops to still be closable via the API or when restoring snapshots, you can temporarily enable this setting after after having disabled `enable-closing-of-player-shops`, restart the server to update all player shops, and then disable this setting again. However, be aware that the open state in any previously captured shop snapshots is not automatically updated: This setting is only taken into account at the time a snapshot is restored.
   * Debug: We the debug mode is enabled, we log whenever a player shop is forcefully re-opened.
 * Fix: Since the last update, mob equipment and default potion effects were no longer applied on spawn.
+* Build: Resolve deprecations in Github build action.
 
 ## v2.26.0 (2026-02-21)
 ### Supported MC versions: 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
