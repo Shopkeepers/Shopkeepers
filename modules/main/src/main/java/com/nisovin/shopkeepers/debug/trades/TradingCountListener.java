@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.debug.trades;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Statistic;
 import org.bukkit.entity.EntityType;
@@ -12,7 +13,6 @@ import org.bukkit.event.player.PlayerStatisticIncrementEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantInventory;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
@@ -27,6 +27,8 @@ import com.nisovin.shopkeepers.util.bukkit.MerchantUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Tries to accurately detect individual trades handled by Minecraft by listening to corresponding
@@ -51,7 +53,7 @@ public class TradingCountListener implements Listener {
 
 	private @Nullable Player tradingPlayer = null;
 	private int tradeCounter = 0;
-	private @Nullable BukkitTask stopListeningTask = null;
+	private @Nullable CompletableFuture<Void> stopListeningTask = null;
 
 	public TradingCountListener(ShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
@@ -74,7 +76,7 @@ public class TradingCountListener implements Listener {
 		Log.debug("Listening for non-shopkeeper trades of player " + tradingPlayer.getName()
 				+ " ...");
 		this.tradingPlayer = tradingPlayer;
-		stopListeningTask = Bukkit.getScheduler().runTask(plugin, stopListeningAction);
+		this.stopListeningTask = SchedulerUtils.runTaskGloballyOrOmit(stopListeningAction);
 	}
 
 	private void stopListeningForTrades() {
@@ -83,7 +85,7 @@ public class TradingCountListener implements Listener {
 		tradingPlayer = null;
 		tradeCounter = 0;
 		if (stopListeningTask != null) {
-			stopListeningTask.cancel();
+			stopListeningTask.cancel(true);
 			stopListeningTask = null;
 		}
 	}

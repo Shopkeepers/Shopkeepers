@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -260,7 +261,7 @@ public abstract class AbstractPlayerShopkeeper
 				ShopkeeperNaming shopkeeperNaming = SKShopkeepersPlugin.getInstance().getShopkeeperNaming();
 				if (shopkeeperNaming.requestNameChange(player, this, newName)) {
 					// Manually remove rename item from player's hand after this event is processed:
-					Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+					SchedulerUtils.runTaskOrOmit(player, () -> {
 						ItemStack newItemInMainHand = ItemUtils.decreaseItemAmount(itemInMainHand, 1);
 						playerInventory.setItemInMainHand(newItemInMainHand);
 					});

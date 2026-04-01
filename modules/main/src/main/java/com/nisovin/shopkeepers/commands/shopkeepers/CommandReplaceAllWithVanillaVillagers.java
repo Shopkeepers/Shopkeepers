@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.commands.shopkeepers;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -208,7 +209,9 @@ class CommandReplaceAllWithVanillaVillagers extends Command {
 
 			// Try to respawn the shopkeeper:
 			if (isShopkeeperSpawned) {
-				shopObject.spawn();
+				SchedulerUtils.runTaskOrOmit(shopkeeper.getLocation(), () -> {
+					shopObject.spawn();
+				});
 			}
 
 			return false;

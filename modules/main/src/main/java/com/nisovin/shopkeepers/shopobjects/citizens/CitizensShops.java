@@ -2,12 +2,13 @@ package com.nisovin.shopkeepers.shopobjects.citizens;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -82,7 +83,7 @@ public class CitizensShops {
 	// created are not contained in this mapping.
 	// If multiple shopkeepers are associated with the same NPC, this mapping keeps track of all of
 	// these shopkeepers.
-	private final Map<UUID, List<AbstractShopkeeper>> shopkeepersByNpcId = new HashMap<>();
+	private final Map<UUID, List<AbstractShopkeeper>> shopkeepersByNpcId = new ConcurrentHashMap<>();
 
 	public CitizensShops(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
@@ -180,7 +181,7 @@ public class CitizensShops {
 		citizensListener.onEnable();
 
 		// Delayed to run after shopkeepers and NPCs were loaded:
-		Bukkit.getScheduler().runTaskLater(plugin, new DelayedSetupTask(), 3L);
+		SchedulerUtils.runAsyncTaskLaterOrOmit(new DelayedSetupTask(), 3L);
 
 		// Enabled:
 		citizensShopsEnabled = true;

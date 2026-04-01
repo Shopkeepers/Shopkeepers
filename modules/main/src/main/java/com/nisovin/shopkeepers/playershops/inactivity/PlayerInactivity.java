@@ -1,8 +1,7 @@
 package com.nisovin.shopkeepers.playershops.inactivity;
 
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -21,7 +20,7 @@ public class PlayerInactivity {
 	public PlayerInactivity(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
 		this.plugin = plugin;
-		this.task = new DeleteInactivePlayerShopsTask(plugin);
+		this.task = new DeleteInactivePlayerShopsTask();
 	}
 
 	public void onEnable() {
@@ -53,19 +52,17 @@ public class PlayerInactivity {
 		// ~4 hours (can be noticeably longer if the server lags)
 		private static final long INTERVAL_TICKS = Ticks.PER_SECOND * 60 * 60 * 4L;
 
-		private final Plugin plugin;
-		private @Nullable BukkitTask task = null;
+		private @Nullable WrappedTask task = null;
 
-		public DeleteInactivePlayerShopsTask(Plugin plugin) {
+		public DeleteInactivePlayerShopsTask() {
 			Validate.notNull(plugin, "plugin is null");
-			this.plugin = plugin;
 		}
 
 		public void start() {
 			this.stop(); // Stop the task if it is already running
 
 			// The task runs once shortly after start, and then periodically in large intervals:
-			task = Bukkit.getScheduler().runTaskTimer(plugin, this, 5L, INTERVAL_TICKS);
+			task = SchedulerUtils.runAsyncTaskTimerOrOmit(this, 5L, INTERVAL_TICKS);
 		}
 
 		public void stop() {
