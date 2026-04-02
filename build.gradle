@@ -159,6 +159,14 @@ subprojects {
 			paperCompileOnly libs.paper.api
 		}
 
+		configurations.all {
+			resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+				if (details.requested.group == 'net.kyori' && details.requested.name == 'adventure-text-serializer-ansi' && (details.requested.version == null || details.requested.version.isEmpty())) {
+					details.useVersion '4.17.0'
+				}
+			}
+		}
+
 		java {
 			sourceCompatibility = JavaVersion.VERSION_21
 		}
