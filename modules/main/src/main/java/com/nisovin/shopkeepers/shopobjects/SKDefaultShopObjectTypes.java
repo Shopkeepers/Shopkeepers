@@ -7,6 +7,7 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.shopobjects.block.base.BaseBlockShops;
 import com.nisovin.shopkeepers.shopobjects.citizens.SKCitizensShopObjectType;
+import com.nisovin.shopkeepers.shopobjects.fancynpcs.SKFancyNpcShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.endcrystal.SKEndCrystalShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShops;
 import com.nisovin.shopkeepers.shopobjects.living.SKLivingShopObjectTypes;
@@ -47,6 +48,7 @@ public final class SKDefaultShopObjectTypes implements DefaultShopObjectTypes {
 		shopObjectTypes.add(this.getSignShopObjectType());
 		shopObjectTypes.add(this.getHangingSignShopObjectType());
 		shopObjectTypes.add(this.getCitizensShopObjectType());
+		shopObjectTypes.add(this.getFancyNpcShopObjectType());
 		return shopObjectTypes;
 	}
 
@@ -75,6 +77,10 @@ public final class SKDefaultShopObjectTypes implements DefaultShopObjectTypes {
 		return plugin.getCitizensShops().getCitizensShopObjectType();
 	}
 
+	public SKFancyNpcShopObjectType getFancyNpcShopObjectType() {
+		return plugin.getFancyNpcsShops().getFancyNpcShopObjectType();
+	}
+
 	// STATICS (for convenience):
 
 	public static SKDefaultShopObjectTypes getInstance() {
@@ -99,5 +105,9 @@ public final class SKDefaultShopObjectTypes implements DefaultShopObjectTypes {
 
 	public static SKCitizensShopObjectType CITIZEN() {
 		return getInstance().getCitizensShopObjectType();
+	}
+
+	public static SKFancyNpcShopObjectType FANCY_NPC() {
+		return getInstance().getFancyNpcShopObjectType();
 	}
 }
