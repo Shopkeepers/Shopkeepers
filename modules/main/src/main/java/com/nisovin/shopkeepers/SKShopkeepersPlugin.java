@@ -56,6 +56,7 @@ import com.nisovin.shopkeepers.shopobjects.SKDefaultShopObjectTypes;
 import com.nisovin.shopkeepers.shopobjects.SKShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.shopobjects.block.base.BaseBlockShops;
 import com.nisovin.shopkeepers.shopobjects.citizens.CitizensShops;
+import com.nisovin.shopkeepers.shopobjects.fancynpcs.FancyNpcsShops;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShops;
 import com.nisovin.shopkeepers.shopobjects.living.LivingShops;
 import com.nisovin.shopkeepers.spigot.SpigotFeatures;
@@ -162,6 +163,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 	private final BaseEntityShops entityShops = new BaseEntityShops(Unsafe.initialized(this));
 	private final LivingShops livingShops = new LivingShops(Unsafe.initialized(this), entityShops);
 	private final CitizensShops citizensShops = new CitizensShops(Unsafe.initialized(this));
+	private final FancyNpcsShops fancyNpcsShops = new FancyNpcsShops(Unsafe.initialized(this));
 
 	private final RegularVillagers regularVillagers = new RegularVillagers(Unsafe.initialized(this));
 
@@ -693,6 +695,10 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 	public CitizensShops getCitizensShops() {
 		return citizensShops;
+	}
+
+	public FancyNpcsShops getFancyNpcsShops() {
+		return fancyNpcsShops;
 	}
 
 	// SHOP TYPES
