@@ -14,7 +14,7 @@ Date format: (YYYY-MM-DD)
 * Config: Add setting `force-open-player-shops` (default: `true`) that controls whether player shops are automatically reopened if `enable-closing-of-player-shops` is disabled.
   * This setting has no effect if `enable-closing-of-player-shops` is enabled.
   * Note: Since we do not track whether a shop was closed by the shop owner or the API, this also effectively disables the closing of player shops via the API or when restoring shop snapshots. If you want shops to still be closable via the API or when restoring snapshots, you can temporarily enable this setting after after having disabled `enable-closing-of-player-shops`, restart the server to update all player shops, and then disable this setting again. However, be aware that the open state in any previously captured shop snapshots is not automatically updated: This setting is only taken into account at the time a snapshot is restored.
-  * Debug: We the debug mode is enabled, we log whenever a player shop is forcefully re-opened.
+  * Debug: When the debug mode is enabled, we log whenever a player shop is forcefully re-opened.
 * Fix: Since the last update, mob equipment and default potion effects were no longer applied on spawn.
 * Build: Resolve deprecations in Github build action.
 
