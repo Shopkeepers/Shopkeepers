@@ -1,0 +1,19 @@
+ext {
+	craftbukkitVersion = '26.1.2.build.+'
+}
+
+apply from: rootProject.file('modules/shared/nmsModulePaper.gradle')
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+java.disableAutoTargetJvm()
+
+/*paperweight {
+	javaLauncher = javaToolchains.launcherFor {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}*/

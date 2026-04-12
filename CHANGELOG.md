@@ -4,7 +4,7 @@ Date format: (YYYY-MM-DD)
 ## v2.26.1 (TBA)
 ### Supported MC versions: 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
-* Update for Spigot 26.1.2.
+* Update for MC 26.1.2.
   * MC 26.1 and 26.1.1 might work but are not officially supported.
 * Config: Add setting `enable-closing-of-player-shops` (default: `true`) that controls whether shop owners can close their shops.
 * Config: Add setting `force-open-player-shops` (default: `true`) that controls whether player shops are automatically reopened if `enable-closing-of-player-shops` is disabled.

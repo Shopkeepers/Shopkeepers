@@ -2,7 +2,7 @@ plugins {
 	id 'base' // Adds the clean task to the root project
 	id 'com.gradleup.shadow' version '9.2.2' apply false
 	id 'org.checkerframework' version '0.6.39' apply false
-	id 'io.papermc.paperweight.userdev' version '2.0.0-beta.17' apply false
+	id 'io.papermc.paperweight.userdev' version '2.0.0-beta.21' apply false
 	id 'org.ajoberstar.git-publish' version '5.1.1'
 	// Useful for build debugging:
 	// https://gitlab.com/barfuin/gradle-taskinfo
