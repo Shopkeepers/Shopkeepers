@@ -1,5 +1,5 @@
 ext {
-	craftbukkitVersion = '26.1-R0.1-SNAPSHOT'
+	craftbukkitVersion = '26.1.2-R0.1-SNAPSHOT'
 }
 
 apply from: rootProject.file('modules/shared/nmsModuleMojang.gradle')
