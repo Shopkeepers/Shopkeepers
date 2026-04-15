@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.ui.equipmentEditor;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -194,7 +195,7 @@ public class EquipmentEditorView extends View {
 
 		if (rightClick) {
 			// Clear the equipment slot:
-			Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+			SchedulerUtils.runTaskOrOmit(view.getPlayer(), () -> {
 				if (!this.isOpen() || this.abortIfContextInvalid()) return;
 
 				inventory.setItem(rawSlot, this.toEditorEquipmentItem(equipmentSlot, null));
@@ -207,7 +208,7 @@ public class EquipmentEditorView extends View {
 		if (leftClick && !ItemUtils.isEmpty(cursorClone)) {
 			assert cursorClone != null;
 			// Place the item from the cursor:
-			Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+			SchedulerUtils.runTaskOrOmit(getPlayer(), () -> {
 				if (!this.isOpen() || this.abortIfContextInvalid()) return;
 
 				cursorClone.setAmount(1);

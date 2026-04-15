@@ -1,6 +1,7 @@
 package com.nisovin.shopkeepers.shopobjects.virtual;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Location;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -74,8 +75,8 @@ public class SKVirtualShopObject extends AbstractShopObject implements VirtualSh
 	}
 
 	@Override
-	public boolean move() {
-		return false;
+	public CompletableFuture<Boolean> move() {
+		return CompletableFuture.completedFuture(false);
 	}
 
 	// TICKING

@@ -3,7 +3,8 @@ package com.nisovin.shopkeepers.shopobjects.living.types.villager;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import org.bukkit.Bukkit;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -13,10 +14,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.TradeSelectEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantInventory;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.ShopkeepersAPI;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
@@ -66,7 +65,7 @@ public class VillagerSounds extends TradingListener {
 	private final LivingShopObject shopObject;
 
 	private long lastSoundNanos = System.nanoTime();
-	private @Nullable BukkitTask tradeInteractionTask = null;
+	private @Nullable WrappedTask tradeInteractionTask = null;
 
 	public VillagerSounds(SKLivingShopObject<? extends AbstractVillager> shopObject) {
 		Validate.notNull(shopObject, "shopObject is null");
@@ -232,8 +231,7 @@ public class VillagerSounds extends TradingListener {
 			// We are already about to process another inventory interaction.
 			return;
 		}
-		tradeInteractionTask = Bukkit.getScheduler().runTask(
-				SKShopkeepersPlugin.getInstance(),
+		tradeInteractionTask = SchedulerUtils.runAsyncTaskOrOmit(
 				new ProcessTradeInteractionTask(uiSession)
 		);
 	}
@@ -258,26 +256,28 @@ public class VillagerSounds extends TradingListener {
 
 	private void onPostTradeInteraction(UISession uiSession) {
 		assert uiSession.isValid();
-		Player player = uiSession.getPlayer();
-		MerchantInventory merchantInventory = (MerchantInventory) player.getOpenInventory().getTopInventory();
+		SchedulerUtils.runTaskOrOmit(uiSession.getPlayer(), () -> {
+			Player player = uiSession.getPlayer();
+			MerchantInventory merchantInventory = (MerchantInventory) player.getOpenInventory().getTopInventory();
 
-		// We don't play any sound if there are no input items:
-		ItemStack slot1 = merchantInventory.getItem(INPUT_SLOT_1);
-		ItemStack slot2 = merchantInventory.getItem(INPUT_SLOT_2);
-		if (ItemUtils.isEmpty(slot1) && ItemUtils.isEmpty(slot2)) {
-			return;
-		}
+			// We don't play any sound if there are no input items:
+			ItemStack slot1 = merchantInventory.getItem(INPUT_SLOT_1);
+			ItemStack slot2 = merchantInventory.getItem(INPUT_SLOT_2);
+			if (ItemUtils.isEmpty(slot1) && ItemUtils.isEmpty(slot2)) {
+				return;
+			}
 
-		long nanosSinceLastSound = System.nanoTime() - lastSoundNanos;
-		if (nanosSinceLastSound < TRADE_INTERACTION_SOUND_DELAY_NANOS) {
-			return;
-		}
-		this.throttleSounds();
+			long nanosSinceLastSound = System.nanoTime() - lastSoundNanos;
+			if (nanosSinceLastSound < TRADE_INTERACTION_SOUND_DELAY_NANOS) {
+				return;
+			}
+			this.throttleSounds();
 
-		// This sound is played to all nearby players.
-		ItemStack resultItem = merchantInventory.getItem(RESULT_SLOT);
-		Sound sound = this.getTradeInteractionSound(resultItem);
-		this.tryPlayVillagerTradingSound(player, "trade interaction", sound, true);
+			// This sound is played to all nearby players.
+			ItemStack resultItem = merchantInventory.getItem(RESULT_SLOT);
+			Sound sound = this.getTradeInteractionSound(resultItem);
+			this.tryPlayVillagerTradingSound(player, "trade interaction", sound, true);
+		});
 	}
 
 	@Override

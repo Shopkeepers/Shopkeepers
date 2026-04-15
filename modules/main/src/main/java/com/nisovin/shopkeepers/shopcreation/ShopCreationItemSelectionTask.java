@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
+import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.lang.Messages;
@@ -81,7 +81,7 @@ class ShopCreationItemSelectionTask implements Runnable {
 
 	private final Plugin plugin;
 	private final Player player;
-	private @Nullable BukkitTask bukkitTask = null;
+	private @Nullable WrappedTask wrappedTask = null;
 
 	// Use the static 'start' factory method.
 	private ShopCreationItemSelectionTask(Plugin plugin, Player player) {
@@ -93,14 +93,14 @@ class ShopCreationItemSelectionTask implements Runnable {
 	private void start() {
 		// Cancel previous task if already active:
 		this.cancel();
-		bukkitTask = Bukkit.getScheduler().runTaskLater(plugin, this, DELAY_TICKS);
+		wrappedTask = SchedulerUtils.runTaskLaterOrOmit(player, this, DELAY_TICKS);
 	}
 
 	// Note: Performs no cleanup.
 	private void cancel() {
-		if (bukkitTask != null) {
-			bukkitTask.cancel();
-			bukkitTask = null;
+		if (wrappedTask != null) {
+			wrappedTask.cancel();
+			wrappedTask = null;
 		}
 	}
 
