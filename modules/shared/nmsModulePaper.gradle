@@ -21,6 +21,13 @@ dependencies {
 	implementation project(':shopkeepers-main')
 	paperweight.paperDevBundle(craftbukkitVersion) // Includes CraftBukkit and PaperAPI
 
+	// Workaround: Some Paper dev-bundle snapshots declare this dependency with an empty version.
+	constraints {
+		implementation('net.kyori:adventure-text-serializer-ansi:4.25.0') {
+			because 'Paper dev-bundle may omit the version for this dependency'
+		}
+	}
+
 	testImplementation libs.junit
 	testImplementation libs.asm
 }
