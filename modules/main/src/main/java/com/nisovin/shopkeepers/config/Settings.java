@@ -23,6 +23,7 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.UpdateItemEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
+import com.nisovin.shopkeepers.api.shopkeeper.player.MemberPermission;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.lib.Config;
 import com.nisovin.shopkeepers.config.lib.ConfigData;
@@ -102,8 +103,7 @@ public class Settings extends Config {
 	public static ItemData shopCreationItem = new ItemData(
 			Material.VILLAGER_SPAWN_EGG,
 			"{\"text\":\"Shopkeeper\",\"italic\":false,\"color\":\"green\"}",
-			null
-	);
+			null);
 
 	public static boolean addShopCreationItemTag = true;
 	public static boolean identifyShopCreationItemByTag = true;
@@ -117,6 +117,9 @@ public class Settings extends Config {
 	public static int maxShopsPerPlayer = -1;
 	public static String maxShopsPermOptions = "5,15,25";
 
+	public static String memberPermissions = "FULL";
+	public static int maxMembersPerShop = 5;
+
 	public static boolean protectContainers = true;
 	public static boolean preventItemMovement = true;
 	public static boolean preventCopperGolemAccess = true;
@@ -127,7 +130,8 @@ public class Settings extends Config {
 	/*
 	 * Shop (Object) Types
 	 */
-	// Villager is the default and therefore first. The other entity types are alphabetically
+	// Villager is the default and therefore first. The other entity types are
+	// alphabetically
 	// sorted.
 	// TODO Generate the default enabled mobs list based on the server's version.
 	public static List<String> enabledLivingShops = CollectionUtils.addAll(
@@ -217,8 +221,7 @@ public class Settings extends Config {
 					"NAUTILUS", // MC 1.21.11
 					"PARCHED", // MC 1.21.11
 					"ZOMBIE_NAUTILUS" // MC 1.21.11
-			), String::compareTo)
-	);
+			), String::compareTo));
 
 	public static boolean enableEndCrystalShops = true;
 	public static boolean allowEndCrystalShopsInTheEnd = false;
@@ -226,11 +229,14 @@ public class Settings extends Config {
 	public static boolean disableGravity = false;
 	public static int gravityChunkRange = 4;
 
-	// A tick period of 4 and higher is clearly noticeable, especially when entities are affected by
+	// A tick period of 4 and higher is clearly noticeable, especially when entities
+	// are affected by
 	// gravity.
-	// The total performance benefits of higher tick periods also become increasingly smaller and
+	// The total performance benefits of higher tick periods also become
+	// increasingly smaller and
 	// instead result in higher performance impacts per individual behavior update.
-	// The gravity updates at a tick period of 2 actually appear less smooth in my testing than at a
+	// The gravity updates at a tick period of 2 actually appear less smooth in my
+	// testing than at a
 	// period of 3 (maybe due to some interpolation artifact by the client).
 	public static int entityBehaviorTickPeriod = 3;
 
@@ -318,6 +324,8 @@ public class Settings extends Config {
 
 	public static boolean enableContainerOptionOnPlayerShop = true;
 	public static ItemData containerItem = new ItemData(Material.CHEST);
+
+	public static ItemData membersItem = new ItemData(Material.PLAYER_HEAD);
 
 	public static ItemData tradeNotificationsItem = new ItemData(Material.BELL);
 	public static ItemData deleteItem = new ItemData(Material.BONE);
@@ -433,8 +441,11 @@ public class Settings extends Config {
 		public static ItemData nameButtonItem = Unsafe.uncheckedNull();
 		public static ItemData moveButtonItem = Unsafe.uncheckedNull();
 		public static ItemData containerButtonItem = Unsafe.uncheckedNull();
+		public static ItemData membersButtonItem = Unsafe.uncheckedNull();
 		public static ItemData deleteButtonItem = Unsafe.uncheckedNull();
 		public static ItemData hireButtonItem = Unsafe.uncheckedNull();
+
+		public static MemberPermission memberPermissionLevel = MemberPermission.FULL;
 
 		public static ItemData deleteVillagerButtonItem = Unsafe.uncheckedNull();
 		public static ItemData nameVillagerButtonItem = Unsafe.uncheckedNull();
@@ -453,9 +464,11 @@ public class Settings extends Config {
 			initialSetup = false;
 		}
 
-		// Gets called after setting values have changed (e.g. after the config has been loaded):
+		// Gets called after setting values have changed (e.g. after the config has been
+		// loaded):
 		private static void setup() {
-			// TODO This formatter uses the server's default time zone. Allow configuring the time
+			// TODO This formatter uses the server's default time zone. Allow configuring
+			// the time
 			// zone?
 			try {
 				dateTimeFormatter = DateTimeFormatter.ofPattern(Messages.dateTimeFormat)
@@ -473,20 +486,16 @@ public class Settings extends Config {
 					ItemUtils.setDisplayNameAndLore(
 							sellingEmptyTradeResultItem.createItemStack(),
 							Messages.sellingShop_emptyTrade_resultItem,
-							Messages.sellingShop_emptyTrade_resultItemLore
-					),
+							Messages.sellingShop_emptyTrade_resultItemLore),
 					ItemUtils.setDisplayNameAndLore(
 							sellingEmptyTradeItem1.createItemStack(),
 							Messages.sellingShop_emptyTrade_item1,
-							Messages.sellingShop_emptyTrade_item1Lore
-					),
+							Messages.sellingShop_emptyTrade_item1Lore),
 					// The editor item can be configured, even if the high currency is disabled:
 					Currencies.isHighCurrencyEnabled() ? ItemUtils.setDisplayNameAndLore(
 							sellingEmptyTradeItem2.createItemStack(),
 							Messages.sellingShop_emptyTrade_item2,
-							Messages.sellingShop_emptyTrade_item2Lore
-					) : sellingEmptyTradeItem2.createItemStack()
-			);
+							Messages.sellingShop_emptyTrade_item2Lore) : sellingEmptyTradeItem2.createItemStack());
 			sellingEmptyTradeSlotItems = new TradingRecipeDraft(
 					// This item is never used, because the slot is never empty for a non-empty
 					// trade:
@@ -494,95 +503,75 @@ public class Settings extends Config {
 					ItemUtils.setDisplayNameAndLore(
 							sellingEmptyItem1.createItemStack(),
 							Messages.sellingShop_emptyItem1,
-							Messages.sellingShop_emptyItem1Lore
-					),
+							Messages.sellingShop_emptyItem1Lore),
 					// The editor item can be configured, even if the high currency is disabled:
 					Currencies.isHighCurrencyEnabled() ? ItemUtils.setDisplayNameAndLore(
 							sellingEmptyItem2.createItemStack(),
 							Messages.sellingShop_emptyItem2,
-							Messages.sellingShop_emptyItem2Lore
-					) : sellingEmptyItem2.createItemStack()
-			);
+							Messages.sellingShop_emptyItem2Lore) : sellingEmptyItem2.createItemStack());
 			buyingEmptyTrade = new TradingRecipeDraft(
 					ItemUtils.setDisplayNameAndLore(
 							buyingEmptyTradeResultItem.createItemStack(),
 							Messages.buyingShop_emptyTrade_resultItem,
-							Messages.buyingShop_emptyTrade_resultItemLore
-					),
+							Messages.buyingShop_emptyTrade_resultItemLore),
 					ItemUtils.setDisplayNameAndLore(
 							buyingEmptyTradeItem1.createItemStack(),
 							Messages.buyingShop_emptyTrade_item1,
-							Messages.buyingShop_emptyTrade_item1Lore
-					),
+							Messages.buyingShop_emptyTrade_item1Lore),
 					// The editor item can be configured, even though this slot is not used for
 					// anything:
-					buyingEmptyTradeItem2.createItemStack()
-			);
+					buyingEmptyTradeItem2.createItemStack());
 			buyingEmptyTradeSlotItems = new TradingRecipeDraft(
 					ItemUtils.setDisplayNameAndLore(
 							buyingEmptyResultItem.createItemStack(),
 							Messages.buyingShop_emptyResultItem,
-							Messages.buyingShop_emptyResultItemLore
-					),
+							Messages.buyingShop_emptyResultItemLore),
 					// This item is never used, because the slot is never empty for a non-empty
 					// trade:
 					null,
 					// The editor item can be configured, even though this slot is not used for
 					// anything:
-					buyingEmptyItem2.createItemStack()
-			);
+					buyingEmptyItem2.createItemStack());
 			tradingEmptyTrade = new TradingRecipeDraft(
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyTradeResultItem.createItemStack(),
 							Messages.tradingShop_emptyTrade_resultItem,
-							Messages.tradingShop_emptyTrade_resultItemLore
-					),
+							Messages.tradingShop_emptyTrade_resultItemLore),
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyTradeItem1.createItemStack(),
 							Messages.tradingShop_emptyTrade_item1,
-							Messages.tradingShop_emptyTrade_item1Lore
-					),
+							Messages.tradingShop_emptyTrade_item1Lore),
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyTradeItem2.createItemStack(),
 							Messages.tradingShop_emptyTrade_item2,
-							Messages.tradingShop_emptyTrade_item2Lore
-					)
-			);
+							Messages.tradingShop_emptyTrade_item2Lore));
 			tradingEmptyTradeSlotItems = new TradingRecipeDraft(
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyResultItem.createItemStack(),
 							Messages.tradingShop_emptyResultItem,
-							Messages.tradingShop_emptyResultItemLore
-					),
+							Messages.tradingShop_emptyResultItemLore),
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyItem1.createItemStack(),
 							Messages.tradingShop_emptyItem1,
-							Messages.tradingShop_emptyItem1Lore
-					),
+							Messages.tradingShop_emptyItem1Lore),
 					ItemUtils.setDisplayNameAndLore(
 							tradingEmptyItem2.createItemStack(),
 							Messages.tradingShop_emptyItem2,
-							Messages.tradingShop_emptyItem2Lore
-					)
-			);
+							Messages.tradingShop_emptyItem2Lore));
 			bookEmptyTrade = new TradingRecipeDraft(
 					ItemUtils.setDisplayNameAndLore(
 							bookEmptyTradeResultItem.createItemStack(),
 							Messages.bookShop_emptyTrade_resultItem,
-							Messages.bookShop_emptyTrade_resultItemLore
-					),
+							Messages.bookShop_emptyTrade_resultItemLore),
 					ItemUtils.setDisplayNameAndLore(
 							bookEmptyTradeItem1.createItemStack(),
 							Messages.bookShop_emptyTrade_item1,
-							Messages.bookShop_emptyTrade_item1Lore
-					),
+							Messages.bookShop_emptyTrade_item1Lore),
 					// The editor item can be configured, even if the high currency is disabled:
 					Currencies.isHighCurrencyEnabled() ? ItemUtils.setDisplayNameAndLore(
 							bookEmptyTradeItem2.createItemStack(),
 							Messages.bookShop_emptyTrade_item2,
-							Messages.bookShop_emptyTrade_item2Lore
-					) : bookEmptyTradeItem2.createItemStack()
-			);
+							Messages.bookShop_emptyTrade_item2Lore) : bookEmptyTradeItem2.createItemStack());
 			bookEmptyTradeSlotItems = new TradingRecipeDraft(
 					// This item is never used, because the slot is never empty for a non-empty
 					// trade:
@@ -590,15 +579,12 @@ public class Settings extends Config {
 					ItemUtils.setDisplayNameAndLore(
 							bookEmptyItem1.createItemStack(),
 							Messages.bookShop_emptyItem1,
-							Messages.bookShop_emptyItem1Lore
-					),
+							Messages.bookShop_emptyItem1Lore),
 					// The editor item can be configured, even if the high currency is disabled:
 					Currencies.isHighCurrencyEnabled() ? ItemUtils.setDisplayNameAndLore(
 							bookEmptyItem2.createItemStack(),
 							Messages.bookShop_emptyItem2,
-							Messages.bookShop_emptyItem2Lore
-					) : bookEmptyItem2.createItemStack()
-			);
+							Messages.bookShop_emptyItem2Lore) : bookEmptyItem2.createItemStack());
 
 			// If enabled, add the shop creation item tag:
 			if (addShopCreationItemTag) {
@@ -607,76 +593,78 @@ public class Settings extends Config {
 				shopCreationItemHelper.addTag();
 				shopCreationItemHelper.applyItemMeta();
 				shopCreationItemData = new ItemData(UnmodifiableItemStack.ofNonNull(
-						shopCreationItemStack
-				));
+						shopCreationItemStack));
 			} else {
 				shopCreationItemData = shopCreationItem;
 			}
 
-			// Ignore (clear) the display name that is used to specify the substituted item type:
+			// Ignore (clear) the display name that is used to specify the substituted item
+			// type:
 			placeholderItemData = new ItemData(UnmodifiableItemStack.ofNonNull(
-					ItemUtils.setDisplayName(placeholderItem.createItemStack(), null)
-			));
+					ItemUtils.setDisplayName(placeholderItem.createItemStack(), null)));
 
-			// Ignore (clear) the display name that is used to specify the new shopkeeper name, but
+			// Ignore (clear) the display name that is used to specify the new shopkeeper
+			// name, but
 			// keep the lore:
 			namingItemData = new ItemData(UnmodifiableItemStack.ofNonNull(
-					ItemUtils.setDisplayName(nameItem.createItemStack(), null)
-			));
+					ItemUtils.setDisplayName(nameItem.createItemStack(), null)));
 
 			// Button items:
 			shopOpenButtonItem = new ItemData(
 					shopOpenItem,
 					Messages.buttonShopOpen,
-					Messages.buttonShopOpenLore
-			);
+					Messages.buttonShopOpenLore);
 			shopClosedButtonItem = new ItemData(
 					shopClosedItem,
 					Messages.buttonShopClosed,
-					Messages.buttonShopClosedLore
-			);
+					Messages.buttonShopClosedLore);
 			nameButtonItem = new ItemData(
 					nameItem,
 					Messages.buttonName,
-					Messages.buttonNameLore
-			);
+					Messages.buttonNameLore);
 			moveButtonItem = new ItemData(
 					moveItem,
 					Messages.buttonMove,
-					Messages.buttonMoveLore
-			);
+					Messages.buttonMoveLore);
 			containerButtonItem = new ItemData(
 					containerItem,
 					Messages.buttonContainer,
-					Messages.buttonContainerLore
-			);
+					Messages.buttonContainerLore);
+			membersButtonItem = new ItemData(
+					membersItem,
+					Messages.buttonMembers,
+					Messages.buttonMembersLore);
 			deleteButtonItem = new ItemData(
 					deleteItem,
 					Messages.buttonDelete,
-					Messages.buttonDeleteLore
-			);
+					Messages.buttonDeleteLore);
 			hireButtonItem = new ItemData(
 					hireItem,
 					Messages.buttonHire,
-					Messages.buttonHireLore
-			);
+					Messages.buttonHireLore);
+
+			// Parse member permission level:
+			try {
+				memberPermissionLevel = MemberPermission.valueOf(memberPermissions);
+			} catch (IllegalArgumentException e) {
+				Log.warning("Config: Invalid 'member-permissions' value '" + memberPermissions
+						+ "'. Using default: FULL");
+				memberPermissionLevel = MemberPermission.FULL;
+			}
 
 			// Note: These use the same item types as the corresponding shopkeeper buttons.
 			deleteVillagerButtonItem = new ItemData(
 					deleteItem,
 					Messages.buttonDeleteVillager,
-					Messages.buttonDeleteVillagerLore
-			);
+					Messages.buttonDeleteVillagerLore);
 			nameVillagerButtonItem = new ItemData(
 					nameItem,
 					Messages.buttonNameVillager,
-					Messages.buttonNameVillagerLore
-			);
+					Messages.buttonNameVillagerLore);
 			villagerInventoryButtonItem = new ItemData(
 					containerItem,
 					Messages.buttonVillagerInventory,
-					Messages.buttonVillagerInventoryLore
-			);
+					Messages.buttonVillagerInventoryLore);
 
 			// Shop name pattern:
 			try {
@@ -789,19 +777,27 @@ public class Settings extends Config {
 		Plugin plugin = SKShopkeepersPlugin.getInstance();
 		var pluginConfig = plugin.getConfig();
 		// The default dot path separator can cause issues.
-		// For example, since Bukkit 1.20.6, item attribute modifiers are now serialized using the
-		// attribute namespaced keys as section keys, which can contain dots. When saving ItemData
-		// with attribute modifiers, we filter the serialized item meta data (to produce a more
-		// minimal and user-friendly output) and then apply all preserved key-value pairs to this
-		// config-backed DataContainer. Setting values with a key containing dots would by default
-		// result in sub-sections to be created, which fails to properly deserialize later.
+		// For example, since Bukkit 1.20.6, item attribute modifiers are now serialized
+		// using the
+		// attribute namespaced keys as section keys, which can contain dots. When
+		// saving ItemData
+		// with attribute modifiers, we filter the serialized item meta data (to produce
+		// a more
+		// minimal and user-friendly output) and then apply all preserved key-value
+		// pairs to this
+		// config-backed DataContainer. Setting values with a key containing dots would
+		// by default
+		// result in sub-sections to be created, which fails to properly deserialize
+		// later.
 		ConfigUtils.disablePathSeparator(pluginConfig);
-		// This is a wrapper around the Bukkit config. Config comments are preserved by the
+		// This is a wrapper around the Bukkit config. Config comments are preserved by
+		// the
 		// underlying Bukkit config.
 		return ConfigData.of(pluginConfig);
 	}
 
-	// Returns null on success, otherwise a severe issue prevented loading the config.
+	// Returns null on success, otherwise a severe issue prevented loading the
+	// config.
 	public static @Nullable ConfigLoadException loadConfig() {
 		Log.info("Loading config.");
 		Plugin plugin = SKShopkeepersPlugin.getInstance();
@@ -814,9 +810,12 @@ public class Settings extends Config {
 
 		ConfigData configData = getPluginConfigData();
 
-		// The default config is not empty. If the loaded config data is empty, the config file is
-		// either empty (unusual) or the config failed to load. We abort the config loading with an
-		// error here instead of inserting the default settings, because doing so might overwrite
+		// The default config is not empty. If the loaded config data is empty, the
+		// config file is
+		// either empty (unusual) or the config failed to load. We abort the config
+		// loading with an
+		// error here instead of inserting the default settings, because doing so might
+		// overwrite
 		// the user's current config file contents.
 		if (configData.isEmpty()) {
 			return new ConfigLoadException("The config file is empty or could not be loaded."
@@ -834,7 +833,8 @@ public class Settings extends Config {
 		}
 
 		if (configChanged) {
-			// If the config was modified (migrations, adding missing settings, ..), save it:
+			// If the config was modified (migrations, adding missing settings, ..), save
+			// it:
 			saveConfig();
 		}
 		return null; // Config loaded successfully
@@ -857,7 +857,8 @@ public class Settings extends Config {
 		}
 
 		// Load and validate settings:
-		// Load the data version setting first so that it is available for the loading of ItemData
+		// Load the data version setting first so that it is available for the loading
+		// of ItemData
 		// settings:
 		var dataVersionSetting = Settings.INSTANCE.getSetting("data-version");
 		assert dataVersionSetting != null;
@@ -867,7 +868,8 @@ public class Settings extends Config {
 		Settings.INSTANCE.load(configData);
 
 		// Update the data version:
-		// Note: This is done after inserting default values, since the default value might itself
+		// Note: This is done after inserting default values, since the default value
+		// might itself
 		// be outdated (we support a range of Minecraft versions).
 		var dataVersionChanged = Settings.INSTANCE.updateDataVersion();
 		if (dataVersionChanged) {
@@ -879,7 +881,8 @@ public class Settings extends Config {
 	}
 
 	/**
-	 * Applies the values of this config to the config of the {@link ShopkeepersPlugin} and
+	 * Applies the values of this config to the config of the
+	 * {@link ShopkeepersPlugin} and
 	 * {@link Plugin#saveConfig() saves it}.
 	 */
 	public static void saveConfig() {
@@ -951,7 +954,8 @@ public class Settings extends Config {
 			}
 		}
 
-		// Warn about potential configuration mistakes regarding the shop creation item tag:
+		// Warn about potential configuration mistakes regarding the shop creation item
+		// tag:
 		if (identifyShopCreationItemByTag && !addShopCreationItemTag) {
 			Log.warning(this.getLogPrefix() + "'identify-shop-creation-item-by-tag' enabled, "
 					+ "but 'add-shop-creation-item-tag' is disabled! Intended?");
@@ -981,13 +985,16 @@ public class Settings extends Config {
 			tradeLogNextMergeTimeoutTicks = 0;
 		}
 		// Note: If tradeLogNextMergeTimeoutTicks is greater than or equal to
-		// tradeLogMergeDurationTicks, it has no effect. However, we do not print a warning in this
-		// case to allow tradeLogMergeDurationTicks to be easily adjusted inside the config without
+		// tradeLogMergeDurationTicks, it has no effect. However, we do not print a
+		// warning in this
+		// case to allow tradeLogMergeDurationTicks to be easily adjusted inside the
+		// config without
 		// having to keep tradeLogNextMergeTimeoutTicks consistent.
 
 		// Temporary workaround for Mohist and Magma servers.
 		// See https://github.com/Shopkeepers/Shopkeepers/issues/738
-		// TODO This is supposed to be removed again once the underlying issue has been fixed by
+		// TODO This is supposed to be removed again once the underlying issue has been
+		// fixed by
 		// Mohist/Magma.
 		if (!disableInventoryVerification) {
 			String serverName = Bukkit.getServer().getName();
@@ -1019,8 +1026,10 @@ public class Settings extends Config {
 		Log.info(this.getLogPrefix() + "'data-version' updated from " + dataVersion + " to "
 				+ currentDataVersion + ".");
 		dataVersion = currentDataVersion;
-		// Note: Any item data is automatically migrated during loading. This data version check and
-		// updating ensures that we save back the migrated item data whenever the data version has
+		// Note: Any item data is automatically migrated during loading. This data
+		// version check and
+		// updating ensures that we save back the migrated item data whenever the data
+		// version has
 		// changed.
 
 		return true;
@@ -1047,9 +1056,12 @@ public class Settings extends Config {
 				}
 			}
 
-			// No event is called for Material settings: There is no item data based on which
-			// plugins can reasonable decide whether or not to change the material without not also
-			// affecting all items of the same type in other contexts. Plugins that want to update
+			// No event is called for Material settings: There is no item data based on
+			// which
+			// plugins can reasonable decide whether or not to change the material without
+			// not also
+			// affecting all items of the same type in other contexts. Plugins that want to
+			// update
 			// specific Material settings need to do so explicitly.
 		}
 
@@ -1065,7 +1077,8 @@ public class Settings extends Config {
 	private boolean updateItemDataSetting(Setting<ItemData> setting) {
 		var value = setting.getValue(); // Can be null
 		var newItemData = ItemUpdates.updateItemData(value);
-		if (newItemData == value) return false; // Not changed
+		if (newItemData == value)
+			return false; // Not changed
 		assert newItemData != null;
 
 		String configKey = setting.getConfigKey();
@@ -1086,7 +1099,8 @@ public class Settings extends Config {
 
 	private int updateItemDataListSetting(Setting<List<ItemData>> setting) {
 		var value = setting.getValue();
-		if (value == null) return 0; // Nothing to update
+		if (value == null)
+			return 0; // Nothing to update
 
 		int updatedItems = 0;
 
@@ -1094,9 +1108,11 @@ public class Settings extends Config {
 		var iterator = value.listIterator();
 		while (iterator.hasNext()) {
 			index += 1;
-			@Nullable ItemData itemData = iterator.next(); // Can be null
+			@Nullable
+			ItemData itemData = iterator.next(); // Can be null
 			var newItemData = ItemUpdates.updateItemData(itemData);
-			if (newItemData == itemData) continue; // Not changed
+			if (newItemData == itemData)
+				continue; // Not changed
 			assert newItemData != null;
 
 			String configKey = setting.getConfigKey();
