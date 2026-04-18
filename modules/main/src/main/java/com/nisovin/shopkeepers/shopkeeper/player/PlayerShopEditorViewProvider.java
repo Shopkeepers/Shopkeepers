@@ -5,6 +5,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.MemberPermission;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.currency.Currencies;
@@ -24,13 +25,14 @@ import com.nisovin.shopkeepers.util.logging.Log;
 
 public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewProvider {
 
-	// Note: In the editor item1 is representing the low cost item and item2 the high cost item, but
-	// in the corresponding trading recipe they will be swapped if they are both present.
+	// Note: In the editor item1 is representing the low cost item and item2 the
+	// high cost item, but
+	// in the corresponding trading recipe they will be swapped if they are both
+	// present.
 
 	protected PlayerShopEditorViewProvider(
 			AbstractPlayerShopkeeper shopkeeper,
-			TradingRecipesAdapter tradingRecipesAdapter
-	) {
+			TradingRecipesAdapter tradingRecipesAdapter) {
 		super(SKDefaultUITypes.EDITOR(), shopkeeper, tradingRecipesAdapter);
 	}
 
@@ -41,10 +43,13 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 
 	@Override
 	public boolean canAccess(Player player, boolean silent) {
-		if (!super.canAccess(player, silent)) return false;
+		if (!super.canAccess(player, silent))
+			return false;
 
-		// Check the owner:
-		if (!this.getShopkeeper().isOwner(player)
+		AbstractPlayerShopkeeper shopkeeper = this.getShopkeeper();
+		// Check the owner or member:
+		if (!shopkeeper.isOwner(player)
+				&& !this.canMemberAccess(player)
 				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
 			if (!silent) {
 				this.debugNotOpeningUI(player, "Player is not owning this shop.");
@@ -55,18 +60,26 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 		return true;
 	}
 
+	private boolean canMemberAccess(Player player) {
+		AbstractPlayerShopkeeper shopkeeper = this.getShopkeeper();
+		if (!shopkeeper.isMember(player))
+			return false;
+		MemberPermission level = Settings.DerivedSettings.memberPermissionLevel;
+		return level == MemberPermission.CHEST_AND_TRADES || level == MemberPermission.FULL;
+	}
+
 	@Override
 	protected ShopkeeperEditorLayout createLayout() {
 		return new PlayerShopEditorLayout(this.getShopkeeper());
 	}
 
 	// Note: In case the cost is too large to represent, it sets the cost to zero.
-	// (So opening and closing the editor window will remove the offer, instead of setting the costs
+	// (So opening and closing the editor window will remove the offer, instead of
+	// setting the costs
 	// to a lower value than what was previously somehow specified)
 	protected static TradingRecipeDraft createTradingRecipeDraft(
 			@ReadOnly ItemStack resultItem,
-			int cost
-	) {
+			int cost) {
 		ItemStack highCostItem = null;
 		ItemStack lowCostItem = null;
 
@@ -77,8 +90,7 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 			if (remainingCost > Settings.highCurrencyMinCost) {
 				highCost = Math.min(
 						(remainingCost / highCurrency.getValue()),
-						highCurrency.getMaxStackSize()
-				);
+						highCurrency.getMaxStackSize());
 			}
 			if (highCost > 0) {
 				remainingCost -= (highCost * highCurrency.getValue());
