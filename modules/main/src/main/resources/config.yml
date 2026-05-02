@@ -525,16 +525,18 @@ placeholder-item: 'minecraft:paper'
 
 # Whether to allow shop owners to close their shops.
 enable-closing-of-player-shops: true
-# When enable-closing-of-player-shops is disabled, this controls whether to automatically re-open
-# any currently closed player shops. This has no effect if enable-closing-of-player-shops is
-# enabled.
-# However, since we do not track whether a shop was closed by a shop owner or via the API, this also
-# effectively disables the closing of player shops via the API or when restoring shop snapshots. If
-# you want shops to still be closable via the API or when restoring snapshots, you can temporarily
-# enable this setting after having disabled enable-closing-of-player-shops, restart the server to
-# update all player shops, and then disable this setting again. However, be aware that the open
-# state in any previously captured shop snapshots is not automatically updated: This setting is only
-# taken into account at the time a snapshot is restored.
+# When enable-closing-of-player-shops is disabled, this controls whether to
+# automatically re-open any currently closed player shops. This has no effect
+# if enable-closing-of-player-shops is enabled.
+# However, since we do not track whether a shop was closed by a shop owner or
+# via the API, this also effectively disables the closing of player shops via
+# the API or when restoring shop snapshots. If you want shops to still be
+# closable via the API or when restoring snapshots, you can temporarily enable
+# this setting after having disabled enable-closing-of-player-shops, restart
+# the server to update all player shops, and then disable this setting again.
+# However, be aware that the open state in any previously captured shop
+# snapshots is not automatically updated: This setting is only taken into
+# account at the time a snapshot is restored.
 force-open-player-shops: true
 # The editor items to represent the shop's open and closed states.
 shop-open-item: 'minecraft:green_banner'
@@ -544,14 +546,16 @@ shop-closed-item: 'minecraft:red_banner'
 name-item: 'minecraft:name_tag'
 
 # Whether to enable the equipment editor for all mobs and all equipment slots.
-# By default, the equipment can only be edited for mobs and slots that are known, at least for
-# certain items, to visually affect the mob. Enabling this setting can for example be useful for
-# testing purposes, e.g. when new mobs are added to the game, or when existing mobs start to support
-# additional equipment slots.
-# Certain shop objects, such as for example horses (armor) or llamas (carpet), provide dedicated
-# editor buttons to edit certain equipment. This setting also enables the equipment editor for these
-# mobs and slots. Any non-empty equipment specified via the equipment editor overrides the equipment
-# of these dedicated editor buttons.
+# By default, the equipment can only be edited for mobs and slots that are
+# known, at least for certain items, to visually affect the mob. Enabling this
+# setting can for example be useful for testing purposes, e.g. when new mobs
+# are added to the game, or when existing mobs start to support additional
+# equipment slots.
+# Certain shop objects, such as for example horses (armor) or llamas (carpet),
+# provide dedicated editor buttons to edit certain equipment. This setting also
+# enables the equipment editor for these mobs and slots. Any non-empty
+# equipment specified via the equipment editor overrides the equipment of these
+# dedicated editor buttons.
 enable-all-equipment-editor-slots: false
 
 # Whether to allow shop owners to move their shops.
