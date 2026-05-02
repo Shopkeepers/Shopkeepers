@@ -31,9 +31,12 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 	public List<? extends AbstractUIType> getAllUITypes() {
 		List<AbstractUIType> defaults = new ArrayList<>();
 		defaults.add(editorUIType);
+		defaults.add(equipmentEditorUIType);
 		defaults.add(tradingUIType);
 		defaults.add(hiringUIType);
 		defaults.add(villagerEditorUIType);
+		defaults.add(villagerEquipmentEditorUIType);
+		defaults.add(confirmationUIType);
 		return defaults;
 	}
 
