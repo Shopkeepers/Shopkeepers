@@ -36,6 +36,8 @@ debug: false
 #    text is sent.
 # - 'unsafe-teleports': Logs additional debug output whenever a teleport is
 #    considered unsafe.
+# - 'shopkeeper-dirty': Logs additional debug output whenever a shopkeeper's
+#    data is marked as 'dirty'.
 debug-options: []
 # Whether to report anonymous usage statistics to https://bStats.org
 # All reported information can be found here:

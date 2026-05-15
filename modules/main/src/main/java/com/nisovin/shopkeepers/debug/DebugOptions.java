@@ -42,6 +42,8 @@ public final class DebugOptions {
 	public static final String textComponents = add("text-components");
 	// Logs additional debug output whenever a teleport is considered unsafe.
 	public static final String unsafeTeleports = add("unsafe-teleports");
+	// Logs additional debug output whenever a shopkeeper's data is marked as 'dirty'.
+	public static final String shopkeeperDirty = add("shopkeeper-dirty");
 
 	private static String add(String debugOption) {
 		allOptions.add(debugOption);

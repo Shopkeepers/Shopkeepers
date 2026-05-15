@@ -585,6 +585,10 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	 * is stored by the storage.
 	 */
 	public final void markDirty() {
+		if (Debug.isDebugging(DebugOptions.shopkeeperDirty)) {
+			Log.info(this.getLogPrefix() + "Marked dirty.", new Exception("stacktrace"));
+		}
+
 		dirty = true;
 		// Inform the storage that the shopkeeper is dirty:
 		if (this.isValid()) {

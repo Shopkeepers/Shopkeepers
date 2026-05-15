@@ -36,6 +36,7 @@ Date format: (YYYY-MM-DD)
     * Rename debug option `owner-name-updates` to `player-name-updates`.
   * Metrics: Add bStats metric `uses-shop-members`.
 * Mannequin shopkeepers use an "Alex" skinned player head now for their profile editor option to not conflict with the new members editor option.
+* Debug: Add option `shopkeeper-dirty` to output additional information whenever a shopkeeper's data is marked as "dirty".
 * API: Add methods to get and edit the player shop members.
 * API: Add `PlayerShopkeeper#isOwner(UUID)`.
 
