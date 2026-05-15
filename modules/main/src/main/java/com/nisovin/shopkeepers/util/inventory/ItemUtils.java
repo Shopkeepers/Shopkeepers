@@ -756,6 +756,22 @@ public final class ItemUtils {
 		}
 	}
 
+	public static ItemStack createPlayerHead(UUID playerUUID) {
+		var itemStack = new ItemStack(Material.PLAYER_HEAD);
+
+		var skullMeta = Unsafe.assertNonNull((SkullMeta) itemStack.getItemMeta());
+		try {
+			var offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
+			skullMeta.setOwningPlayer(offlinePlayer);
+		} catch (Exception e) {
+			Log.debug("Failed to apply skull meta for player: " + playerUUID, e);
+			return itemStack;
+		}
+
+		itemStack.setItemMeta(skullMeta);
+		return itemStack;
+	}
+
 	public static ItemStack createHead(UUID uuid, String name, String skinUrl) {
 		var itemStack = new ItemStack(Material.PLAYER_HEAD);
 
@@ -780,6 +796,14 @@ public final class ItemUtils {
 
 		itemStack.setItemMeta(skullMeta);
 		return itemStack;
+	}
+
+	public static final ItemStack getSkull_MHF_Alex() {
+		return createHead(
+				UUID.fromString("6ab43178-89fd-4905-97f6-0f67d9d76fd9"),
+				"MHF_Alex",
+				"http://textures.minecraft.net/texture/63b098967340daac529293c24e04910509b208e7b94563c3ef31dec7b3750"
+		);
 	}
 
 	public static final ItemStack getSkull_MHF_ArrowLeft() {

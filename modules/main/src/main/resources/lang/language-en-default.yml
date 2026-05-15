@@ -72,6 +72,10 @@ button-move: "&aMove shopkeeper"
 button-move-lore:
 - Lets you move
 - your shopkeeper
+button-members: "&aShop members"
+button-members-lore:
+- "Manage the shop members."
+- "Currently: &e{memberCount}"
 button-container: "&aView shop inventory"
 button-container-lore:
 - Lets you view the inventory
@@ -328,6 +332,48 @@ equipment-slot-head: "&aHead"
 equipment-slot-body: "&aBody"
 equipment-slot-saddle: "&aSaddle"
 
+shop-members-editor-title: "Shop Members"
+
+shop-member-title: "{memberName}"
+shop-member-lore:
+- "Access level: &e{accessLevel}"
+- "{accessLevelDescription}"
+- "Left/Right click to"
+- "change the access level."
+- "Shift click to remove."
+
+button-add-shop-member: "&aAdd new member"
+button-add-shop-member-lore: []
+
+enter-new-shop-member: |-
+  &aPlease enter the name or id of the player you want to give access to the shop.
+  &a  You can configure their access level afterwards inside the editor.
+  &a  Enter an exclamation mark (!) to abort.
+cannot-add-shop-member-already-owner: "&7Player &e{player_name}&7 is already the shop owner!"
+cannot-add-shop-member-already-member: "&7Player &e{player_name}&7 is already a shop member!"
+shop-member-added: "&aShop member added: &e{member_name}"
+
+cannot-edit-shop-member-self: "&7You cannot edit your own shop membership!"
+cannot-edit-shop-member-no-longer-a-member: "&7The player is no longer a shop member!"
+your-shop-membership-has-changed: "&7Your shop membership has changed!"
+
+confirmation-ui-remove-shop-member-title: "&cRemove shop member?"
+confirmation-ui-remove-shop-member-lore:
+- "This will revoke {member_name}'s"
+- "access to this shop!"
+
+shop-member-removed: "&aShop member removed: &e{member_name}"
+
+player-shop-access-level-none: "No access"
+player-shop-access-level-container: "Container"
+player-shop-access-level-edit: "Edit"
+player-shop-access-level-full: "Full access"
+
+player-shop-access-level-description-none: "No access."
+player-shop-access-level-description-container: "Can access shop containers."
+player-shop-access-level-description-edit: "Can access shop containers\nand edit the shop."
+player-shop-access-level-description-full: "Full editing rights,\nincluding the shop members\nand deleting the shop."
+
 admin-sign-shop-line1: "&2[SHOP]"
 admin-sign-shop-line2: "&7{shopName}"
 admin-sign-shop-line3: ""
@@ -388,7 +434,9 @@ target-entity-is-no-shop: "&7The targeted entity is no shopkeeper."
 target-shop-is-no-admin-shop: "&7The targeted shopkeeper is no admin shopkeeper."
 target-shop-is-no-player-shop: "&7The targeted shopkeeper is no player shopkeeper."
 unused-container: "&7No shopkeeper is using this container."
-not-owner: "&7You are not the owner of this shopkeeper."
+not-allowed-to-edit-shop: "&7You are not allowed to edit this shop!"
+not-allowed-to-edit-shop-members: "&7You are not allowed to edit the shop members!"
+not-allowed-to-delete-shop: "&7You are not allowed to delete this shop!"
 owner-set: "&aThe new owner is now &e{owner}"
 shop-creation-items-given: "&aPlayer &e{player}&a has received &e{amount}&a shop creation item(s)!"
 shop-creation-items-received: "&aYou have received &e{amount}&a shop creation item(s)!"
@@ -424,7 +472,7 @@ shop-currently-closed: "&7This shop is currently closed. Check again later!"
 cannot-trade-no-offers: "&7This shop currently has no offers. Check again later!"
 no-offers-open-editor-description: "&eYou can edit this shop by right clicking it while sneaking."
 cannot-trade-with-own-shop: "&7You cannot trade with your own shop."
-cannot-trade-while-owner-online: "&7You cannot trade while the owner of this shop ('&e{owner}&7') is online."
+cannot-trade-while-member-online: "&7You cannot trade while a member of this shop ('&e{member}&7') is online."
 cannot-trade-with-shop-missing-container: "&7You cannot trade with this shop, because its container is missing."
 cannot-trade-unexpected-trade: "&7Trade aborted: The traded items do not match what this shopkeeper expected."
 cannot-trade-items-not-strictly-matching: "&7Trade aborted: The offered items do not exactly match the required items."
@@ -720,6 +768,8 @@ confirmation-ui-cancel-lore:
 - "This will abort the"
 - "current action."
 confirmation-ui-aborted: "&7Confirmation aborted."
+
+text-input-aborted: "&7Text input aborted."
 
 snapshot-list-header: "&9Shop &e{shop_id} &9has &e{snapshotsCount} &9snapshots: &e(Page {page} of {maxPage})"
 snapshot-list-entry: "  &e{id}) &2{name}&8 (&7{timestamp}&8)"

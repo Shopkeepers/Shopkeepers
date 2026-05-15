@@ -20,6 +20,8 @@ public final class ConfirmationUI {
 		return VIEW_PROVIDER;
 	}
 
+	// TODO Add the involved shopkeeper/villager as context, so any open views can be automatically
+	// aborted when needed (e.g. on concurrent edits by other players)?
 	public static void requestConfirmation(Player player, ConfirmationUIState config) {
 		Validate.notNull(player, "player is null");
 		Validate.notNull(config, "config is null");

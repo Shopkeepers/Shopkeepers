@@ -11,25 +11,25 @@ public class PlayerShops {
 
 	private final PlayerShopsLimit playerShopsLimit;
 	private final PlayerInactivity playerInactivity;
-	private final ShopOwnerNameUpdates shopOwnerNameUpdates;
+	private final ShopMemberNameUpdates shopMemberNameUpdates;
 
 	public PlayerShops(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
 		this.playerShopsLimit = new PlayerShopsLimit();
 		this.playerInactivity = new PlayerInactivity(plugin);
-		this.shopOwnerNameUpdates = new ShopOwnerNameUpdates(plugin);
+		this.shopMemberNameUpdates = new ShopMemberNameUpdates(plugin);
 	}
 
 	public void onEnable() {
 		playerShopsLimit.onEnable();
 		playerInactivity.onEnable();
-		shopOwnerNameUpdates.onEnable();
+		shopMemberNameUpdates.onEnable();
 	}
 
 	public void onDisable() {
 		playerShopsLimit.onDisable();
 		playerInactivity.onDisable();
-		shopOwnerNameUpdates.onDisable();
+		shopMemberNameUpdates.onDisable();
 	}
 
 	public PlayerShopsLimit getPlayerShopsLimit() {
@@ -40,7 +40,7 @@ public class PlayerShops {
 		return playerInactivity;
 	}
 
-	public ShopOwnerNameUpdates getShopOwnerNameUpdates() {
-		return shopOwnerNameUpdates;
+	public ShopMemberNameUpdates getShopMemberNameUpdates() {
+		return shopMemberNameUpdates;
 	}
 }

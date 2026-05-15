@@ -59,7 +59,7 @@ public class Settings extends Config {
 	/*
 	 * General Settings
 	 */
-	public static int configVersion = 10;
+	public static int configVersion = 11;
 	// Initial value: Lowest supported Minecraft data version: MC 1.21.5
 	public static int dataVersion = 4325;
 	public static boolean debug = false;
@@ -316,6 +316,10 @@ public class Settings extends Config {
 	public static boolean enableMovingOfPlayerShops = true;
 	public static ItemData moveItem = new ItemData(Material.ENDER_PEARL);
 
+	public static int maxMembersPerShop = 9;
+	public static boolean allowMembersWithFullAccess = true;
+	public static ItemData membersItem = new ItemData(Material.PLAYER_HEAD);
+
 	public static boolean enableContainerOptionOnPlayerShop = true;
 	public static ItemData containerItem = new ItemData(Material.CHEST);
 
@@ -355,7 +359,7 @@ public class Settings extends Config {
 	 * Trading
 	 */
 	public static boolean preventTradingWithOwnShop = true;
-	public static boolean preventTradingWhileOwnerIsOnline = false;
+	public static boolean preventTradingWhileMemberIsOnline = false;
 	public static boolean useStrictItemComparison = false;
 
 	public static boolean incrementVillagerStatistics = false;
@@ -381,8 +385,8 @@ public class Settings extends Config {
 	public static boolean notifyPlayersAboutTrades = false;
 	public static SoundEffect tradeNotificationSound = SoundEffect.EMPTY;
 
-	public static boolean notifyShopOwnersAboutTrades = true;
-	public static SoundEffect shopOwnerTradeNotificationSound = new SoundEffect(Sound.ENTITY_EXPERIENCE_ORB_PICKUP)
+	public static boolean notifyShopMembersAboutTrades = true;
+	public static SoundEffect shopMemberTradeNotificationSound = new SoundEffect(Sound.ENTITY_EXPERIENCE_ORB_PICKUP)
 			.withVolume(0.25f);
 
 	/*
@@ -964,6 +968,16 @@ public class Settings extends Config {
 			Log.warning(this.getLogPrefix() + "'max-trades-pages' can not be greater than 10!");
 			maxTradesPages = 10;
 		}
+
+		if (maxMembersPerShop < 0) {
+			Log.warning(this.getLogPrefix() + "'max-members-per-shop' can not be less than 0!");
+			maxMembersPerShop = 0;
+		} else if (maxMembersPerShop > 36) {
+			// See PlayerShopMembersEditorView.MAX_INVENTORY_SIZE
+			Log.warning(this.getLogPrefix() + "'max-members-per-shop' can not be larger than 36!");
+			maxMembersPerShop = 36;
+		}
+
 		if (taxRate < 0) {
 			Log.warning(this.getLogPrefix() + "'tax-rate' can not be less than 0!");
 			taxRate = 0;

@@ -21,6 +21,7 @@ import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.moving.ShopkeeperMoving;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
+import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUI;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUIState;
 import com.nisovin.shopkeepers.ui.lib.UIState;
@@ -83,6 +84,8 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 	}
 
 	protected Button createDeleteButton() {
+		// ActionButton instead of ShopkeeperActionButton: No need to call the edited event and save
+		// the shopkeeper when clicked.
 		return new ActionButton(true) {
 			@Override
 			public @Nullable ItemStack getIcon(EditorView editorView) {
@@ -91,6 +94,12 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 			@Override
 			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+				// Check if the player is allowed to delete this shopkeeper:
+				if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
+						&& !playerShop.canDeleteShopkeeper(editorView.getPlayer(), false)) {
+					return true;
+				}
+
 				UIState capturedUIState = editorView.captureState();
 				editorView.closeDelayedAndRunTask(() -> {
 					requestConfirmationDeleteShop(editorView.getPlayer(), capturedUIState);
@@ -110,6 +119,12 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 					if (!shopkeeper.isValid()) {
 						// The shopkeeper has already been removed in the meantime.
 						TextUtils.sendMessage(player, Messages.shopAlreadyRemoved);
+						return;
+					}
+
+					// The player's access permission might have changed in the meantime:
+					if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
+							&& !playerShop.canDeleteShopkeeper(player, false)) {
 						return;
 					}
 

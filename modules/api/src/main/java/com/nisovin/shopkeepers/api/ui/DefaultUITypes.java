@@ -31,6 +31,13 @@ public interface DefaultUITypes {
 	public UIType getEquipmentEditorUIType();
 
 	/**
+	 * Gets the default shop members editor {@link UIType}.
+	 * 
+	 * @return the default shop members editor {@link UIType}
+	 */
+	public UIType getShopMembersEditorUIType();
+
+	/**
 	 * Gets the default trading {@link UIType}.
 	 * 
 	 * @return the default trading {@link UIType}
@@ -73,6 +80,16 @@ public interface DefaultUITypes {
 	 */
 	public static UIType EQUIPMENT_EDITOR() {
 		return getInstance().getTradingUIType();
+	}
+
+	/**
+	 * Gets the default shop members editor {@link UIType}.
+	 * 
+	 * @return the default shop members editor {@link UIType}
+	 * @see #getShopMembersEditorUIType()
+	 */
+	public static UIType SHOP_MEMBERS_EDITOR() {
+		return getInstance().getShopMembersEditorUIType();
 	}
 
 	/**

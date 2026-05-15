@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerDeleteShopkeeperEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.commands.Confirmations;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
@@ -75,7 +76,8 @@ class CommandRemove extends Command {
 		// Command permission checks:
 		if (shopkeeper instanceof PlayerShopkeeper) {
 			PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-			if (senderPlayer != null && playerShop.isOwner(senderPlayer)) {
+			if (senderPlayer != null
+					&& playerShop.hasAccessLevel(senderPlayer, DefaultPlayerShopAccessLevels.FULL())) {
 				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OWN_PERMISSION);
 			} else {
 				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OTHERS_PERMISSION);

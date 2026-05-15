@@ -10,6 +10,7 @@ import com.nisovin.shopkeepers.ui.editor.EditorUIType;
 import com.nisovin.shopkeepers.ui.equipmentEditor.EquipmentEditorUIType;
 import com.nisovin.shopkeepers.ui.hiring.HiringUIType;
 import com.nisovin.shopkeepers.ui.lib.AbstractUIType;
+import com.nisovin.shopkeepers.ui.members.ShopMembersEditorUIType;
 import com.nisovin.shopkeepers.ui.trading.TradingUIType;
 import com.nisovin.shopkeepers.ui.villager.editor.VillagerEditorUIType;
 import com.nisovin.shopkeepers.ui.villager.equipmentEditor.VillagerEquipmentEditorUIType;
@@ -18,6 +19,7 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 
 	private final EditorUIType editorUIType = EditorUIType.INSTANCE;
 	private final EquipmentEditorUIType equipmentEditorUIType = EquipmentEditorUIType.INSTANCE;
+	private final ShopMembersEditorUIType shopMembersEditorUIType = ShopMembersEditorUIType.INSTANCE;
 	private final TradingUIType tradingUIType = TradingUIType.INSTANCE;
 	private final HiringUIType hiringUIType = HiringUIType.INSTANCE;
 	private final VillagerEditorUIType villagerEditorUIType = VillagerEditorUIType.INSTANCE;
@@ -32,6 +34,7 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 		List<AbstractUIType> defaults = new ArrayList<>();
 		defaults.add(editorUIType);
 		defaults.add(equipmentEditorUIType);
+		defaults.add(shopMembersEditorUIType);
 		defaults.add(tradingUIType);
 		defaults.add(hiringUIType);
 		defaults.add(villagerEditorUIType);
@@ -48,6 +51,11 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 	@Override
 	public EquipmentEditorUIType getEquipmentEditorUIType() {
 		return equipmentEditorUIType;
+	}
+
+	@Override
+	public ShopMembersEditorUIType getShopMembersEditorUIType() {
+		return shopMembersEditorUIType;
 	}
 
 	@Override
@@ -87,6 +95,10 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 
 	public static EquipmentEditorUIType EQUIPMENT_EDITOR() {
 		return getInstance().getEquipmentEditorUIType();
+	}
+
+	public static ShopMembersEditorUIType SHOP_MEMBERS_EDITOR() {
+		return getInstance().getShopMembersEditorUIType();
 	}
 
 	public static TradingUIType TRADING() {

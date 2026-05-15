@@ -38,7 +38,7 @@ public class PluginMetrics {
 		metrics.addCustomChart(new GringottsChart());
 		metrics.addCustomChart(new ShopkeepersCountChart(shopkeeperRegistry));
 		metrics.addCustomChart(new PlayerShopsChart(shopkeeperRegistry));
-		metrics.addCustomChart(new FeaturesChart());
+		metrics.addCustomChart(new FeaturesChart(shopkeeperRegistry));
 		metrics.addCustomChart(new WorldsChart(shopkeeperRegistry));
 		// TODO Add chart with number of virtual shops?
 		// TODO Add chart with the server variant used (CraftBukkit, Spigot, Paper, other..).

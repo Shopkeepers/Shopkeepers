@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.api.shopkeeper.player;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import org.bukkit.block.Block;
@@ -7,7 +8,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopMember;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopAccessLevel;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 
 /**
@@ -15,6 +20,8 @@ import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
  * will deposit earnings back into that container.
  */
 public interface PlayerShopkeeper extends Shopkeeper {
+
+	// OWNER
 
 	/**
 	 * Sets the owner of this shop.
@@ -61,10 +68,19 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * Checks if the given owner is owning this shop.
 	 * 
 	 * @param player
-	 *            the player to check
+	 *            the player to check, not <code>null</code>
 	 * @return <code>true</code> if the given player owns this shop
 	 */
 	public boolean isOwner(Player player);
+
+	/**
+	 * Checks if the specified player is the owner of this shop.
+	 * 
+	 * @param playerUUID
+	 *            the player UUID
+	 * @return <code>true</code> if the specified player owns this shop
+	 */
+	public boolean isOwner(UUID playerUUID);
 
 	/**
 	 * Gets the owner of this shop IF they are online.
@@ -72,6 +88,128 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * @return the owner of this shop, or <code>null</code> if the owner is offline
 	 */
 	public @Nullable Player getOwner();
+
+	// MEMBERS
+
+	/**
+	 * Gets the additional shop members, not including the shop owner.
+	 * 
+	 * @return an unmodifiable view on the additional shop members, not including the shop owner
+	 */
+	public Collection<? extends PlayerShopMember> getMembers();
+
+	/**
+	 * Adds the specified player as a shop member.
+	 * <p>
+	 * This has no effect if the shop members feature is disabled.
+	 * 
+	 * @param playerUUID
+	 *            the member's uuid, not <code>null</code>
+	 * @param playerName
+	 *            the member's name, not <code>null</code> or empty
+	 * @param accessLevel
+	 *            the {@link PlayerShopAccessLevel}, not
+	 *            {@link DefaultPlayerShopAccessLevels#getNone()}
+	 * @throws IllegalArgumentException
+	 *             if the specified player is already a {@link #isMember(UUID) member} (includes the
+	 *             shop owner)
+	 */
+	public void addMember(UUID playerUUID, String playerName, PlayerShopAccessLevel accessLevel);
+
+	/**
+	 * Removes the specified player from the shop members.
+	 * <p>
+	 * This has no effect if the player is already not a member.
+	 * 
+	 * @param playerUUID
+	 *            the member's uuid
+	 * @throws IllegalArgumentException
+	 *             if the specified player is the {@link #isOwner(UUID) owner}
+	 */
+	public void removeMember(UUID playerUUID);
+
+	/**
+	 * Gets the {@link PlayerShopMember} for the specified player, if they are a shop member.
+	 * <p>
+	 * This also returns a value for the shop owner.
+	 * 
+	 * @param playerUUID
+	 *            the player UUID
+	 * @return the {@link PlayerShopMember}, or <code>null</code> if the player is not a member
+	 */
+	public @Nullable PlayerShopMember getMember(UUID playerUUID);
+
+	/**
+	 * Checks if the given player is the owner or an additional member of this shop.
+	 * 
+	 * @param player
+	 *            the player, not <code>null</code>
+	 * @return <code>true</code> if the given player is a member of this shop
+	 */
+	public boolean isMember(Player player);
+
+	/**
+	 * Checks if the specified player is the owner or an additional member of this shop.
+	 * 
+	 * @param playerUUID
+	 *            the player UUID
+	 * @return <code>true</code> if the specified player is a member of this shop
+	 */
+	public boolean isMember(UUID playerUUID);
+
+	/**
+	 * Gets the {@link PlayerShopAccessLevel} for the specified player.
+	 * <p>
+	 * This returns {@link DefaultPlayerShopAccessLevels#getFull()} for the shop owner and
+	 * {@link DefaultPlayerShopAccessLevels#getNone()} for players that are not shop members.
+	 * 
+	 * @param playerUUID
+	 *            the player UUID
+	 * @return the {@link PlayerShopAccessLevel}
+	 */
+	public PlayerShopAccessLevel getAccessLevel(UUID playerUUID);
+
+	/**
+	 * Updates the {@link PlayerShopAccessLevel} for the specified shop member.
+	 * 
+	 * @param playerUUID
+	 *            the member's uuid, not <code>null</code>
+	 * @param accessLevel
+	 *            the {@link PlayerShopAccessLevel}, not
+	 *            {@link DefaultPlayerShopAccessLevels#getNone()}
+	 * @throws IllegalArgumentException
+	 *             if the specified player is the {@link #isOwner(UUID) owner} or not a
+	 *             {@link #isMember(UUID) member}
+	 */
+	public void setAccessLevel(UUID playerUUID, PlayerShopAccessLevel accessLevel);
+
+	/**
+	 * Checks if the given player has at least the specified {@link PlayerShopAccessLevel}.
+	 * <p>
+	 * This does not take the {@link ShopkeepersPlugin#BYPASS_PERMISSION} into account.
+	 * 
+	 * @param player
+	 *            the player
+	 * @param accessLevel
+	 *            the access level to check for
+	 * @return <code>true</code> if the given player has the specified access level
+	 */
+	public boolean hasAccessLevel(Player player, PlayerShopAccessLevel accessLevel);
+
+	/**
+	 * Checks if the specified player has at least the specified {@link PlayerShopAccessLevel}.
+	 * <p>
+	 * This does not take the {@link ShopkeepersPlugin#BYPASS_PERMISSION} into account.
+	 * 
+	 * @param playerUUID
+	 *            the player UUID
+	 * @param accessLevel
+	 *            the access level to check for
+	 * @return <code>true</code> if the specified player has the specified access level
+	 */
+	public boolean hasAccessLevel(UUID playerUUID, PlayerShopAccessLevel accessLevel);
+
+	// TRADE NOTIFICATIONS
 
 	/**
 	 * Checks whether the shop owner is notified about trades of this shopkeeper.
@@ -92,6 +230,8 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * @see #isNotifyOnTrades()
 	 */
 	public void setNotifyOnTrades(boolean notifyOnTrades);
+
+	// HIRING
 
 	/**
 	 * Checks whether this shopkeeper is for hire.
@@ -132,6 +272,8 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 *         is not for hire
 	 */
 	public @Nullable UnmodifiableItemStack getHireCost();
+
+	// CONTAINERS
 
 	/**
 	 * Gets the container's x coordinate.
@@ -210,4 +352,13 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * @return <code>true</code> if the interface was successfully opened
 	 */
 	public boolean openContainerWindow(Player player);
+
+	/**
+	 * Attempts to open the shop members editor of this shopkeeper for the specified player.
+	 * 
+	 * @param player
+	 *            the player
+	 * @return <code>true</code> if the interface was successfully opened
+	 */
+	public boolean openMembersEditorWindow(Player player);
 }

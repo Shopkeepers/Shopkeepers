@@ -34,8 +34,57 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 	protected void setupShopkeeperButtons() {
 		super.setupShopkeeperButtons();
 
+		this.addButtonOrIgnore(this.createMembersButton());
 		this.addButtonOrIgnore(this.createContainerButton());
 		this.addButtonOrIgnore(this.createTradeNotificationsButton());
+	}
+
+	protected @Nullable Button createMembersButton() {
+		if (Settings.maxMembersPerShop <= 0) {
+			return null;
+		}
+
+		return new ShopkeeperActionButton() {
+			@Override
+			public @Nullable ItemStack getIcon(EditorView editorView) {
+				var shopkeeper = (PlayerShopkeeper) this.getShopkeeper();
+				ItemStack iconItem = Settings.membersItem.createItemStack();
+				String memberCount = String.valueOf(shopkeeper.getMembers().size());
+				String displayName = StringUtils.replaceArguments(Messages.buttonMembers,
+						"memberCount", memberCount
+				);
+				List<? extends String> lore = StringUtils.replaceArguments(
+						Messages.buttonMembersLore,
+						"memberCount", memberCount
+				);
+				ItemUtils.setDisplayNameAndLore(iconItem, displayName, lore);
+				return iconItem;
+			}
+
+			@Override
+			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+				var shopkeeper = (AbstractPlayerShopkeeper) this.getShopkeeper();
+				// Check if the player is allowed to edit the shop members:
+				if (!shopkeeper.canEditMembers(editorView.getPlayer(), false)) {
+					return true;
+				}
+
+				// Closing the UI also triggers a save of the current editor state:
+				editorView.closeDelayedAndRunTask(() -> {
+					// Open the shop members editor:
+					Player player = editorView.getPlayer();
+					if (!player.isValid() || !shopkeeper.isValid()) return;
+
+					shopkeeper.openMembersEditorWindow(player);
+				});
+				return true;
+			}
+
+			@Override
+			protected void onActionSuccess(EditorView editorView, InventoryClickEvent clickEvent) {
+				// Skip the edit event and saving of the shopkeeper.
+			}
+		};
 	}
 
 	protected @Nullable Button createContainerButton() {
@@ -43,6 +92,8 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 			return null;
 		}
 
+		// ActionButton instead of ShopkeeperActionButton: No need to call the edited event and save
+		// the shopkeeper when clicked.
 		return new ActionButton() {
 			@Override
 			public @Nullable ItemStack getIcon(EditorView editorView) {
@@ -66,7 +117,7 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 	}
 
 	protected @Nullable Button createTradeNotificationsButton() {
-		if (!Settings.notifyShopOwnersAboutTrades) {
+		if (!Settings.notifyShopMembersAboutTrades) {
 			return null;
 		}
 

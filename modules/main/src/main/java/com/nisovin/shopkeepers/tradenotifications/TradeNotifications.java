@@ -38,7 +38,7 @@ import com.nisovin.shopkeepers.util.trading.TradeMerger;
 import com.nisovin.shopkeepers.util.trading.TradeMerger.MergeMode;
 
 /**
- * Informs certain players and/or shop owners about trades that take place.
+ * Informs certain players and/or shop owners/members about trades that take place.
  */
 public class TradeNotifications implements Listener {
 
@@ -192,7 +192,7 @@ public class TradeNotifications implements Listener {
 	}
 
 	public void onEnable() {
-		this.enabled = (Settings.notifyPlayersAboutTrades || Settings.notifyShopOwnersAboutTrades);
+		this.enabled = (Settings.notifyPlayersAboutTrades || Settings.notifyShopMembersAboutTrades);
 		if (!enabled) return;
 
 		Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -221,18 +221,18 @@ public class TradeNotifications implements Listener {
 	private void onTradesCompleted(MergedTrades mergedTrades) {
 		TradeContext tradeContext = new TradeContext(mergedTrades);
 		this.sendTradeNotifications(tradeContext);
-		this.sendOwnerTradeNotifications(tradeContext);
+		this.sendShopMemberTradeNotifications(tradeContext);
 	}
 
 	private void sendTradeNotifications(TradeContext tradeContext) {
 		assert tradeContext != null;
 		if (!Settings.notifyPlayersAboutTrades) return;
 
-		Player shopOwner = null;
+		var shopkeeper = tradeContext.getShopkeeper();
+
 		String tradeNotificationPermission = ShopkeepersPlugin.TRADE_NOTIFICATIONS_ADMIN;
-		if (tradeContext.getShopkeeper() instanceof PlayerShopkeeper) {
+		if (shopkeeper instanceof PlayerShopkeeper) {
 			tradeNotificationPermission = ShopkeepersPlugin.TRADE_NOTIFICATIONS_PLAYER;
-			shopOwner = ((PlayerShopkeeper) tradeContext.getShopkeeper()).getOwner();
 		}
 
 		Lazy<Text> tradeNotification = new Lazy<>(
@@ -244,7 +244,9 @@ public class TradeNotifications implements Listener {
 			// Note that the shop owner may have deactivated the trade notification for this
 			// particular shopkeeper. In this case, they will not receive either type of trade
 			// notification.
-			if (player == shopOwner && Settings.notifyShopOwnersAboutTrades) continue;
+			if (Settings.notifyShopMembersAboutTrades && this.isShopMember(shopkeeper, player)) {
+				continue;
+			}
 			if (!userPreferences.isNotifyOnTrades(player)) continue;
 			if (!PermissionUtils.hasPermission(player, tradeNotificationPermission)) continue;
 
@@ -254,6 +256,11 @@ public class TradeNotifications implements Listener {
 			Settings.tradeNotificationSound.play(player);
 			this.sendDisableTradeNotificationsHint(player);
 		}
+	}
+
+	private boolean isShopMember(Shopkeeper shopkeeper, Player player) {
+		return shopkeeper instanceof PlayerShopkeeper playerShop
+				&& playerShop.isMember(player);
 	}
 
 	private Text getTradeNotificationMessage(TradeContext tradeContext) {
@@ -323,23 +330,38 @@ public class TradeNotifications implements Listener {
 		return message;
 	}
 
-	private void sendOwnerTradeNotifications(TradeContext tradeContext) {
+	private void sendShopMemberTradeNotifications(TradeContext tradeContext) {
 		assert tradeContext != null;
-		if (!Settings.notifyShopOwnersAboutTrades) return;
-		if (!(tradeContext.getShopkeeper() instanceof PlayerShopkeeper)) return;
-
-		PlayerShopkeeper playerShop = (PlayerShopkeeper) tradeContext.getShopkeeper();
+		if (!Settings.notifyShopMembersAboutTrades) return;
+		if (!(tradeContext.getShopkeeper() instanceof PlayerShopkeeper playerShop)) return;
 		if (!playerShop.isNotifyOnTrades()) return;
-		Player owner = playerShop.getOwner();
-		if (owner == null) return; // Owner is offline
-		if (!userPreferences.isNotifyOnTrades(owner)) return;
 
+		@Nullable Text message = null;
+
+		@Nullable Player owner = playerShop.getOwner();
+		if (owner != null && userPreferences.isNotifyOnTrades(owner)) {
+			message = this.getOwnerTradeNotificationMessage(tradeContext);
+			this.sendShopMemberTradeNotification(owner, message);
+		}
+
+		for (var shopMember : playerShop.getMembers()) {
+			var memberPlayer = shopMember.getUser().getPlayer();
+			if (memberPlayer != null && userPreferences.isNotifyOnTrades(memberPlayer)) {
+				if (message == null) {
+					message = this.getOwnerTradeNotificationMessage(tradeContext);
+				}
+
+				this.sendShopMemberTradeNotification(memberPlayer, message);
+			}
+		}
+	}
+
+	private void sendShopMemberTradeNotification(Player shopMember, Text message) {
 		// Note: We also send trade notifications for own trades (i.e. when the trading player
 		// matches the recipient of the notification).
-		Text message = this.getOwnerTradeNotificationMessage(tradeContext);
-		TextUtils.sendMessage(owner, message);
-		Settings.shopOwnerTradeNotificationSound.play(owner);
-		this.sendDisableTradeNotificationsHint(owner);
+		TextUtils.sendMessage(shopMember, message);
+		Settings.shopMemberTradeNotificationSound.play(shopMember);
+		this.sendDisableTradeNotificationsHint(shopMember);
 	}
 
 	private Text getOwnerTradeNotificationMessage(TradeContext tradeContext) {

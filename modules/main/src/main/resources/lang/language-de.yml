@@ -67,6 +67,10 @@ button-move: "&aShop umziehen"
 button-move-lore:
 - Verschiebe deinen Shop
 - an einen anderen Ort
+button-members: "&aShop-Mitglieder"
+button-members-lore:
+- "Verwalte die Shop-Mitglieder."
+- "Aktuell: &e{memberCount}"
 button-container: "&aShop-Inventar öffnen"
 button-container-lore:
 - Zeigt dir das Inventar
@@ -336,6 +340,48 @@ equipment-slot-head: "&aKopf"
 equipment-slot-body: "&aKörper"
 equipment-slot-saddle: "&aSattel"
 
+shop-members-editor-title: "Shop-Mitglieder"
+
+shop-member-title: "{memberName}"
+shop-member-lore:
+- "Berechtigungsstufe: &e{accessLevel}"
+- "{accessLevelDescription}"
+- "Links-/Rechtsklick zum  Ändern"
+- "der Berechtigungsstufe."
+- "Umschalt+Klick zum Entfernen."
+
+button-add-shop-member: "&aNeues Mitglied hinzufügen"
+button-add-shop-member-lore: []
+
+enter-new-shop-member: |-
+  &aBitte gib den Namen oder die Id des Spielers ein, dem du Zugriff auf den Shop gewähren möchtest.
+  &a  Du kannst die Zugriffsrechte anschließend im Editor konfigurieren.
+  &a  Ein Ausrufezeichen (!) bricht den Vorgang ab.
+cannot-add-shop-member-already-owner: "&7Player &e{player_name}&7 is already the shop owner!"
+cannot-add-shop-member-already-member: "&7Player &e{player_name}&7 is already a shop member!"
+shop-member-added: "&aShop member added: &e{member_name}"
+
+cannot-edit-shop-member-self: "&7Du kannst deine eigene Shop-Mitgliedschaft nicht bearbeiten!"
+cannot-edit-shop-member-no-longer-a-member: "&7Der Spieler ist nicht länger ein Shop-Mitglied!"
+your-shop-membership-has-changed: "&7Deine Shop-Mitgliedschaft hat sich geändert!"
+
+confirmation-ui-remove-shop-member-title: "&cShop-Mitglied entfernen?"
+confirmation-ui-remove-shop-member-lore:
+- "Damit wird {member_name}"
+- "der Zugriff auf diesen Shop entzogen!"
+
+shop-member-removed: "&aShop-Mitglied entfernt: &e{member_name}"
+
+player-shop-access-level-none: "Kein Zugriff"
+player-shop-access-level-container: "Behälter"
+player-shop-access-level-edit: "Bearbeiten"
+player-shop-access-level-full: "Voller Zugriff"
+
+player-shop-access-level-description-none: "Kein Zugriff."
+player-shop-access-level-description-container: "Kann auf Shop-Container zugreifen."
+player-shop-access-level-description-edit: "Kann auf Shop-Container zugreifen\nund den Shop bearbeiten."
+player-shop-access-level-description-full: "Volle Bearbeitungsrechte,\neinsließlich der Shop-Mitglieder\nund das Löschen des Shops."
+
 admin-sign-shop-line1: "&2[SHOP]"
 admin-sign-shop-line2: "&7{shopName}"
 admin-sign-shop-line3: ""
@@ -396,7 +442,9 @@ target-entity-is-no-shop: "&7Das anvisierte Objekt ist kein Shop."
 target-shop-is-no-admin-shop: "&7Der anvisierte Shop ist kein Admin-Shop."
 target-shop-is-no-player-shop: "&7Der anvisierte Shop ist kein Spieler-Shop."
 unused-container: "&7Dieser Behälter wird von keinem Shop benutzt."
-not-owner: "&7Du bist nicht der Besitzer von diesem Shop."
+not-allowed-to-edit-shop: "&7Du kannst diesen Shop nicht bearbeiten!"
+not-allowed-to-edit-shop-members: "&7Du kannst die Shop-Mitglieder nicht bearbeiten!"
+not-allowed-to-delete-shop: "&7Du kannst diesen Shop nicht löschen!"
 owner-set: "&aDer neue Besitzer ist jetzt &e{owner}"
 shop-creation-items-given: "&aSpieler &e{player}&a hat &e{amount}&a Shop-Erstellungsgegenstände bekommen!"
 shop-creation-items-received: "&aDu hast &e{amount}&a Shop-Erstellungsgegenstände bekommen!"
@@ -432,7 +480,7 @@ shop-currently-closed: "&7Dieser Shop ist derzeit geschlossen. Schaue später no
 cannot-trade-no-offers: "&7Dieser Shop hat derzeit keine Angebote. Schaue später nochmal vorbei!"
 no-offers-open-editor-description: "&eDu kannst diesen Shop mit Shift+Rechtsklick bearbeiten."
 cannot-trade-with-own-shop: "&7Du kannst nicht mit deinem eigenen Shop handeln."
-cannot-trade-while-owner-online: "&7Du kannst nicht handeln, während der Besitzer dieses Shops ('&e{owner}&7') online ist."
+cannot-trade-while-member-online: "&7Du kannst nicht handeln, während ein Mitglied dieses Shops ('&e{member}&7') online ist."
 cannot-trade-with-shop-missing-container: "&7Du kannst nicht mit diesem Shop handeln, da sein Behälter fehlt."
 cannot-trade-unexpected-trade: "&7Handel abgebrochen: Die gehandelten Gegenstände entsprechen nicht dem, was dieser Shop erwartet hat."
 cannot-trade-items-not-strictly-matching: "&7Handel abgebrochen: Die angebotenen Gegenstände stimmen nicht exakt mit den benötigten Gegenständen überein."
@@ -728,6 +776,8 @@ confirmation-ui-cancel-lore:
 - "Dadurch wird die aktuelle"
 - "Aktion abgebrochen."
 confirmation-ui-aborted: "&7Bestätigung abgebrochen."
+
+text-input-aborted: "&7Texteingabe abgebrochen."
 
 snapshot-list-header: "&9Shop &e{shop_id} &9hat &e{snapshotsCount} &9Snapshots: &e(Seite {page} von {maxPage})"
 snapshot-list-entry: "  &e{id}) &2{name}&8 (&7{timestamp}&8)"

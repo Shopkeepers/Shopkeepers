@@ -43,7 +43,7 @@ public abstract class AbstractTypeRegistry<T extends AbstractType> implements Ty
 	 * <p>
 	 * Used to print slightly more informative debug messages.
 	 * <p>
-	 * Examples: 'shop type', 'shop object type', 'trading window', 'hiring window', etc.
+	 * Examples: 'shop type', 'shop object type', 'UI type', etc.
 	 * 
 	 * @return a name for the type this class is handling
 	 */

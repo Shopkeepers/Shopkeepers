@@ -4,6 +4,73 @@ Date format: (YYYY-MM-DD)
 ## v2.26.2 (TBA)
 ### Supported MC versions: 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
+* Add player shop members: Shop owners can now allow additional players access to their shops.
+  * Editor: Add a new option to the editor of player shops to allow owners to view and edit the shop members.
+    * Click an empty slot and then enter the name or id of a player to add as shop member into the chat.
+    * Left/Right click a member to circle through the different access levels.
+    * Shift-click a member to remove them after additional confirmation.
+  * Available shop member access levels:
+    * Container access
+    * Container and editor access, excluding the ability to view/edit shop members or delete the shop
+    * Full access (same as shop owner): Can also edit the shop members or delete the shop.
+  * Notes:
+    * Shop members are taken into account for command completions when the command requires a player name or id.
+    * The `prevent-trading-while-owner-is-online` and `prevent-trading-with-own-shop` settings also apply to other shop members now: Trading is disabled if any shop member is online and shop members cannot trade with shops they have access to (any access level).
+    * If `notify-shop-owners-about-trades` is enabled, the other shop members also receive trading notifications now.
+    * The `deleting-player-shop-returns-creation-item` also returns the shop creation item to players other than the owner if they have full shop access.
+    * The `remove-all` command and `ShopkeeperRegistry#getPlayerShopkeepersByOwner` only affects a player's actually owned shops, not shops they have access to.
+    * If `set-citizen-npc-owner-of-player-shops` is enabled: Citizens NPCs only support a single owner, so other players, even with full access, won't be able to edit the Citizens NPC.
+    * If a shop member's permission changes, any currently open editor view is automatically closed for them.
+    * The editor layout cannot be customized per-player, so the shop members and delete buttons are always visible to all players with access to the editor, but can only be used by players with full shop access.
+  * Config: Add setting `max-members-per-shop` (default: `9`).
+    * The shop members feature can be disabled by setting this to `0`.
+    * If the shop members feature is disabled, existing shop members are not automatically deleted from the shopkeeper data, but they are dynamically ignored by the plugin and API.
+    * If the limit is reduced, existing shop members are not automatically deleted, but no new members can be edited via the editor.
+  * Config: Add setting `allow-members-with-full-access` (default: `true`).
+    * If disabled, the access level of existing shop members with "full" access is not automatically updated inside the shopkeeper data, but their access level is dynamically downgraded to "edit" access.
+  * Config: Add setting `members-item` to change the editor item.
+  * Config: Config migration `11`:
+    * Rename `prevent-trading-while-owner-is-online` to `prevent-trading-while-member-is-online`.
+    * Rename `notify-shop-owners-about-trades` to `notify-shop-members-about-trades`.
+    * Rename `shop-owner-trade-notification-sound` to `shop-member-trade-notification-sound`.
+    * Rename debug option `owner-name-updates` to `player-name-updates`.
+  * Metrics: Add bStats metric `uses-shop-members`.
+* Mannequin shopkeepers use an "Alex" skinned player head now for their profile editor option to not conflict with the new members editor option.
+* API: Add methods to get and edit the player shop members.
+* API: Add `PlayerShopkeeper#isOwner(UUID)`.
+
+**Message changes:**  
+* Removed `not-owner`.
+* Renamed and changed `cannot-trade-while-owner-online` to `cannot-trade-while-member-online`.
+* Added `not-allowed-to-edit-shop`.
+* Added `not-allowed-to-edit-shop-members`.
+* Added `not-allowed-to-delete-shop`.
+* Added `button-members`.
+* Added `button-members-lore`.
+* Added `shop-members-editor-title`.
+* Added `shop-member-title`.
+* Added `shop-member-lore`.
+* Added `button-add-shop-member`.
+* Added `button-add-shop-member-lore`.
+* Added `enter-new-shop-member`.
+* Added `cannot-add-shop-member-already-owner`.
+* Added `cannot-add-shop-member-already-member`.
+* Added `shop-member-added`.
+* Added `cannot-edit-shop-member-self`.
+* Added `cannot-edit-shop-member-no-longer-a-member`.
+* Added `your-shop-membership-has-changed`.
+* Added `confirmation-ui-remove-shop-member-title`.
+* Added `confirmation-ui-remove-shop-member-lore`.
+* Added `shop-member-removed`.
+* Added `player-shop-access-level-none`.
+* Added `player-shop-access-level-container`.
+* Added `player-shop-access-level-edit`.
+* Added `player-shop-access-level-full`.
+* Added `player-shop-access-level-description-none`.
+* Added `player-shop-access-level-description-container`.
+* Added `player-shop-access-level-description-edit`.
+* Added `player-shop-access-level-description-full`.
+* Added `text-input-aborted`.
 
 ## v2.26.1 (2026-04-12)
 ### Supported MC versions: 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

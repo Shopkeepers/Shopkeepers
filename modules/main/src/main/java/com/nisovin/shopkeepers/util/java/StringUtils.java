@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.util.java;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -232,6 +233,18 @@ public final class StringUtils {
 		} else {
 			return NEWLINE_PATTERN.split(source, -1);
 		}
+	}
+
+	public static List<String> flattenLines(
+			List<? extends String> source,
+			boolean splitLiteralNewlines
+	) {
+		List<String> flatten = new ArrayList<>(source.size());
+		for (String item : source) {
+			String[] lines = splitLines(item, splitLiteralNewlines);
+			Collections.addAll(flatten, lines);
+		}
+		return flatten;
 	}
 
 	public static String stripTrailingNewlines(String string) {

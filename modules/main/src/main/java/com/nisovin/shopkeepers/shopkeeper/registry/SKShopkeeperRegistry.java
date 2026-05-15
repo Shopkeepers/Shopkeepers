@@ -477,7 +477,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		return new AbstractSet<AbstractPlayerShopkeeper>() {
 			private Stream<? extends AbstractPlayerShopkeeper> createStream() {
 				return allPlayerShopkeepersView.stream()
-						.filter(shopkeeper -> shopkeeper.getOwnerUUID().equals(ownerUUID));
+						.filter(shopkeeper -> shopkeeper.isOwner(ownerUUID));
 			}
 
 			@Override

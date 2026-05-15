@@ -1,5 +1,8 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +30,9 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopAccessLevel;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopMember;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
@@ -47,12 +53,15 @@ import com.nisovin.shopkeepers.shopkeeper.ShopkeeperData;
 import com.nisovin.shopkeepers.shopkeeper.migration.Migration;
 import com.nisovin.shopkeepers.shopkeeper.migration.MigrationPhase;
 import com.nisovin.shopkeepers.shopkeeper.migration.ShopkeeperDataMigrator;
+import com.nisovin.shopkeepers.shopkeeper.player.members.SKPlayerShopMember;
+import com.nisovin.shopkeepers.ui.members.PlayerShopMembersEditorViewProvider;
 import com.nisovin.shopkeepers.user.SKUser;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
 import com.nisovin.shopkeepers.util.bukkit.BlockLocation;
 import com.nisovin.shopkeepers.util.bukkit.LocationUtils;
 import com.nisovin.shopkeepers.util.bukkit.MutableBlockLocation;
+import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.data.container.DataContainer;
 import com.nisovin.shopkeepers.util.data.property.BasicProperty;
@@ -69,6 +78,7 @@ import com.nisovin.shopkeepers.util.data.serialization.java.UUIDSerializers;
 import com.nisovin.shopkeepers.util.inventory.InventoryUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemMigration;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
+import com.nisovin.shopkeepers.util.java.CollectionUtils;
 import com.nisovin.shopkeepers.util.java.CyclicCounter;
 import com.nisovin.shopkeepers.util.java.RateLimiter;
 import com.nisovin.shopkeepers.util.java.StringUtils;
@@ -84,7 +94,10 @@ public abstract class AbstractPlayerShopkeeper
 			CHECK_CONTAINER_PERIOD_SECONDS + 1
 	);
 
-	private User owner = SKUser.EMPTY; // Valid after successful initialization
+	// Valid after successful initialization:
+	private PlayerShopMember owner = SKPlayerShopMember.EMPTY;
+	private final List<SKPlayerShopMember> members = new ArrayList<SKPlayerShopMember>();
+	private final List<? extends PlayerShopMember> membersView = Collections.unmodifiableList(members);
 	// The world name of this BlockLocation matches the shopkeeper world name.
 	// TODO Allow the container to be located in a world different to that of the shopkeeper? This
 	// could also be useful for virtual player shops, which don't have a world themselves, but would
@@ -125,6 +138,9 @@ public abstract class AbstractPlayerShopkeeper
 
 	@Override
 	protected void setup() {
+		this.registerViewProviderIfMissing(DefaultUITypes.SHOP_MEMBERS_EDITOR(), () -> {
+			return new PlayerShopMembersEditorViewProvider(this);
+		});
 		this.registerViewProviderIfMissing(DefaultUITypes.HIRING(), () -> {
 			return new PlayerShopHiringViewProvider(this);
 		});
@@ -135,6 +151,7 @@ public abstract class AbstractPlayerShopkeeper
 	public void loadDynamicState(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		super.loadDynamicState(shopkeeperData);
 		this.loadOwner(shopkeeperData);
+		this.loadMembers(shopkeeperData);
 		this.loadContainer(shopkeeperData);
 		this.loadNotifyOnTrades(shopkeeperData);
 		this.loadForHire(shopkeeperData);
@@ -144,6 +161,7 @@ public abstract class AbstractPlayerShopkeeper
 	public void saveDynamicState(ShopkeeperData shopkeeperData, boolean saveAll) {
 		super.saveDynamicState(shopkeeperData, saveAll);
 		this.saveOwner(shopkeeperData);
+		this.saveMembers(shopkeeperData);
 		this.saveContainer(shopkeeperData);
 		this.saveNotifyOnTrades(shopkeeperData);
 		this.saveForHire(shopkeeperData);
@@ -194,10 +212,25 @@ public abstract class AbstractPlayerShopkeeper
 		this.unprotectContainer();
 	}
 
+	public boolean canDeleteShopkeeper(Player player, boolean silent) {
+		Validate.notNull(player, "player is null");
+		if (!this.hasAccessLevel(player, DefaultPlayerShopAccessLevels.FULL())
+				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+			if (!silent) {
+				TextUtils.sendMessage(player, Messages.notAllowedToDeleteShop);
+			}
+			return false;
+		}
+
+		return true;
+	}
+
 	@Override
 	public void delete(@Nullable Player player) {
 		// Return the shop creation item:
-		if (Settings.deletingPlayerShopReturnsCreationItem && player != null && this.isOwner(player)) {
+		if (Settings.deletingPlayerShopReturnsCreationItem
+				&& player != null
+				&& this.hasAccessLevel(player, DefaultPlayerShopAccessLevels.FULL())) {
 			ItemStack shopCreationItem = ShopCreationItem.create();
 			Map<Integer, ItemStack> remaining = player.getInventory().addItem(shopCreationItem);
 			if (!remaining.isEmpty()) {
@@ -317,7 +350,7 @@ public abstract class AbstractPlayerShopkeeper
 
 	private void saveOwner(ShopkeeperData shopkeeperData) {
 		assert shopkeeperData != null;
-		shopkeeperData.set(OWNER, owner);
+		shopkeeperData.set(OWNER, owner.getUser());
 	}
 
 	@Override
@@ -343,39 +376,247 @@ public abstract class AbstractPlayerShopkeeper
 
 	private void _setOwner(User owner) {
 		Validate.notNull(owner, "owner is null");
-		this.owner = owner;
+		this.owner = new SKPlayerShopMember(owner, true, DefaultPlayerShopAccessLevels.FULL());
 
 		// Inform the shop object:
 		this.getShopObject().onShopOwnerChanged();
 	}
 
 	public User getOwnerUser() {
-		return owner;
+		return owner.getUser();
 	}
 
 	@Override
 	public UUID getOwnerUUID() {
-		return owner.getUniqueId();
+		return owner.getUser().getUniqueId();
 	}
 
 	@Override
 	public String getOwnerName() {
-		return owner.getLastKnownName();
+		return owner.getUser().getLastKnownName();
 	}
 
 	@Override
 	public String getOwnerString() {
-		return TextUtils.getPlayerString(owner);
+		return TextUtils.getPlayerString(owner.getUser());
 	}
 
 	@Override
 	public boolean isOwner(Player player) {
-		return player.getUniqueId().equals(this.getOwnerUUID());
+		return this.isOwner(player.getUniqueId());
+	}
+
+	@Override
+	public boolean isOwner(UUID playerUUID) {
+		return this.getOwnerUUID().equals(playerUUID);
 	}
 
 	@Override
 	public @Nullable Player getOwner() {
 		return Bukkit.getPlayer(this.getOwnerUUID());
+	}
+
+	// MEMBERS
+
+	public static final Property<List<? extends PlayerShopMember>> MEMBERS = new BasicProperty<List<? extends PlayerShopMember>>()
+			.dataKeyAccessor("members", SKPlayerShopMember.LIST_SERIALIZER)
+			.useDefaultIfMissing()
+			.defaultValue(Collections.emptyList())
+			.build();
+
+	private void loadMembers(ShopkeeperData shopkeeperData) throws InvalidDataException {
+		assert shopkeeperData != null;
+		this._setMembers(shopkeeperData.get(MEMBERS));
+	}
+
+	private void saveMembers(ShopkeeperData shopkeeperData) {
+		assert shopkeeperData != null;
+		shopkeeperData.set(MEMBERS, membersView);
+	}
+
+	@Override
+	public Collection<? extends PlayerShopMember> getMembers() {
+		if (Settings.maxMembersPerShop == 0) {
+			// Shop members feature is disabled:
+			return Collections.emptyList();
+		}
+
+		return membersView;
+	}
+
+	public @Nullable Player getFirstOnlineMember() {
+		var owner = this.getOwner();
+		if (owner != null) {
+			return owner;
+		}
+
+		for (var member : this.getMembers()) {
+			var memberPlayer = member.getUser().getPlayer();
+			if (memberPlayer != null) {
+				return memberPlayer;
+			}
+		}
+
+		return null;
+	}
+
+	private void _setMembers(List<? extends PlayerShopMember> members) {
+		assert members != null && !CollectionUtils.containsNull(members);
+		this.members.clear();
+		members.forEach(this::_addMember);
+	}
+
+	private void _addMember(PlayerShopMember member) {
+		Validate.notNull(member, "member is null");
+		Validate.isTrue(member instanceof SKPlayerShopMember,
+				"Member is not of type SKPlayerShopMember!");
+
+		var skMember = (SKPlayerShopMember)member;
+		Validate.isTrue(!skMember.isOwner(), "Cannot add shop owner as member!");
+
+		var playerUUID = member.getUser().getUniqueId();
+		Validate.isTrue(!this.isOwner(playerUUID), "Cannot add shop owner as member!");
+		Validate.isTrue(this._getMember(playerUUID) == null, "Already a member!");
+		Validate.isTrue(member.getAccessLevel() != DefaultPlayerShopAccessLevels.NONE(),
+				"Invalid member access level: " + DefaultPlayerShopAccessLevels.NONE().getIdentifier());
+
+		members.add((SKPlayerShopMember) member);
+	}
+
+	@Override
+	public void addMember(UUID playerUUID, String playerName, PlayerShopAccessLevel accessLevel) {
+		if (Settings.maxMembersPerShop == 0) {
+			// Shop members feature is disabled:
+			return;
+		}
+
+		var user = SKUser.of(playerUUID, playerName);
+		var newMember = new SKPlayerShopMember(user, false, accessLevel);
+		// Validate the new member:
+		this._addMember(newMember);
+		this.markDirty();
+	}
+
+	@Override
+	public void removeMember(UUID playerUUID) {
+		Validate.isTrue(!this.isOwner(playerUUID), "Cannot remove shop owner from members!");
+		if (members.removeIf(x -> x.getUser().getUniqueId().equals(playerUUID))) {
+			this.markDirty();
+		}
+	}
+
+	/**
+	 * Updates the specified shop member, i.e. their name and/or access level.
+	 * <p>
+	 * Unlike removing and re-adding the member, this preserves the members position in the member
+	 * list.
+	 * 
+	 * @param playerUUID
+	 *            the member's uuid, not <code>null</code>
+	 * @param playerName
+	 *            the member's name, or <code>null</code> to preserve the current name
+	 * @param accessLevel
+	 *            the {@link PlayerShopAccessLevel}, not
+	 *            {@link DefaultPlayerShopAccessLevels#getNone()}, or <code>null</code> to preserve
+	 *            the current access level
+	 * @throws IllegalArgumentException
+	 *             if the specified player is the {@link #isOwner(UUID) owner} or not a
+	 *             {@link #isMember(UUID) member}
+	 */
+	public void updateMember(
+			UUID playerUUID,
+			@Nullable String playerName,
+			@Nullable PlayerShopAccessLevel accessLevel
+	) {
+		Validate.isTrue(!this.isOwner(playerUUID), "The specified player is the shop owner!");
+		Validate.isTrue(accessLevel != DefaultPlayerShopAccessLevels.NONE(),
+				"Invalid member access level: " + DefaultPlayerShopAccessLevels.NONE().getIdentifier());
+
+		var member = this.getMember(playerUUID);
+		if (member == null) {
+			throw new IllegalArgumentException("The specified player is not a shop member!");
+		}
+
+		// Update the member, preserving its position within the members list:
+
+		var index = members.indexOf(member);
+		assert index >= 0 && index < members.size();
+
+		var newMemberName = playerName == null ? member.getUser().getName() : playerName;
+		var newUser = SKUser.of(playerUUID, newMemberName);
+		var newAccessLevel = accessLevel == null ? member.getAccessLevel() : accessLevel;
+
+		var newMember = new SKPlayerShopMember(newUser, false, newAccessLevel);
+		members.set(index, newMember);
+		this.markDirty();
+	}
+
+	@Override
+	public @Nullable PlayerShopMember getMember(UUID playerUUID) {
+		if (this.isOwner(playerUUID)) {
+			return owner;
+		}
+
+		// Shop members feature is disabled:
+		if (Settings.maxMembersPerShop == 0) {
+			return null;
+		}
+
+		return this._getMember(playerUUID);
+	}
+
+	// No owner or setting check:
+	private @Nullable PlayerShopMember _getMember(UUID playerUUID) {
+		for (var member : membersView) {
+			if (member.getUser().getUniqueId().equals(playerUUID)) {
+				return member;
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public boolean isMember(Player player) {
+		return this.isMember(player.getUniqueId());
+	}
+
+	@Override
+	public boolean isMember(UUID playerUUID) {
+		return this.getMember(playerUUID) != null;
+	}
+
+	@Override
+	public PlayerShopAccessLevel getAccessLevel(UUID playerUUID) {
+		// Includes the owner:
+		var member = this.getMember(playerUUID);
+		if (member == null) {
+			return DefaultPlayerShopAccessLevels.NONE();
+		}
+
+		return member.getAccessLevel();
+	}
+
+	@Override
+	public void setAccessLevel(UUID playerUUID, PlayerShopAccessLevel accessLevel) {
+		// Update the member, preserving its name and its position within the members list:
+		this.updateMember(playerUUID, null, accessLevel);
+	}
+
+	@Override
+	public boolean hasAccessLevel(Player player, PlayerShopAccessLevel accessLevel) {
+		return this.hasAccessLevel(player.getUniqueId(), accessLevel);
+	}
+
+	@Override
+	public boolean hasAccessLevel(UUID playerUUID, PlayerShopAccessLevel accessLevel) {
+		var memberAccessLevel = this.getAccessLevel(playerUUID);
+		return memberAccessLevel.includes(accessLevel);
+	}
+
+	public boolean canEditMembers(Player player, boolean silent) {
+		Validate.notNull(player, "player is null");
+		return this.canAccess(player, DefaultUITypes.SHOP_MEMBERS_EDITOR(), silent);
 	}
 
 	// TRADE NOTIFICATIONS
@@ -769,6 +1010,11 @@ public abstract class AbstractPlayerShopkeeper
 		Log.debug(() -> "Opening container inventory for player '" + player.getName() + "'.");
 		// Open the container directly for the player (no need for a custom UI):
 		return player.openInventory(containerInventory) != null;
+	}
+
+	@Override
+	public boolean openMembersEditorWindow(Player player) {
+		return this.openWindow(DefaultUITypes.SHOP_MEMBERS_EDITOR(), player);
 	}
 
 	// EDITOR

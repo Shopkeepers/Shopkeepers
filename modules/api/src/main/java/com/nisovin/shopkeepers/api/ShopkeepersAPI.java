@@ -15,6 +15,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.PriceOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.TradeOffer;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopAccessLevelRegistry;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectTypesRegistry;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
@@ -135,6 +137,26 @@ public final class ShopkeepersAPI {
 	 */
 	public static DefaultUITypes getDefaultUITypes() {
 		return getPlugin().getDefaultUITypes();
+	}
+
+	// PLAYER SHOP ACCESS LEVELS
+
+	/**
+	 * Gets the {@link PlayerShopAccessLevelRegistry}.
+	 * 
+	 * @return the player shop access level registry
+	 */
+	public static PlayerShopAccessLevelRegistry<?> getPlayerShopAccessLevelRegistry() {
+		return getPlugin().getPlayerShopAccessLevelRegistry();
+	}
+
+	/**
+	 * Gets the {@link DefaultPlayerShopAccessLevels}.
+	 * 
+	 * @return the default player shop access levels
+	 */
+	public static DefaultPlayerShopAccessLevels getDefaultPlayerShopAccessLevels() {
+		return getPlugin().getDefaultPlayerShopAccessLevels();
 	}
 
 	// SHOPKEEPER REGISTRY

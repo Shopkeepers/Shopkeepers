@@ -9,7 +9,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Represents a player that the Shopkeepers plugin knows about.
  * <p>
- * The player might not be currently online.
+ * The player might not be online currently.
+ * <p>
+ * Note: Do not compare users by their object identity. Instead, compare them by their
+ * {@link #getUniqueId()}.
  */
 public interface User {
 

@@ -25,8 +25,8 @@ public final class DebugOptions {
 	public static final String visualizeShopkeeperTicks = add("visualize-shopkeeper-ticks");
 	// Enables additional commands related debugging output.
 	public static final String commands = add("commands");
-	// Logs information when updating stored shop owner names.
-	public static final String ownerNameUpdates = add("owner-name-updates");
+	// Logs information when updating stored player names, such as of shop owners or shop members.
+	public static final String playerNameUpdates = add("player-name-updates");
 	// TODO Remove this once all servers are expected to have updated to our new item stack
 	// serialization. Logging item migrations during item stack serialization would be quite spammy,
 	// occur frequently during server updates, and not provide context information about the

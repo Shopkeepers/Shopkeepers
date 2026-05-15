@@ -5,6 +5,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.currency.Currencies;
@@ -44,11 +45,11 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 		if (!super.canAccess(player, silent)) return false;
 
 		// Check the owner:
-		if (!this.getShopkeeper().isOwner(player)
+		if (!this.getShopkeeper().hasAccessLevel(player, DefaultPlayerShopAccessLevels.EDIT())
 				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
 			if (!silent) {
-				this.debugNotOpeningUI(player, "Player is not owning this shop.");
-				TextUtils.sendMessage(player, Messages.notOwner);
+				this.debugNotOpeningUI(player, "Player has no access.");
+				TextUtils.sendMessage(player, Messages.notAllowedToEditShop);
 			}
 			return false;
 		}

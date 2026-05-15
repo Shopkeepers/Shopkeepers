@@ -328,7 +328,7 @@ public final class CollectionUtils {
 	}
 
 	public static <T> @NonNull T cycleValue(
-			List<@NonNull T> values,
+			List<? extends @NonNull T> values,
 			@NonNull T current,
 			boolean backwards
 	) {
@@ -336,7 +336,7 @@ public final class CollectionUtils {
 	}
 
 	public static <T> @NonNull T cycleValue(
-			List<@NonNull T> values,
+			List<? extends @NonNull T> values,
 			@NonNull T current,
 			boolean backwards,
 			Predicate<? super @NonNull T> predicate
@@ -351,7 +351,7 @@ public final class CollectionUtils {
 	}
 
 	public static <T> @Nullable T cycleValueNullable(
-			List<@NonNull T> values,
+			List<? extends @NonNull T> values,
 			@Nullable T current,
 			boolean backwards
 	) {
@@ -364,7 +364,7 @@ public final class CollectionUtils {
 	}
 
 	public static <T> @Nullable T cycleValueNullable(
-			List<@NonNull T> values,
+			List<? extends @NonNull T> values,
 			@Nullable T current,
 			boolean backwards,
 			Predicate<? super @Nullable T> predicate
@@ -372,7 +372,7 @@ public final class CollectionUtils {
 		return cycleValue(
 				values,
 				true,
-				current,
+				Unsafe.nullableAsNonNull(current),
 				backwards,
 				predicate
 		);
@@ -382,7 +382,7 @@ public final class CollectionUtils {
 	// current==null: nullable has to be true.
 	// Cycled through all values but none got accepted: Returns current value (can be null).
 	public static <T> T cycleValue(
-			List<@NonNull T> values,
+			List<? extends @NonNull T> values,
 			boolean nullable,
 			T current,
 			boolean backwards,

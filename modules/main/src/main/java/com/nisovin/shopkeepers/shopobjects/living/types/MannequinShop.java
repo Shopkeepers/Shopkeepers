@@ -256,13 +256,11 @@ public class MannequinShop extends SKLivingShopObject<LivingEntity> {
 	}
 
 	private ItemStack getProfileEditorItem() {
-		ItemStack iconItem = new ItemStack(Material.PLAYER_HEAD);
-		ItemUtils.setDisplayNameAndLore(
-				iconItem,
+		return ItemUtils.setDisplayNameAndLore(
+				ItemUtils.getSkull_MHF_Alex(),
 				Messages.buttonMannequinProfile,
 				Messages.buttonMannequinProfileLore
 		);
-		return iconItem;
 	}
 
 	private Button getProfileEditorButton() {

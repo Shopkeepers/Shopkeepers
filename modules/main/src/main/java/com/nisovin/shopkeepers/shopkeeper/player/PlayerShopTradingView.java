@@ -42,23 +42,27 @@ public class PlayerShopTradingView extends TradingView {
 		var shopkeeper = this.getShopkeeperNonNull();
 		Player tradingPlayer = trade.getTradingPlayer();
 
-		// No trading with own shop:
-		if (Settings.preventTradingWithOwnShop && shopkeeper.isOwner(tradingPlayer)
+		// No trading with own shops:
+		// This setting also applies to other shop members.
+		if (Settings.preventTradingWithOwnShop
+				&& shopkeeper.isMember(tradingPlayer)
 				&& !PermissionUtils.hasPermission(tradingPlayer, ShopkeepersPlugin.BYPASS_PERMISSION)) {
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeWithOwnShop);
 			this.debugPreventedTrade("Trading with the own shop is not allowed.");
 			return false;
 		}
 
-		// No trading while shop owner is online:
-		if (Settings.preventTradingWhileOwnerIsOnline) {
-			Player ownerPlayer = shopkeeper.getOwner();
-			if (ownerPlayer != null && !shopkeeper.isOwner(tradingPlayer)
+		// No trading while any shop member is online:
+		if (Settings.preventTradingWhileMemberIsOnline) {
+			@Nullable Player memberPlayer = shopkeeper.getFirstOnlineMember();
+			if (memberPlayer != null
+					&& !shopkeeper.isMember(tradingPlayer)
 					&& !PermissionUtils.hasPermission(tradingPlayer, ShopkeepersPlugin.BYPASS_PERMISSION)) {
-				TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeWhileOwnerOnline,
-						"owner", Unsafe.assertNonNull(ownerPlayer.getName())
+				TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeWhileMemberOnline,
+						"member", Unsafe.assertNonNull(memberPlayer.getName())
 				);
-				this.debugPreventedTrade("Trading is not allowed while the shop owner is online.");
+				this.debugPreventedTrade("Trading is not allowed while a shop member is online: "
+						+ Unsafe.assertNonNull(memberPlayer.getName()));
 				return false;
 			}
 		}

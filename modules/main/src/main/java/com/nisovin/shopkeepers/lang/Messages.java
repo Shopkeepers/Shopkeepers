@@ -100,6 +100,11 @@ public class Messages extends Config {
 			"Lets you move",
 			"your shopkeeper"
 	));
+	public static String buttonMembers = c("&aShop members");
+	public static List<String> buttonMembersLore = c(Arrays.asList(
+			"Manage the shop members.",
+			"Currently: &e{memberCount}"
+	));
 	public static String buttonContainer = c("&aView shop inventory");
 	public static List<String> buttonContainerLore = c(Arrays.asList(
 			"Lets you view the inventory",
@@ -418,6 +423,50 @@ public class Messages extends Config {
 	public static String equipmentSlotBody = c("&aBody");
 	public static String equipmentSlotSaddle = c("&aSaddle");
 
+	public static String shopMembersEditorTitle = c("Shop Members");
+
+	public static String shopMemberTitle = c("{memberName}");
+	public static List<String> shopMemberLore = c(Arrays.asList(
+			"Access level: &e{accessLevel}",
+			"{accessLevelDescription}",
+			"Left/Right click to",
+			"change the access level.",
+			"Shift click to remove."
+	));
+
+	public static String buttonAddShopMember = c("&aAdd new member");
+	public static List<String> buttonAddShopMemberLore = c(Arrays.asList());
+
+	public static Text enterNewShopMember = Text.parse(
+			"&aPlease enter the name or id of the player you want to give access to the shop.\n"
+					+ "&a  You can configure their access level afterwards inside the editor.\n"
+					+ "&a  Enter an exclamation mark (!) to abort."
+	);
+	public static Text cannotAddShopMemberAlreadyOwner = Text.parse("&7Player &e{player_name}&7 is already the shop owner!");
+	public static Text cannotAddShopMemberAlreadyMember = Text.parse("&7Player &e{player_name}&7 is already a shop member!");
+	public static Text shopMemberAdded = Text.parse("&aShop member added: &e{member_name}");
+
+	public static Text cannotEditShopMemberSelf = Text.parse("&7You cannot edit your own shop membership!");
+	public static Text cannotEditShopMemberNoLongerAMember = Text.parse("&7The player is no longer a shop member!");
+	public static Text yourShopMembershipHasChanged = Text.parse("&7Your shop membership has changed!");
+
+	public static String confirmationUiRemoveShopMemberTitle = c("&cRemove shop member?");
+	public static List<String> confirmationUiRemoveShopMemberLore = c(Arrays.asList(
+			"This will revoke {member_name}'s",
+			"access to this shop!"
+	));
+	public static Text shopMemberRemoved = Text.parse("&aShop member removed: &e{member_name}");
+
+	public static String playerShopAccessLevelNone = c("No access");
+	public static String playerShopAccessLevelContainer = c("Container");
+	public static String playerShopAccessLevelEdit = c("Edit");
+	public static String playerShopAccessLevelFull = c("Full access");
+
+	public static String playerShopAccessLevelDescriptionNone = c("No access.");
+	public static String playerShopAccessLevelDescriptionContainer = c("Can access shop containers.");
+	public static String playerShopAccessLevelDescriptionEdit = c("Can access shop containers\nand edit the shop.");
+	public static String playerShopAccessLevelDescriptionFull = c("Full editing rights,\nincluding the shop members\nand deleting the shop.");
+
 	public static String adminSignShopLine1 = c("&2[SHOP]");
 	public static String adminSignShopLine2 = c("&7{shopName}");
 	public static String adminSignShopLine3 = c("");
@@ -481,7 +530,9 @@ public class Messages extends Config {
 	public static Text targetShopIsNoAdminShop = Text.parse("&7The targeted shopkeeper is no admin shopkeeper.");
 	public static Text targetShopIsNoPlayerShop = Text.parse("&7The targeted shopkeeper is no player shopkeeper.");
 	public static Text unusedContainer = Text.parse("&7No shopkeeper is using this container.");
-	public static Text notOwner = Text.parse("&7You are not the owner of this shopkeeper.");
+	public static Text notAllowedToEditShop = Text.parse("&7You are not allowed to edit this shop!");
+	public static Text notAllowedToEditShopMembers = Text.parse("&7You are not allowed to edit the shop members!");
+	public static Text notAllowedToDeleteShop = Text.parse("&7You are not allowed to delete this shop!");
 	// Placeholders: {owner} -> new owners name
 	public static Text ownerSet = Text.parse("&aThe new owner is now &e{owner}");
 	public static Text shopCreationItemsGiven = Text.parse("&aPlayer &e{player}&a has received &e{amount}&a shop creation item(s)!");
@@ -519,7 +570,7 @@ public class Messages extends Config {
 	public static Text cannotTradeNoOffers = Text.parse("&7This shop currently has no offers. Check again later!");
 	public static String noOffersOpenEditorDescription = c("&eYou can edit this shop by right clicking it while sneaking.");
 	public static Text cannotTradeWithOwnShop = Text.parse("&7You cannot trade with your own shop.");
-	public static Text cannotTradeWhileOwnerOnline = Text.parse("&7You cannot trade while the owner of this shop ('&e{owner}&7') is online.");
+	public static Text cannotTradeWhileMemberOnline = Text.parse("&7You cannot trade while a member of this shop ('&e{member}&7') is online.");
 	public static Text cannotTradeWithShopMissingContainer = Text.parse("&7You cannot trade with this shop, because its container is missing.");
 	public static Text cannotTradeUnexpectedTrade = Text.parse("&7Trade aborted: The traded items do not match what this shopkeeper expected.");
 	public static Text cannotTradeItemsNotStrictlyMatching = Text.parse("&7Trade aborted: The offered items do not exactly match the required items.");
@@ -855,6 +906,8 @@ public class Messages extends Config {
 			"current action."
 	));
 	public static Text confirmationUiAborted = Text.parse("&7Confirmation aborted.");
+
+	public static Text textInputAborted = Text.parse("&7Text input aborted.");
 
 	public static Text snapshotListHeader = Text.parse("&9Shop &e{shop_id} &9has &e{snapshotsCount} &9snapshots: &e(Page {page} of {maxPage})");
 	public static Text snapshotListEntry = Text.parse("  &e{id}) &2{name}&8 (&7{timestamp}&8)");

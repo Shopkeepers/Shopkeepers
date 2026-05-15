@@ -19,6 +19,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.container.ShopContainers;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
@@ -182,18 +183,24 @@ public class ProtectedContainers {
 	) {
 		List<? extends PlayerShopkeeper> shopkeepers = this._getShopkeepers(worldName, x, y, z);
 		// Check if there are any shopkeepers using this container:
-		if (shopkeepers == null) return false;
+		if (shopkeepers == null) {
+			return false;
+		}
+
 		assert !shopkeepers.isEmpty();
 		if (player != null) {
 			// Check whether the player is affected by the protection:
 			// Note: The bypass permission does not get checked here but needs to be checked
 			// separately.
-			// We always allow shop owners to access their shop container (regardless of other
-			// shopkeepers using the same container):
+			// We always allow shop owners and members with container access to access the shop
+			// container (regardless of other shopkeepers using the same container):
 			for (PlayerShopkeeper shopkeeper : shopkeepers) {
-				if (shopkeeper.isOwner(player)) return false;
+				if (shopkeeper.hasAccessLevel(player, DefaultPlayerShopAccessLevels.CONTAINER())) {
+					return false;
+				}
 			}
 		}
+
 		// There exists a protection for this container and the player doesn't own any shopkeeper
 		// using it:
 		return true;

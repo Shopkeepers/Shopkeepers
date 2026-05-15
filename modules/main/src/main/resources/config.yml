@@ -5,7 +5,7 @@
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
 # Determines the required config migrations. Do not edit manually!
-config-version: 10
+config-version: 11
 # Determines the required config item data migrations. Do not edit manually!
 data-version: 4325
 # The initial debugging state of the plugin.
@@ -24,8 +24,8 @@ debug: false
 # - 'visualize-shopkeeper-ticks': Visualizes the ticking activities of
 #    shopkeepers in-game.
 # - 'commands': Enables additional commands related debugging output.
-# - 'owner-name-updates': Logs information when updating stored shop owner
-#    names.
+# - 'player-name-updates': Logs information when updating stored player names,
+#    such as of shop owners or shop members.
 # - 'item-migrations': Logs whenever a shopkeeper performs item migrations
 #    (e.g. for trade offers).
 # - 'item-updates': Logs whenever items are updated via the UpdateItemEvent.
@@ -391,6 +391,8 @@ default-citizen-npc-type: 'PLAYER'
 # By enabling this setting, and configuring the Citizens command permissions
 # for your players accordingly, you can allow shop owners to use the commands
 # of the Citizens plugin to edit the Citizens NPCs of their NPC shopkeepers.
+# Citizens NPCs only support a single owner, so any other shop members are not
+# registered as the NPC owner and can therefore not edit the NPC via Citizens.
 set-citizen-npc-owner-of-player-shops: false
 # Whether to make shopkeeper Citizens NPCs pushable by fluids (true), unpushable by fluids (false),
 # or not modify their current behavior ("undefined").
@@ -563,6 +565,19 @@ enable-moving-of-player-shops: true
 # The item used for the move button.
 move-item: 'minecraft:ender_pearl'
 
+# The maximum number of players that shop owners can give access to their shop.
+# A value of 0 disables player shop members: The shop members option is removed
+# from the player shop editor and any existing shop members lose their access.
+# The maximum supported value is 36.
+max-members-per-shop: 9
+# Whether to allow shop members to have full access to the shop, which includes
+# access permissions that are usually limited to the shop owner, such as the
+# ability to edit shop members or delete the shop.
+# If disabled, any members with full access are downgraded to editor access.
+allow-members-with-full-access: true
+# The item used for the player shop members editor button.
+members-item: 'minecraft:player_head'
+
 # Whether the editor menu of player shops contains an option to open the shop's
 # container.
 enable-container-option-on-player-shop: true
@@ -643,13 +658,14 @@ hire-require-creation-permission: true
 # Trading
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
-# Whether to prevent players from trading with their own shopkeepers. Keeping
-# this enabled is recommended.
+# Whether to prevent players from trading with shopkeepers they own or are a
+# member of. It is recommended to keep this enabled.
 prevent-trading-with-own-shop: true
-# With this enabled player shopkeepers don't trade while their owner is online.
-# This might be useful for role-playing servers that want to force players to
-# trade with each other directly while they are online.
-prevent-trading-while-owner-is-online: false
+# When enabled, player shopkeepers don't trade while their owner or any other
+# shop member is online. This might be useful for role-playing servers that
+# want to force players to trade with each other directly while they are
+# online.
+prevent-trading-while-member-is-online: false
 # In some situations, Minecraft allows the trading of items even if they do not
 # fully match (e.g. villagers accept items with additional metadata). With this
 # setting enabled, the Shopkeepers plugin will always check that the traded
@@ -717,11 +733,12 @@ notify-players-about-trades: false
 # this to an empty String to disable the sound effect.
 trade-notification-sound: ""
 
-# Whether to inform shop owners about trades that take place in their shops.
-notify-shop-owners-about-trades: true
-# This sound effect is played when a shop owner receives a trade notification.
+# Whether to inform shop owners and other members about trades that take place
+# at their shops.
+notify-shop-members-about-trades: true
+# This sound effect is played when a shop member receives a trade notification.
 # Set this to an empty String to disable the sound effect.
-shop-owner-trade-notification-sound:
+shop-member-trade-notification-sound:
   sound: 'minecraft:entity.experience_orb.pickup'
   volume: 0.25
 

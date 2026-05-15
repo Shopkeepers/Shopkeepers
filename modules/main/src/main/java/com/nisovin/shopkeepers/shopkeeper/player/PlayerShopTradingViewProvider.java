@@ -5,7 +5,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
-import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.ui.lib.UIState;
@@ -28,17 +27,19 @@ public abstract class PlayerShopTradingViewProvider extends TradingViewProvider 
 	@Override
 	public boolean canOpen(Player player, boolean silent) {
 		if (!super.canOpen(player, silent)) return false;
-		PlayerShopkeeper shopkeeper = this.getShopkeeper();
 
-		// Stop opening if trading shall be prevented while the owner is offline:
-		if (Settings.preventTradingWhileOwnerIsOnline
+		var shopkeeper = this.getShopkeeper();
+
+		// Stop opening if trading shall be prevented while a member is online:
+		if (Settings.preventTradingWhileMemberIsOnline
 				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
-			Player ownerPlayer = shopkeeper.getOwner();
-			if (ownerPlayer != null) {
+			@Nullable Player memberPlayer = shopkeeper.getFirstOnlineMember();
+			if (memberPlayer != null) {
 				if (!silent) {
-					this.debugNotOpeningUI(player, "Shop owner is online.");
-					TextUtils.sendMessage(player, Messages.cannotTradeWhileOwnerOnline,
-							"owner", Unsafe.assertNonNull(ownerPlayer.getName())
+					this.debugNotOpeningUI(player, "Shop member is online: "
+							+ Unsafe.assertNonNull(memberPlayer.getName()));
+					TextUtils.sendMessage(player, Messages.cannotTradeWhileMemberOnline,
+							"member", Unsafe.assertNonNull(memberPlayer.getName())
 					);
 				}
 				return false;
