@@ -461,7 +461,7 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 		assert shopType != null;
 
 		// Note: If the shop is forced open, this will mark the shopkeeper as dirty.
-		this.setOpen(shopkeeperData.get(OPEN));
+		this._setOpen(shopkeeperData.get(OPEN));
 		this._setName(shopkeeperData.get(NAME));
 
 		// Optional shop object data:
@@ -1290,6 +1290,11 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 
 	@Override
 	public void setOpen(boolean open) {
+		this._setOpen(open);
+		this.markDirty();
+	}
+
+	private void _setOpen(boolean open) {
 		// Note: We do not track if the shop was closed via the API or by the shop owner. Also, we
 		// do not know whether the server admin also wants to automatically re-open player shops
 		// restored from a previously saved snapshot. Consequently, the force-open-player-shops
@@ -1304,13 +1309,9 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 			// Note: We always mark the shopkeeper as dirty here, even if the current open state has
 			// not changed, to ensure that any change to the open state loaded from the shopkeeper's
 			// data is persisted.
+			this.markDirty();
 		}
 
-		this._setOpen(open);
-		this.markDirty();
-	}
-
-	private void _setOpen(boolean open) {
 		// Only call onClosed if the current value actually changed:
 		if (this.open == open) {
 			return;
