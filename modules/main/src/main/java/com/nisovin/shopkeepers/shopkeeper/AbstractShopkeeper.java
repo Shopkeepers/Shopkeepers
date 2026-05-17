@@ -36,6 +36,7 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperSnapshot;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.shopobjects.virtual.VirtualShopObject;
 import com.nisovin.shopkeepers.api.shopobjects.virtual.VirtualShopObjectType;
@@ -1686,6 +1687,29 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 		}
 
 		return UISessionManager.getInstance().requestUI(viewProvider, player, uiState);
+	}
+
+	/**
+	 * Closes any currently open inventory view associated with this shopkeeper for the given
+	 * player.
+	 * <p>
+	 * For {@link PlayerShopkeeper}, this also closes any currently open inventory view for the
+	 * {@link PlayerShopkeeper#getContainer()}.
+	 * 
+	 * @param player
+	 *            the player
+	 * @return <code>true</code> if the player had some inventory open associated with this
+	 *         shopkeeper
+	 */
+	public boolean closeView(Player player) {
+		Validate.notNull(player, "player is null");
+		var view = UISessionManager.getInstance().getUISession(player);
+		if (view != null && view.getShopkeeper() == this) {
+			view.abort();
+			return true;
+		}
+
+		return false;
 	}
 
 	// Shortcuts for the default UI types:

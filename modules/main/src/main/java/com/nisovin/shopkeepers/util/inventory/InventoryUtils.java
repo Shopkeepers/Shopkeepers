@@ -4,9 +4,12 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -50,6 +53,39 @@ public final class InventoryUtils {
 	public static boolean hasInventoryOpen(Player player) {
 		InventoryType inventoryType = player.getOpenInventory().getType();
 		return inventoryType != InventoryType.CRAFTING && inventoryType != InventoryType.CREATIVE;
+	}
+
+	/**
+	 * Gets the {@link Block} associated with the given {@link Inventory}.
+	 * <p>
+	 * For {@link DoubleChest} inventories, this returns the left side block.
+	 * 
+	 * @param inventory
+	 *            the inventory, not <code>null</code>
+	 * @return the associated block, or <code>null</code> if the inventory is not associated with
+	 *         any block
+	 */
+	public static @Nullable Block getBlock(Inventory inventory) {
+		var holder = inventory.getHolder();
+		if (holder == null) {
+			return null;
+		}
+
+		// Double chest: Return the left side block.
+		// Note: CraftInventoryDoubleChest has some logic to handle cases of recursive double chest
+		// inventories for either side. We ignore this here, because it is not clear in which cases
+		// this could be encountered. And if it were possible for double chest inventories to nest,
+		// e.g. maybe if due to invalid block data both blocks next to each other are marked as
+		// "left", it is not clear whether this would result in cyclic references.
+		if (holder instanceof DoubleChest doubleChest) {
+			holder = doubleChest.getLeftSide();
+		}
+
+		if (holder instanceof BlockInventoryHolder blockHolder) {
+			return blockHolder.getBlock();
+		}
+
+		return null;
 	}
 
 	/**

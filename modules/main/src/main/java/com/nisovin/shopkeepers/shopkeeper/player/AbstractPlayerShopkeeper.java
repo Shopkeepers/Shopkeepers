@@ -471,7 +471,7 @@ public abstract class AbstractPlayerShopkeeper
 		Validate.isTrue(member instanceof SKPlayerShopMember,
 				"Member is not of type SKPlayerShopMember!");
 
-		var skMember = (SKPlayerShopMember)member;
+		var skMember = (SKPlayerShopMember) member;
 		Validate.isTrue(!skMember.isOwner(), "Cannot add shop owner as member!");
 
 		var playerUUID = member.getUser().getUniqueId();
@@ -1015,6 +1015,28 @@ public abstract class AbstractPlayerShopkeeper
 	@Override
 	public boolean openMembersEditorWindow(Player player) {
 		return this.openWindow(DefaultUITypes.SHOP_MEMBERS_EDITOR(), player);
+	}
+
+	@Override
+	public boolean closeView(Player player) {
+		if (super.closeView(player)) {
+			return true;
+		}
+
+		// Close any views for the shop container:
+		var openInventoryView = player.getOpenInventory();
+		var inventoryBlock = InventoryUtils.getBlock(openInventoryView.getTopInventory());
+		if (inventoryBlock != null) {
+			var shopkeepersUsingBlock = SKShopkeepersPlugin.getInstance()
+					.getProtectedContainers()
+					.getShopkeepersUsingContainer(inventoryBlock);
+			if (shopkeepersUsingBlock.contains(this)) {
+				openInventoryView.close();
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	// EDITOR

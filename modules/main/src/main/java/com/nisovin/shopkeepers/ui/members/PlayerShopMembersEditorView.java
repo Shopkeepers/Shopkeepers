@@ -31,7 +31,6 @@ import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.player.members.SKPlayerShopAccessLevel;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUI;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUIState;
-import com.nisovin.shopkeepers.ui.lib.UISessionManager;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.lib.View;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
@@ -74,7 +73,7 @@ public class PlayerShopMembersEditorView extends View {
 		var playerShop = this.getShopkeeperNonNull();
 		var memberCount = playerShop.getMembers().size();
 		var inventorySize = Math.min(
-				ChestLayout.getRequiredSlots(Math.max(memberCount , Settings.maxMembersPerShop)),
+				ChestLayout.getRequiredSlots(Math.max(memberCount, Settings.maxMembersPerShop)),
 				MAX_INVENTORY_SIZE
 		);
 		var inventory = Bukkit.createInventory(null, inventorySize, Messages.shopMembersEditorTitle);
@@ -322,14 +321,9 @@ public class PlayerShopMembersEditorView extends View {
 			shopkeeper.setAccessLevel(memberId, nextAccessLevel);
 
 			// Close any open view for the affected shop member:
-			// TODO Also close any open shop container views?
 			var memberPlayer = member.getUser().getPlayer();
-			if (memberPlayer != null) {
-				var memberView = UISessionManager.getInstance().getUISession(memberPlayer);
-				if (memberView != null && memberView.getShopkeeper() == shopkeeper) {
-					memberView.abortDelayed();
-					TextUtils.sendMessage(memberPlayer, Messages.yourShopMembershipHasChanged);
-				}
+			if (memberPlayer != null && shopkeeper.closeView(memberPlayer)) {
+				TextUtils.sendMessage(player, Messages.yourShopMembershipHasChanged);
 			}
 
 			// Call event:
@@ -383,14 +377,9 @@ public class PlayerShopMembersEditorView extends View {
 					shopkeeper.removeMember(memberId);
 
 					// Close any open view for the affected shop member:
-					// TODO Also close any open shop container views?
 					var memberPlayer = member.getUser().getPlayer();
-					if (memberPlayer != null) {
-						var memberView = UISessionManager.getInstance().getUISession(memberPlayer);
-						if (memberView != null && memberView.getShopkeeper() == shopkeeper) {
-							memberView.abortDelayed();
-							TextUtils.sendMessage(memberPlayer, Messages.yourShopMembershipHasChanged);
-						}
+					if (memberPlayer != null && shopkeeper.closeView(memberPlayer)) {
+						TextUtils.sendMessage(memberPlayer, Messages.yourShopMembershipHasChanged);
 					}
 
 					TextUtils.sendMessage(player, Messages.shopMemberRemoved,

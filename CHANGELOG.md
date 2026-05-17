@@ -20,7 +20,7 @@ Date format: (YYYY-MM-DD)
     * The `deleting-player-shop-returns-creation-item` also returns the shop creation item to players other than the owner if they have full shop access.
     * The `remove-all` command and `ShopkeeperRegistry#getPlayerShopkeepersByOwner` only affects a player's actually owned shops, not shops they have access to.
     * If `set-citizen-npc-owner-of-player-shops` is enabled: Citizens NPCs only support a single owner, so other players, even with full access, won't be able to edit the Citizens NPC.
-    * If a shop member's permission changes, any currently open editor view is automatically closed for them.
+    * If a shop member's permission changes, any currently open shopkeeper or container view is automatically closed for them.
     * The editor layout cannot be customized per-player, so the shop members and delete buttons are always visible to all players with access to the editor, but can only be used by players with full shop access.
   * Config: Add setting `max-members-per-shop` (default: `9`).
     * The shop members feature can be disabled by setting this to `0`.
