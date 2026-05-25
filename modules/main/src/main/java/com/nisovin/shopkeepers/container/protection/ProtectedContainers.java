@@ -231,13 +231,13 @@ public class ProtectedContainers {
 	 * which is directly used by a shopkeeper.
 	 * </ul>
 	 * <p>
-	 * Optionally, this takes shop editing access for the specified player into account.
+	 * Optionally, this takes shop container access for the specified player into account.
 	 * 
 	 * @param containerBlock
 	 *            the container block (the block might not actually be a container anymore though)
 	 * @param player
 	 *            the player to check the protection for, or <code>null</code> to check for
-	 *            protection without taking shop editing access into account
+	 *            protection without taking shop container access into account
 	 * @return <code>true</code> if the block is protected
 	 */
 	public boolean isContainerProtected(Block containerBlock, @Nullable Player player) {
@@ -253,10 +253,10 @@ public class ProtectedContainers {
 		boolean result = true;
 		// Check if the player is affected by the protection:
 		if (player != null) {
-			// We always allow shop owners to access their shop container (regardless of other
+			// We always allow shop members to access their shop container (regardless of other
 			// shopkeepers using the same container):
 			for (AbstractPlayerShopkeeper shopkeeper : tempResultsList) {
-				if (shopkeeper.canEdit(player, true)) {
+				if (shopkeeper.checkAccess(player, DefaultPlayerShopAccessLevels.CONTAINER(), true)) {
 					result = false;
 					break;
 				}
