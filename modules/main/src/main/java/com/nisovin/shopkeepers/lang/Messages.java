@@ -530,9 +530,7 @@ public class Messages extends Config {
 	public static Text targetShopIsNoAdminShop = Text.parse("&7The targeted shopkeeper is no admin shopkeeper.");
 	public static Text targetShopIsNoPlayerShop = Text.parse("&7The targeted shopkeeper is no player shopkeeper.");
 	public static Text unusedContainer = Text.parse("&7No shopkeeper is using this container.");
-	public static Text notAllowedToEditShop = Text.parse("&7You are not allowed to edit this shop!");
-	public static Text notAllowedToEditShopMembers = Text.parse("&7You are not allowed to edit the shop members!");
-	public static Text notAllowedToDeleteShop = Text.parse("&7You are not allowed to delete this shop!");
+	public static Text missingAccessLevel = Text.parse("&7You do not have the required access level!");
 	// Placeholders: {owner} -> new owners name
 	public static Text ownerSet = Text.parse("&aThe new owner is now &e{owner}");
 	public static Text shopCreationItemsGiven = Text.parse("&aPlayer &e{player}&a has received &e{amount}&a shop creation item(s)!");

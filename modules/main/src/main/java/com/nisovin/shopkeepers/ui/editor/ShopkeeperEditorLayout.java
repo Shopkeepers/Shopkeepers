@@ -12,6 +12,7 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerDeleteShopkeeperEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.config.Settings;
@@ -96,7 +97,7 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
 				// Check if the player is allowed to delete this shopkeeper:
 				if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
-						&& !playerShop.canDeleteShopkeeper(editorView.getPlayer(), false)) {
+						&& !playerShop.checkAccess(editorView.getPlayer(), DefaultPlayerShopAccessLevels.FULL(), false)) {
 					return true;
 				}
 
@@ -124,7 +125,7 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 					// The player's access permission might have changed in the meantime:
 					if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
-							&& !playerShop.canDeleteShopkeeper(player, false)) {
+							&& !playerShop.checkAccess(player, DefaultPlayerShopAccessLevels.FULL(), false)) {
 						return;
 					}
 

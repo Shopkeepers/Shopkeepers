@@ -212,19 +212,6 @@ public abstract class AbstractPlayerShopkeeper
 		this.unprotectContainer();
 	}
 
-	public boolean canDeleteShopkeeper(Player player, boolean silent) {
-		Validate.notNull(player, "player is null");
-		if (!this.hasAccessLevel(player, DefaultPlayerShopAccessLevels.FULL())
-				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
-			if (!silent) {
-				TextUtils.sendMessage(player, Messages.notAllowedToDeleteShop);
-			}
-			return false;
-		}
-
-		return true;
-	}
-
 	@Override
 	public void delete(@Nullable Player player) {
 		// Return the shop creation item:
@@ -612,6 +599,20 @@ public abstract class AbstractPlayerShopkeeper
 	public boolean hasAccessLevel(UUID playerUUID, PlayerShopAccessLevel accessLevel) {
 		var memberAccessLevel = this.getAccessLevel(playerUUID);
 		return memberAccessLevel.includes(accessLevel);
+	}
+
+	public boolean checkAccess(Player player, PlayerShopAccessLevel accessLevel, boolean silent) {
+		Validate.notNull(player, "player is null");
+		Validate.notNull(accessLevel, "accessLevel is null");
+		if (!this.hasAccessLevel(player, accessLevel)
+				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+			if (!silent) {
+				TextUtils.sendMessage(player, Messages.missingAccessLevel);
+			}
+			return false;
+		}
+
+		return true;
 	}
 
 	public boolean canEditMembers(Player player, boolean silent) {

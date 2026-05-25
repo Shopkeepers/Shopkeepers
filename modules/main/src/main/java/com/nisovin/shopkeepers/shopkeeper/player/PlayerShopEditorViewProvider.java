@@ -3,22 +3,18 @@ package com.nisovin.shopkeepers.shopkeeper.player;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.currency.Currencies;
 import com.nisovin.shopkeepers.currency.Currency;
-import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
 import com.nisovin.shopkeepers.ui.SKDefaultUITypes;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperEditorLayout;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperEditorViewProvider;
 import com.nisovin.shopkeepers.ui.editor.TradingRecipesAdapter;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
-import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
-import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
@@ -44,15 +40,14 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 	public boolean canAccess(Player player, boolean silent) {
 		if (!super.canAccess(player, silent)) return false;
 
-		// Check the owner:
-		if (!this.getShopkeeper().hasAccessLevel(player, DefaultPlayerShopAccessLevels.EDIT())
-				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+		// Check access:
+		if (!this.getShopkeeper().checkAccess(player, DefaultPlayerShopAccessLevels.EDIT(), silent)) {
 			if (!silent) {
 				this.debugNotOpeningUI(player, "Player has no access.");
-				TextUtils.sendMessage(player, Messages.notAllowedToEditShop);
 			}
 			return false;
 		}
+
 		return true;
 	}
 

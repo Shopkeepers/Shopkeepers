@@ -44,9 +44,7 @@ Date format: (YYYY-MM-DD)
 **Message changes:**  
 * Removed `not-owner`.
 * Renamed and changed `cannot-trade-while-owner-online` to `cannot-trade-while-member-online`.
-* Added `not-allowed-to-edit-shop`.
-* Added `not-allowed-to-edit-shop-members`.
-* Added `not-allowed-to-delete-shop`.
+* Added `missing-access-level`.
 * Added `button-members`.
 * Added `button-members-lore`.
 * Added `shop-members-editor-title`.
