@@ -17,6 +17,7 @@ import com.nisovin.shopkeepers.commands.arguments.TargetShopkeeperFallback;
 import com.nisovin.shopkeepers.commands.lib.Command;
 import com.nisovin.shopkeepers.commands.lib.CommandException;
 import com.nisovin.shopkeepers.commands.lib.CommandInput;
+import com.nisovin.shopkeepers.commands.lib.NoPermissionException;
 import com.nisovin.shopkeepers.commands.lib.context.CommandContextView;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils.TargetShopkeeperFilter;
 import com.nisovin.shopkeepers.event.ShopkeeperEventHelper;
@@ -68,28 +69,24 @@ class CommandRemove extends Command {
 
 		AbstractShopkeeper shopkeeper = context.get(ARGUMENT_SHOPKEEPER);
 
-		// Check that the sender can edit this shop:
-		if (!shopkeeper.canEdit(sender, false)) {
+		if (!this.checkDeletePermission(sender, shopkeeper)) {
 			return;
-		}
-
-		// Command permission checks:
-		if (shopkeeper instanceof PlayerShopkeeper) {
-			PlayerShopkeeper playerShop = (PlayerShopkeeper) shopkeeper;
-			if (senderPlayer != null
-					&& playerShop.hasAccessLevel(senderPlayer, DefaultPlayerShopAccessLevels.FULL())) {
-				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OWN_PERMISSION);
-			} else {
-				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OTHERS_PERMISSION);
-			}
-		} else {
-			this.checkPermission(sender, ShopkeepersPlugin.REMOVE_ADMIN_PERMISSION);
 		}
 
 		confirmations.awaitConfirmation(sender, () -> {
 			if (!shopkeeper.isValid()) {
 				// The shopkeeper has been removed in the meantime.
 				TextUtils.sendMessage(sender, Messages.shopAlreadyRemoved);
+				return;
+			}
+
+			// Re-check the permission after the deferred confirmation:
+			try {
+				if (!this.checkDeletePermission(sender, shopkeeper)) {
+					return;
+				}
+			} catch (NoPermissionException e) {
+				TextUtils.sendMessage(sender, e.getMessageText());
 				return;
 			}
 
@@ -114,5 +111,33 @@ class CommandRemove extends Command {
 
 		TextUtils.sendMessage(sender, Messages.confirmRemoveShop);
 		TextUtils.sendMessage(sender, Messages.confirmationRequired);
+	}
+
+	// Returns false if the player has no access and was already notified.
+	// Throws a NoPermissionException if the player has no access and was not notified yet. This can
+	// be handled like any other CommandException (command failure, debug logging, etc.).
+	// Returns true if the player has access.
+	private boolean checkDeletePermission(CommandSender sender, AbstractShopkeeper shopkeeper)
+			throws NoPermissionException {
+		// Check that the sender can edit this shop:
+		// Note: More fine-grained player shop access levels and permissions are checked below.
+		if (!shopkeeper.canEdit(sender, false)) {
+			return false;
+		}
+
+		// Command permission checks:
+		if (shopkeeper instanceof PlayerShopkeeper playerShop) {
+			Player senderPlayer = ObjectUtils.castOrNull(sender, Player.class);
+			if (senderPlayer != null
+					&& playerShop.hasAccessLevel(senderPlayer, DefaultPlayerShopAccessLevels.FULL())) {
+				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OWN_PERMISSION);
+			} else {
+				this.checkPermission(sender, ShopkeepersPlugin.REMOVE_OTHERS_PERMISSION);
+			}
+		} else {
+			this.checkPermission(sender, ShopkeepersPlugin.REMOVE_ADMIN_PERMISSION);
+		}
+
+		return true;
 	}
 }

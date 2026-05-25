@@ -9,6 +9,8 @@ import org.bukkit.command.CommandSender;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperSnapshot;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.commands.Confirmations;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
@@ -26,6 +28,7 @@ import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils.TargetShopk
 import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
+import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 
@@ -66,7 +69,12 @@ class CommandSnapshotRemove extends Command {
 		CommandSender sender = input.getSender();
 		AbstractShopkeeper shopkeeper = context.get(ARGUMENT_SHOPKEEPER);
 
-		if (!shopkeeper.canEdit(sender, false)) {
+		// Check access:
+		if (shopkeeper instanceof PlayerShopkeeper) {
+			if (!((AbstractPlayerShopkeeper) shopkeeper).checkAccess(sender, DefaultPlayerShopAccessLevels.FULL(), false)) {
+				return;
+			}
+		} else if (!shopkeeper.canEdit(sender, false)) {
 			return;
 		}
 

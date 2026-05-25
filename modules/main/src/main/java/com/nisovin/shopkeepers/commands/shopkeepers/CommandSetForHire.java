@@ -4,7 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
-import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperFilter;
 import com.nisovin.shopkeepers.commands.arguments.TargetShopkeeperFallback;
@@ -35,7 +35,7 @@ class CommandSetForHire extends PlayerCommand {
 		this.addArgument(new TargetShopkeeperFallback(
 				new ShopkeeperArgument(ARGUMENT_SHOPKEEPER,
 						ShopkeeperFilter.PLAYER
-								.and(ShopkeeperFilter.withAccess(DefaultUITypes.EDITOR()))),
+								.and(ShopkeeperFilter.withAccessLevel(DefaultPlayerShopAccessLevels.FULL()))),
 				TargetShopkeeperFilter.PLAYER
 		));
 	}
@@ -55,8 +55,8 @@ class CommandSetForHire extends PlayerCommand {
 			return;
 		}
 
-		// Check that the executing player can edit this shop:
-		if (!shopkeeper.canEdit(player, false)) {
+		// Check access:
+		if (!shopkeeper.checkAccess(player, DefaultPlayerShopAccessLevels.FULL(), false)) {
 			return;
 		}
 

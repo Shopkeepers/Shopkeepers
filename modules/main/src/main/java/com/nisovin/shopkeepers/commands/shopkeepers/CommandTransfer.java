@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.bukkit.command.CommandSender;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
-import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
+import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperFilter;
@@ -50,7 +50,7 @@ class CommandTransfer extends Command {
 		this.addArgument(new TargetShopkeeperFallback(
 				new ShopkeeperArgument(ARGUMENT_SHOPKEEPER,
 						ShopkeeperFilter.PLAYER
-								.and(ShopkeeperFilter.withAccess(DefaultUITypes.EDITOR()))),
+								.and(ShopkeeperFilter.withAccessLevel(DefaultPlayerShopAccessLevels.FULL()))),
 				TargetShopkeeperFilter.PLAYER
 		));
 		// Accept any uuid or user name. We then also supports offline player lookup.
@@ -100,8 +100,8 @@ class CommandTransfer extends Command {
 			newOwner = matchingUsers.getFirst();
 		}
 
-		// Check that the sender can edit this shopkeeper:
-		if (!shopkeeper.canEdit(sender, false)) {
+		// Check access:
+		if (!shopkeeper.checkAccess(sender, DefaultPlayerShopAccessLevels.FULL(), false)) {
 			return;
 		}
 

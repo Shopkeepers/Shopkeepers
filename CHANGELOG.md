@@ -10,9 +10,9 @@ Date format: (YYYY-MM-DD)
     * Left/Right click a member to circle through the different access levels.
     * Shift-click a member to remove them after additional confirmation.
   * Available shop member access levels:
-    * Container access
-    * Container and editor access, excluding the ability to view/edit shop members or delete the shop
-    * Full access (same as shop owner): Can also edit the shop members or delete the shop.
+    * Container access.
+    * Container and editor access, excluding the ability to view/edit shop members or delete the shop.
+    * Full access (same as shop owner): Can also edit the shop members, delete the shop and, depending on the command permissions, manage the shopkeeper snapshots, set the shop for hire, or transfer the shop.
   * Notes:
     * Shop members are taken into account for command completions when the command requires a player name or id.
     * The `prevent-trading-while-owner-is-online` and `prevent-trading-with-own-shop` settings also apply to other shop members now: Trading is disabled if any shop member is online and shop members cannot trade with shops they have access to (any access level).

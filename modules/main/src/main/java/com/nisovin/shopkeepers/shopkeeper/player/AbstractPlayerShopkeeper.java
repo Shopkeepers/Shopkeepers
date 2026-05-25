@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -601,18 +602,40 @@ public abstract class AbstractPlayerShopkeeper
 		return memberAccessLevel.includes(accessLevel);
 	}
 
-	public boolean checkAccess(Player player, PlayerShopAccessLevel accessLevel, boolean silent) {
-		Validate.notNull(player, "player is null");
+	/**
+	 * Checks if the given {@link CommandSender} has either the specified
+	 * {@link PlayerShopAccessLevel} or the bypass permission.
+	 * <p>
+	 * For non-player {@link CommandSender}s, this only checks the bypass permission.
+	 * 
+	 * @param sender
+	 *            the {@link CommandSender}, not <code>null</code>
+	 * @param accessLevel
+	 *            the {@link PlayerShopAccessLevel}, not <code>null</code>
+	 * @param silent
+	 *            <code>true</code> to omit any feedback that might otherwise be sent to the sender
+	 * @return <code>true</code> if the sender has the specified access level for this shopkeeper
+	 */
+	public boolean checkAccess(CommandSender sender, PlayerShopAccessLevel accessLevel, boolean silent) {
+		Validate.notNull(sender, "sender is null");
 		Validate.notNull(accessLevel, "accessLevel is null");
-		if (!this.hasAccessLevel(player, accessLevel)
-				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
-			if (!silent) {
-				TextUtils.sendMessage(player, Messages.missingAccessLevel);
-			}
-			return false;
-		}
 
-		return true;
+		if (sender instanceof Player player) {
+			if (!this.hasAccessLevel(player, accessLevel)
+					&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+				if (!silent) {
+					TextUtils.sendMessage(player, Messages.missingAccessLevel);
+				}
+				return false;
+			}
+
+			return true;
+		} else {
+			// Check if the command sender has the bypass permission (e.g. the case for the console
+			// and block command senders, but might not be the case for other unexpected types of
+			// command senders):
+			return PermissionUtils.hasPermission(sender, ShopkeepersPlugin.BYPASS_PERMISSION);
+		}
 	}
 
 	public boolean canEditMembers(Player player, boolean silent) {
