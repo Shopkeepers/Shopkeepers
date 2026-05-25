@@ -39,6 +39,6 @@ public final class SKPlayerShopAccessLevel extends AbstractType implements Playe
 	@Override
 	public boolean includes(PlayerShopAccessLevel accessLevel) {
 		return accessLevel instanceof SKPlayerShopAccessLevel skAccessLevel
-				&& skAccessLevel.getAccessLevel() >= this.getAccessLevel();
+				&& this.getAccessLevel() >= skAccessLevel.getAccessLevel();
 	}
 }
