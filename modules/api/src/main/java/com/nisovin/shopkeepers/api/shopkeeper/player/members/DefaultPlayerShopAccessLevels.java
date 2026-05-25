@@ -77,7 +77,7 @@ public interface DefaultPlayerShopAccessLevels {
 	 * @see #getContainer()
 	 */
 	public static PlayerShopAccessLevel CONTAINER() {
-		return getInstance().getNone();
+		return getInstance().getContainer();
 	}
 
 	/**
@@ -87,7 +87,7 @@ public interface DefaultPlayerShopAccessLevels {
 	 * @see #getEdit()
 	 */
 	public static PlayerShopAccessLevel EDIT() {
-		return getInstance().getNone();
+		return getInstance().getEdit();
 	}
 
 	/**
@@ -97,6 +97,6 @@ public interface DefaultPlayerShopAccessLevels {
 	 * @see #getFull()
 	 */
 	public static PlayerShopAccessLevel FULL() {
-		return getInstance().getNone();
+		return getInstance().getFull();
 	}
 }
