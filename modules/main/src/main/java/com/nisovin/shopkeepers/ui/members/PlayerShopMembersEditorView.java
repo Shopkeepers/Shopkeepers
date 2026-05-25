@@ -359,7 +359,7 @@ public class PlayerShopMembersEditorView extends View {
 					// Freshly retrieve the view provider, because it might have changed in the
 					// meantime:
 					var viewProvider = shopkeeper.getViewProvider(DefaultUITypes.SHOP_MEMBERS_EDITOR());
-					if (viewProvider == null || viewProvider.canAccess(player, false)) {
+					if (viewProvider == null || !viewProvider.canAccess(player, false)) {
 						return;
 					}
 
