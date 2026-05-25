@@ -429,8 +429,8 @@ public class Messages extends Config {
 	public static List<String> shopMemberLore = c(Arrays.asList(
 			"Access level: &e{accessLevel}",
 			"{accessLevelDescription}",
-			"Left/Right click to",
-			"change the access level.",
+			"Left/Right click to change",
+			"the access level.",
 			"Shift click to remove."
 	));
 

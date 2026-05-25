@@ -338,8 +338,8 @@ shop-member-title: "{memberName}"
 shop-member-lore:
 - "Access level: &e{accessLevel}"
 - "{accessLevelDescription}"
-- "Left/Right click to"
-- "change the access level."
+- "Left/Right click to change"
+- "the access level."
 - "Shift click to remove."
 
 button-add-shop-member: "&aAdd new member"

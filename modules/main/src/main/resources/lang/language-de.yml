@@ -346,7 +346,7 @@ shop-member-title: "{memberName}"
 shop-member-lore:
 - "Berechtigungsstufe: &e{accessLevel}"
 - "{accessLevelDescription}"
-- "Links-/Rechtsklick zum  Ändern"
+- "Links-/Rechtsklick zum Ändern"
 - "der Berechtigungsstufe."
 - "Umschalt+Klick zum Entfernen."
 
