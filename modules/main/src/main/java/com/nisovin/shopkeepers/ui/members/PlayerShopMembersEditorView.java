@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -35,7 +34,6 @@ import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.lib.View;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ChestLayout;
-import com.nisovin.shopkeepers.util.inventory.ItemData;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.CollectionUtils;
 import com.nisovin.shopkeepers.util.java.ConversionUtils;
@@ -141,7 +139,7 @@ public class PlayerShopMembersEditorView extends View {
 
 	private @Nullable ItemStack createAddMemberItem() {
 		return ItemUtils.setDisplayNameAndLore(
-				new ItemData(Material.GRAY_STAINED_GLASS_PANE).createItemStack(),
+				Settings.addMemberItem.createItemStack(),
 				Messages.buttonAddShopMember,
 				StringUtils.replaceArguments(Messages.buttonAddShopMemberLore,
 						"memberCount", this.getShopkeeperNonNull().getMembers().size(),

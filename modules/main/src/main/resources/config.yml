@@ -579,6 +579,8 @@ max-members-per-shop: 9
 allow-members-with-full-access: true
 # The item used for the player shop members editor button.
 members-item: 'minecraft:player_head'
+# The item used for the add-member shop editor button.
+add-member-item: 'minecraft:name_tag'
 
 # Whether the editor menu of player shops contains an option to open the shop's
 # container.

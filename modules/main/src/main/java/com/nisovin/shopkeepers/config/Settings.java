@@ -319,6 +319,7 @@ public class Settings extends Config {
 	public static int maxMembersPerShop = 9;
 	public static boolean allowMembersWithFullAccess = true;
 	public static ItemData membersItem = new ItemData(Material.PLAYER_HEAD);
+	public static ItemData addMemberItem = new ItemData(Material.NAME_TAG);
 
 	public static boolean enableContainerOptionOnPlayerShop = true;
 	public static ItemData containerItem = new ItemData(Material.CHEST);

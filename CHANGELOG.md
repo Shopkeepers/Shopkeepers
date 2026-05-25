@@ -29,6 +29,7 @@ Date format: (YYYY-MM-DD)
   * Config: Add setting `allow-members-with-full-access` (default: `true`).
     * If disabled, the access level of existing shop members with "full" access is not automatically updated inside the shopkeeper data, but their access level is dynamically downgraded to "edit" access.
   * Config: Add setting `members-item` to change the editor item.
+  * Config: Add setting `add-member-item` to change the add-member editor item.
   * Config: Config migration `11`:
     * Rename `prevent-trading-while-owner-is-online` to `prevent-trading-while-member-is-online`.
     * Rename `notify-shop-owners-about-trades` to `notify-shop-members-about-trades`.
