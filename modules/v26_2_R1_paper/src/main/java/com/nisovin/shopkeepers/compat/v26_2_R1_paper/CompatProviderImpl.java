@@ -116,6 +116,7 @@ public final class CompatProviderImpl implements CompatProvider {
 		}
 	}
 
+	private final LivingEntityShopListener livingEntityShopListener;
 	private final CopperChestProtectionListener copperChestProtectionListener;
 
 	private final TagParser<Tag> tagParser = Unsafe.castNonNull(TagParser.create(NbtOps.INSTANCE));
@@ -123,7 +124,9 @@ public final class CompatProviderImpl implements CompatProvider {
 	private final Field craftItemStackHandleField;
 
 	public CompatProviderImpl() throws Exception {
-		copperChestProtectionListener = new CopperChestProtectionListener(SKShopkeepersPlugin.getInstance());
+		var plugin = SKShopkeepersPlugin.getInstance();
+		livingEntityShopListener = new LivingEntityShopListener(plugin);
+		copperChestProtectionListener = new CopperChestProtectionListener(plugin);
 		craftItemStackHandleField = CraftItemStack.class.getDeclaredField("handle");
 		craftItemStackHandleField.setAccessible(true);
 	}
@@ -136,6 +139,9 @@ public final class CompatProviderImpl implements CompatProvider {
 	@Override
 	public void onEnable() {
 		var plugin = SKShopkeepersPlugin.getInstance();
+
+		Bukkit.getPluginManager().registerEvents(livingEntityShopListener, plugin);
+
 		if (Settings.protectContainers && Settings.preventCopperGolemAccess) {
 			Bukkit.getPluginManager().registerEvents(copperChestProtectionListener, plugin);
 		}
@@ -143,6 +149,7 @@ public final class CompatProviderImpl implements CompatProvider {
 
 	@Override
 	public void onDisable() {
+		HandlerList.unregisterAll(livingEntityShopListener);
 		HandlerList.unregisterAll(copperChestProtectionListener);
 	}
 
@@ -231,6 +238,12 @@ public final class CompatProviderImpl implements CompatProvider {
 	@Override
 	public boolean isNoAIDisablingGravity() {
 		return true;
+	}
+
+	// Paper 26.2 has deprecated the PigZapEvent in favor of the Paper-specific EntityZapEvent.
+	@Override
+	public boolean isHandlePigZapEvent() {
+		return false;
 	}
 
 	@Override

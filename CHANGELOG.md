@@ -6,6 +6,7 @@ Date format: (YYYY-MM-DD)
 
 * Update for MC 26.2.
   * Internal: Spigot continues to work with the 26.1.2 compat module. Paper requires a new 26.2 compat module.
+  * Internal: Paper: Use EntityZapEvent in favor of PigZapEvent.
 * Add player shop members: Shop owners can now allow additional players access to their shops.
   * Editor: Add a new option to the editor of player shops to allow owners to view and edit the shop members.
     * Click an empty slot and then enter the name or id of a player to add as shop member into the chat.
@@ -43,6 +44,7 @@ Date format: (YYYY-MM-DD)
 * Debug: Add option `shopkeeper-dirty` to output additional information whenever a shopkeeper's data is marked as "dirty".
 * API: Add methods to get and edit the player shop members.
 * API: Add `PlayerShopkeeper#isOwner(UUID)`.
+* Internal: Also handle the `EntityTransformEvent`, just in case that it is used in the future in cases that are not covered by the NoAI behavior.
 
 **Message changes:**  
 * Removed `not-owner`.

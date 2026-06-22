@@ -1,6 +1,10 @@
 package com.nisovin.shopkeepers.shopobjects.living;
 
+import org.bukkit.event.Listener;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
+import com.nisovin.shopkeepers.compat.Compat;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.ShopkeeperData;
 import com.nisovin.shopkeepers.shopkeeper.migration.Migration;
@@ -67,20 +71,36 @@ public class LivingShops {
 		});
 	}
 
+	private final SKShopkeepersPlugin plugin;
 	private final SKLivingShopObjectTypes livingShopObjectTypes;
 	private final LivingEntityShopListener livingEntityShopListener;
+	// The PigZapListener class is not loaded if the compat module is handling the event:
+	private @Nullable Listener pigZapListener;
 
 	public LivingShops(SKShopkeepersPlugin plugin, BaseEntityShops baseEntityShops) {
+		this.plugin = plugin;
 		livingShopObjectTypes = new SKLivingShopObjectTypes(baseEntityShops, this);
 		livingEntityShopListener = new LivingEntityShopListener(plugin);
 	}
 
 	public void onEnable() {
 		livingEntityShopListener.onEnable();
+
+		if (Compat.getProvider().isHandlePigZapEvent() && pigZapListener == null) {
+			pigZapListener = new PigZapListener(plugin);
+		}
+
+		if (pigZapListener != null) {
+			((PigZapListener) pigZapListener).onEnable();
+		}
 	}
 
 	public void onDisable() {
 		livingEntityShopListener.onDisable();
+
+		if (pigZapListener != null) {
+			((PigZapListener) pigZapListener).onDisable();
+		}
 	}
 
 	public SKLivingShopObjectTypes getLivingShopObjectTypes() {

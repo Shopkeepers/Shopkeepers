@@ -19,7 +19,7 @@ import org.bukkit.event.entity.CreeperPowerEvent.PowerCause;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent.Action;
-import org.bukkit.event.entity.PigZapEvent;
+import org.bukkit.event.entity.EntityTransformEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -62,7 +62,7 @@ class LivingEntityShopListener implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	void onPigZap(PigZapEvent event) {
+	void onEntityTransformEvent(EntityTransformEvent event) {
 		if (shopkeeperRegistry.isShopkeeper(event.getEntity())) {
 			event.setCancelled(true);
 		}
