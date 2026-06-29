@@ -189,6 +189,9 @@ public class SKLivingShopObject<E extends LivingEntity>
 		// Disable aging and breeding:
 		if (entity instanceof Ageable ageable) {
 			ageable.setAdult();
+			// TODO SPIGOT-8139. Not deprecated on Paper and for example relevant for SulfurCubes.
+			// Still available on Spigot, so not an issue to call:
+			ageable.setAgeLock(true);
 		}
 
 		if (entity instanceof Breedable breedable) {

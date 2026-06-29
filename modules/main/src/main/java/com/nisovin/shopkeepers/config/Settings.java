@@ -216,7 +216,8 @@ public class Settings extends Config {
 					"CAMEL_HUSK", // MC 1.21.11
 					"NAUTILUS", // MC 1.21.11
 					"PARCHED", // MC 1.21.11
-					"ZOMBIE_NAUTILUS" // MC 1.21.11
+					"ZOMBIE_NAUTILUS", // MC 1.21.11
+					"SULFUR_CUBE" // MC 26.2
 			), String::compareTo)
 	);
 

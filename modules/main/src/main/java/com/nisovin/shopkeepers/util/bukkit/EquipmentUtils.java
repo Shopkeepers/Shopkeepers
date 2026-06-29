@@ -191,6 +191,8 @@ public class EquipmentUtils {
 			// Head: Some items are rendered with a weird offset.
 			// Saddle: Only certain items are rendered.
 			return EQUIPMENT_SLOTS_HANDS_HEAD_SADDLE;
+		case "SULFUR_CUBE": // MC 26.2
+			return EQUIPMENT_SLOTS_BODY; // Body: Equipped item
 		default:
 			return Collections.emptyList();
 		}

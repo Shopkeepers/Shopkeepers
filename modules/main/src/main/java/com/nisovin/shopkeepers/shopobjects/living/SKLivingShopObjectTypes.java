@@ -188,6 +188,9 @@ import com.nisovin.shopkeepers.util.java.ClassUtils;
  * <li>NAUTILUS: okay, saddle, armor
  * <li>PARCHED: okay, similar to other skeletons
  * <li>ZOMBIE_NAUTILUS: okay, variants, saddle, armor, does not support baby variant
+ * <li>SULFUR_CUBE: okay, body equipment slot determines visual block (only certain items work
+ * properly, others result in visual glitches), TODO SPIGOT-8139: Ageable on Paper but not on Spigot
+ * -> Random spawn age, not babyable, and age not locked.
  * </ul>
  **/
 public final class SKLivingShopObjectTypes implements LivingShopObjectTypes {
