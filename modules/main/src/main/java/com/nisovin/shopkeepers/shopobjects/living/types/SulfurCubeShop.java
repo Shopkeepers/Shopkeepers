@@ -3,7 +3,7 @@ package com.nisovin.shopkeepers.shopobjects.living.types;
 import java.util.List;
 
 import org.bukkit.Material;
-import org.bukkit.entity.Creature;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -33,7 +33,7 @@ import com.nisovin.shopkeepers.util.java.StringUtils;
 import com.nisovin.shopkeepers.util.logging.Log;
 
 // TODO Replace with the actual mob type once we support 26.2+
-public class SulfurCubeShop extends SKLivingShopObject<Creature> {
+public class SulfurCubeShop extends SKLivingShopObject<LivingEntity> {
 
 	// Note: Minecraft actually allows sulfur cubes with sizes up to 256 (internally stored as 0 -
 	// 255). However, at these sizes the sulfur cube is not properly rendered anymore, cannot be
@@ -121,7 +121,7 @@ public class SulfurCubeShop extends SKLivingShopObject<Creature> {
 	}
 
 	private void applySize() {
-		Creature entity = this.getEntity();
+		LivingEntity entity = this.getEntity();
 		if (entity == null) return; // Not spawned
 
 		Compat.getProvider().setSulfurCubeSize(entity, this.getSize());
