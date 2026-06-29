@@ -209,6 +209,10 @@ button-magma-cube-size: "&aChoose magma cube size"
 button-magma-cube-size-lore:
 - "Cycles the magma cube's size."
 - "Current size: &e{size}"
+button-sulfur-cube-size: "&aChoose sulfur cube size"
+button-sulfur-cube-size-lore:
+- "Cycles the sulfur cube's size."
+- "Current size: &e{size}"
 button-snowman-pumpkin-head: "&aToggle pumpkin head"
 button-snowman-pumpkin-head-lore:
 - "Toggles the snowman's"

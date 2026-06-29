@@ -193,4 +193,10 @@ public interface CompatProvider {
 		// Not supported by default.
 		return variant;
 	}
+
+	// MC 26.2 TODO Can be removed once we only support Bukkit 26.2+
+
+	public default void setSulfurCubeSize(LivingEntity sulfurCube, int size) {
+		// Not supported by default.
+	}
 }

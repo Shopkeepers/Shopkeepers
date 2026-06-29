@@ -47,14 +47,12 @@ public final class Compat {
 	// Minecraft version instead.
 	static {
 		// Registered in the order from latest to oldest.
-		// 26.2: The Spigot mappings version has not changed. We can reuse the 26.1 compat module.
-		// 26.2 Paper: Some fields are no longer public -> New compat module.
+		// 26.2: The Spigot mappings version has not changed. New compat module for SulfurCube
+		// functionality.
 		register(new CompatVersion("26_2_R1_paper", "26.2", "26.2"));
+		register(new CompatVersion("26_2_R1", "26.2", "e8ece90188c951d866bd2fffc52c803e"));
 		register(new CompatVersion("26_1_R1_paper", "26.1.2", "26.1.2"));
-		register(new CompatVersion("26_1_R1", Arrays.asList(
-				new ServerVersion("26.1.2", "e8ece90188c951d866bd2fffc52c803e"),
-				new ServerVersion("26.2", "e8ece90188c951d866bd2fffc52c803e")
-		)));
+		register(new CompatVersion("26_1_R1", "26.1.2", "e8ece90188c951d866bd2fffc52c803e"));
 		// 26.1 and 26.1.1: Not supported. Superseded by 26.1.2.
 		register(new CompatVersion("1_21_R9_paper", "1.21.11", "1.21.11"));
 		register(new CompatVersion("1_21_R9", "1.21.11", "e3cd927e07e6ff434793a0474c51b2b9"));

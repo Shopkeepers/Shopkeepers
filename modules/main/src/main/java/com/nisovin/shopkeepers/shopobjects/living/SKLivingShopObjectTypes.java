@@ -54,6 +54,7 @@ import com.nisovin.shopkeepers.shopobjects.living.types.ShulkerShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.SlimeShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.SnowmanShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.StriderShop;
+import com.nisovin.shopkeepers.shopobjects.living.types.SulfurCubeShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.TropicalFishShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.VillagerShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.WanderingTraderShop;
@@ -189,8 +190,10 @@ import com.nisovin.shopkeepers.util.java.ClassUtils;
  * <li>PARCHED: okay, similar to other skeletons
  * <li>ZOMBIE_NAUTILUS: okay, variants, saddle, armor, does not support baby variant
  * <li>SULFUR_CUBE: okay, body equipment slot determines visual block (only certain items work
- * properly, others result in visual glitches), TODO SPIGOT-8139: Ageable on Paper but not on Spigot
- * -> Random spawn age, not babyable, and age not locked.
+ * properly, others result in visual glitches), size editor option (instead of baby option:
+ * setBaby/Adult does not properly update the size), stops looking at nearby players once an item
+ * was equipped (even if the item is then removed again), TODO SPIGOT-8139: Ageable on Paper but not
+ * on Spigot -> Random spawn age and age not locked.
  * </ul>
  **/
 public final class SKLivingShopObjectTypes implements LivingShopObjectTypes {
@@ -578,6 +581,14 @@ public final class SKLivingShopObjectTypes implements LivingShopObjectTypes {
 						entityType,
 						ZombieNautilusShop.class,
 						ZombieNautilusShop::new
+				);
+				break;
+			case "SULFUR_CUBE":
+				objectType = new SKLivingShopObjectType<>(
+						context,
+						entityType,
+						SulfurCubeShop.class,
+						SulfurCubeShop::new
 				);
 				break;
 			default:

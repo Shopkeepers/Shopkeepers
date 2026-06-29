@@ -211,6 +211,10 @@ button-magma-cube-size: "&aGröße ändern"
 button-magma-cube-size-lore:
 - "Ändert die Größe des Magmawürfels."
 - "Aktuelle Größe: &e{size}"
+button-sulfur-cube-size: "&aGröße ändern"
+button-sulfur-cube-size-lore:
+- "Ändert die Größe des Schwefelwürfels."
+- "Aktuelle Größe: &e{size}"
 button-snowman-pumpkin-head: "&aKürbiskopf umschalten"
 button-snowman-pumpkin-head-lore:
 - "Schaltet zwischen Schneemann"

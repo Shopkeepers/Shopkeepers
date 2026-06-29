@@ -54,6 +54,7 @@ public class BabyableShop<E extends Ageable> extends SKLivingShopObject<E> {
 		case "WANDERING_TRADER":
 		case "PIGLIN_BRUTE": // Added in MC 1.16.2
 		case "FROG": // Added in MC 1.19
+		case "SULFUR_CUBE": // Added in MC 26.2. Uses a dedicated size property instead.
 			return false;
 		default:
 			return true;

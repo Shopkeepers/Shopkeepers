@@ -7,8 +7,8 @@ Date format: (YYYY-MM-DD)
 * Update for MC 26.2.
   * Add sulfur cube to the by default enabled mob types.
     * The body equipment slot controls the stored item. However, certain items can result in "visual glitches".
-    * On Spigot, the baby editor option and age lock is currently not working (SPIGOT-8139): The mob spawns with a random age and ages until the next respawn / chunk reload.
-  * Internal: Spigot continues to work with the 26.1.2 compat module. Paper requires a new 26.2 compat module.
+    * Config: Add `sulfur-cube-max-size` (default: `5`). The maximum supported size is `10`.
+    * On Spigot, the age lock is currently not working (SPIGOT-8139): The mob spawns with a random age and ages until the next respawn / chunk reload.
   * Internal: Paper: Use EntityZapEvent in favor of PigZapEvent.
 * Add player shop members: Shop owners can now allow additional players access to their shops.
   * Editor: Add a new option to the editor of player shops to allow owners to view and edit the shop members.
@@ -79,6 +79,8 @@ Date format: (YYYY-MM-DD)
 * Added `player-shop-access-level-description-edit`.
 * Added `player-shop-access-level-description-full`.
 * Added `text-input-aborted`.
+* Added `button-sulfur-cube-size`.
+* Added `button-sulfur-cube-size-lore`.
 
 ## v2.26.1 (2026-04-12)
 ### Supported MC versions: 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

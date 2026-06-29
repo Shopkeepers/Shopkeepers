@@ -17,6 +17,7 @@ def nmsModules = [
 	':shopkeepers-v1_21_R9_paper',
 	':shopkeepers-v26_1_R1',
 	':shopkeepers-v26_1_R1_paper',
+	':shopkeepers-v26_2_R1',
 	':shopkeepers-v26_2_R1_paper'
 ]
 

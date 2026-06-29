@@ -42,6 +42,7 @@ import com.nisovin.shopkeepers.shopcreation.ShopCreationItem;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
 import com.nisovin.shopkeepers.shopobjects.living.types.MagmaCubeShop;
 import com.nisovin.shopkeepers.shopobjects.living.types.SlimeShop;
+import com.nisovin.shopkeepers.shopobjects.living.types.SulfurCubeShop;
 import com.nisovin.shopkeepers.tradelog.TradeLogStorageType;
 import com.nisovin.shopkeepers.util.bukkit.ConfigUtils;
 import com.nisovin.shopkeepers.util.bukkit.EntityUtils;
@@ -240,6 +241,7 @@ public class Settings extends Config {
 
 	public static int slimeMaxSize = 5;
 	public static int magmaCubeMaxSize = 5;
+	public static int sulfurCubeMaxSize = 5;
 
 	public static boolean silenceShopEntities = true;
 
@@ -934,6 +936,11 @@ public class Settings extends Config {
 			Log.warning(this.getLogPrefix() + "'magma-cube-max-size' must be between "
 					+ MagmaCubeShop.MIN_SIZE + " and " + MagmaCubeShop.MAX_SIZE + ".");
 			magmaCubeMaxSize = MathUtils.clamp(magmaCubeMaxSize, MagmaCubeShop.MIN_SIZE, MagmaCubeShop.MAX_SIZE);
+		}
+		if (sulfurCubeMaxSize < SulfurCubeShop.MIN_SIZE || sulfurCubeMaxSize > SulfurCubeShop.MAX_SIZE) {
+			Log.warning(this.getLogPrefix() + "'sulfur-cube-max-size' must be between "
+					+ SulfurCubeShop.MIN_SIZE + " and " + SulfurCubeShop.MAX_SIZE + ".");
+			sulfurCubeMaxSize = MathUtils.clamp(sulfurCubeMaxSize, SulfurCubeShop.MIN_SIZE, SulfurCubeShop.MAX_SIZE);
 		}
 
 		// Certain items cannot be of type AIR:

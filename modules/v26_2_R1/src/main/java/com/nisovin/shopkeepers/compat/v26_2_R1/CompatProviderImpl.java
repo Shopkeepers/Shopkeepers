@@ -1,14 +1,12 @@
-package com.nisovin.shopkeepers.compat.v26_2_R1_paper;
+package com.nisovin.shopkeepers.compat.v26_2_R1;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.Registry;
 import org.bukkit.craftbukkit.CraftRegistry;
 import org.bukkit.craftbukkit.entity.CraftAbstractVillager;
@@ -19,11 +17,10 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.entity.CraftVillager;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.inventory.CraftMerchant;
-import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.entity.AbstractVillager;
 import org.bukkit.entity.CopperGolem;
-import org.bukkit.entity.CopperGolem.Oxidizing;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Golem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mannequin;
@@ -33,6 +30,7 @@ import org.bukkit.entity.Pose;
 import org.bukkit.entity.SulfurCube;
 import org.bukkit.entity.Villager;
 import org.bukkit.entity.ZombieNautilus;
+import org.bukkit.entity.memory.MemoryKey;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -40,6 +38,7 @@ import org.bukkit.inventory.MainHand;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantInventory;
 import org.bukkit.inventory.view.builder.InventoryViewBuilder;
+import org.bukkit.potion.PotionType;
 import org.bukkit.profile.PlayerProfile;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -57,16 +56,11 @@ import com.nisovin.shopkeepers.util.data.container.DataContainer;
 import com.nisovin.shopkeepers.util.inventory.ItemStackComponentsData;
 import com.nisovin.shopkeepers.util.inventory.ItemStackMetaTag;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
+import com.nisovin.shopkeepers.util.java.ClassUtils;
 import com.nisovin.shopkeepers.util.java.EnumUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
 
-import io.papermc.paper.datacomponent.item.ResolvableProfile;
-import io.papermc.paper.registry.RegistryAccess;
-import io.papermc.paper.registry.RegistryKey;
-import io.papermc.paper.world.WeatheringCopperState;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.core.component.DataComponentExactPredicate;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.PatchedDataComponentMap;
@@ -85,39 +79,8 @@ import net.minecraft.world.item.trading.MerchantOffers;
 public final class CompatProviderImpl implements CompatProvider {
 
 	// Public static for access in tests.
-	public static final String VERSION_ID = "26_2_R1_paper";
+	public static final String VERSION_ID = "26_2_R1";
 
-	private static final Map<Class<?>, RegistryKey<?>> CLASS_TO_REGISTRY_KEY = new HashMap<>();
-
-	static {
-		try {
-			for (var field : RegistryKey.class.getFields()) {
-				if (field.getType() != RegistryKey.class) {
-					continue;
-				}
-
-				// Get the type from the RegistryKey generic parameter on the field:
-				var fieldType = (ParameterizedType) field.getGenericType();
-				var typeArgument = fieldType.getActualTypeArguments()[0];
-				Class<?> registryClass;
-				if (typeArgument instanceof Class<?> typeArgumentClass) {
-					registryClass = typeArgumentClass;
-				} else if (typeArgument instanceof ParameterizedType typeArgumentParameterized) {
-					registryClass = Unsafe.castNonNull(typeArgumentParameterized.getRawType());
-				} else {
-					throw new RuntimeException("Unexpected RegistryKey type parameter for field: "
-							+ field.getName());
-				}
-
-				RegistryKey<?> registryKey = Unsafe.castNonNull(field.get(null));
-				CLASS_TO_REGISTRY_KEY.put(registryClass, registryKey);
-			}
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	private final LivingEntityShopListener livingEntityShopListener;
 	private final CopperChestProtectionListener copperChestProtectionListener;
 
 	private final TagParser<Tag> tagParser = Unsafe.castNonNull(TagParser.create(NbtOps.INSTANCE));
@@ -125,9 +88,7 @@ public final class CompatProviderImpl implements CompatProvider {
 	private final Field craftItemStackHandleField;
 
 	public CompatProviderImpl() throws Exception {
-		var plugin = SKShopkeepersPlugin.getInstance();
-		livingEntityShopListener = new LivingEntityShopListener(plugin);
-		copperChestProtectionListener = new CopperChestProtectionListener(plugin);
+		copperChestProtectionListener = new CopperChestProtectionListener(SKShopkeepersPlugin.getInstance());
 		craftItemStackHandleField = CraftItemStack.class.getDeclaredField("handle");
 		craftItemStackHandleField.setAccessible(true);
 	}
@@ -140,22 +101,17 @@ public final class CompatProviderImpl implements CompatProvider {
 	@Override
 	public void onEnable() {
 		var plugin = SKShopkeepersPlugin.getInstance();
-
-		Bukkit.getPluginManager().registerEvents(livingEntityShopListener, plugin);
-
-		if (Settings.protectContainers && Settings.preventCopperGolemAccess) {
+		// 1.21.11-R0.1 did not yet have the event.
+		if (Settings.protectContainers
+				&& Settings.preventCopperGolemAccess
+				&& ClassUtils.getClassOrNull("org.bukkit.event.entity.EntityTargetBlockEvent") != null) {
 			Bukkit.getPluginManager().registerEvents(copperChestProtectionListener, plugin);
 		}
 	}
 
 	@Override
 	public void onDisable() {
-		HandlerList.unregisterAll(livingEntityShopListener);
 		HandlerList.unregisterAll(copperChestProtectionListener);
-	}
-
-	public Class<?> getCraftMagicNumbersClass() {
-		return CraftMagicNumbers.class;
 	}
 
 	@Override
@@ -166,7 +122,7 @@ public final class CompatProviderImpl implements CompatProvider {
 			net.minecraft.world.entity.Mob mcMob = ((CraftMob) entity).getHandle();
 
 			// Overwrite the goal selector:
-			GoalSelector goalSelector = mcMob.getGoalSelector();
+			GoalSelector goalSelector = mcMob.goalSelector;
 
 			// Clear the old goals: Removes all goals from the "availableGoals". During the next
 			// tick, the "lockedFlags" (active goals) are updated as well.
@@ -203,7 +159,7 @@ public final class CompatProviderImpl implements CompatProvider {
 		// Clear the sensing cache. This sensing cache is reused for the individual ticks.
 		mcMob.getSensing().tick();
 		for (int i = 0; i < ticks; ++i) {
-			mcMob.getGoalSelector().tick();
+			mcMob.goalSelector.tick();
 			if (!mcMob.getLookControl().isLookingAtTarget()) {
 				// If there is no target to look at, the entity rotates towards its current body
 				// rotation.
@@ -239,12 +195,6 @@ public final class CompatProviderImpl implements CompatProvider {
 	@Override
 	public boolean isNoAIDisablingGravity() {
 		return true;
-	}
-
-	// Paper 26.2 has deprecated the PigZapEvent in favor of the Paper-specific EntityZapEvent.
-	@Override
-	public boolean isHandlePigZapEvent() {
-		return false;
 	}
 
 	@Override
@@ -296,8 +246,7 @@ public final class CompatProviderImpl implements CompatProvider {
 
 	@Override
 	public void setInventoryViewTitle(InventoryViewBuilder<?> builder, String title) {
-		var titleComponent = LegacyComponentSerializer.legacySection().deserialize(title);
-		builder.title(titleComponent);
+		builder.title(title);
 	}
 
 	@Override
@@ -373,10 +322,6 @@ public final class CompatProviderImpl implements CompatProvider {
 		var requiredTag = (Tag) required.getNmsTag();
 		return NbtUtils.compareNbt(requiredTag, providedTag, matchPartialLists);
 	}
-
-	// Note: Paper 1.21.5+ also already serializes ItemStacks in a similar format. However, for
-	// consistency and better compatibility across Paper and Spigot servers (e.g. loading item
-	// stacks saved on another server type), we use our own format on Paper servers as well.
 
 	@Override
 	public @Nullable ItemStackComponentsData getItemStackComponentsData(@ReadOnly ItemStack itemStack) {
@@ -457,49 +402,41 @@ public final class CompatProviderImpl implements CompatProvider {
 
 	@Override
 	public <T extends Keyed> Registry<T> getRegistry(Class<T> clazz) {
-		// Non-null: Expected to only be used with known registry types.
-		RegistryKey<T> registryKey = Unsafe.castNonNull(CLASS_TO_REGISTRY_KEY.get(clazz));
-		return Unsafe.castNonNull(RegistryAccess.registryAccess().getRegistry(registryKey));
+		// Some API-only registries might not be supported by Bukkit.getRegistry(Class):
+		if (clazz == EntityType.class) {
+			return Unsafe.castNonNull(Registry.ENTITY_TYPE);
+		} else if (clazz == Particle.class) {
+			return Unsafe.castNonNull(Registry.PARTICLE_TYPE);
+		} else if (clazz == PotionType.class) {
+			return Unsafe.castNonNull(Registry.POTION);
+		} else if (clazz == MemoryKey.class) {
+			return Unsafe.castNonNull(Registry.MEMORY_MODULE_TYPE);
+		} else {
+			// Non-null: Expected to only be used with known registry types.
+			return Unsafe.assertNonNull(Bukkit.getRegistry(clazz));
+		}
 	}
 
 	// MC 1.21.9+ TODO Can be removed once we only support Bukkit 1.21.9+
 
 	public void setCopperGolemWeatherState(Golem golem, String weatherState) {
-		// Note: Different API than Spigot, but the same enum names.
-		WeatheringCopperState weatherStateValue = EnumUtils.valueOf(WeatheringCopperState.class, weatherState);
+		CopperGolem.CopperWeatherState weatherStateValue = EnumUtils.valueOf(CopperGolem.CopperWeatherState.class, weatherState);
 		if (weatherStateValue == null) {
-			weatherStateValue = WeatheringCopperState.UNAFFECTED; // Default
+			weatherStateValue = CopperGolem.CopperWeatherState.UNAFFECTED; // Default
 		}
-		((CopperGolem) golem).setWeatheringState(weatherStateValue);
+		((CopperGolem) golem).setWeatherState(weatherStateValue);
 	}
 
 	public void setCopperGolemNextWeatheringTick(Golem golem, int tick) {
-		Oxidizing oxidizing;
-		switch (tick) {
-		case -2:
-			oxidizing = Oxidizing.waxed();
-			break;
-		case -1:
-			oxidizing = Oxidizing.unset();
-			break;
-		default:
-			oxidizing = Oxidizing.atTime(tick);
-			break;
-		}
-
-		((CopperGolem) golem).setOxidizing(oxidizing);
+		((CopperGolem) golem).setNextWeatheringTick(tick);
 	}
 
 	public void setMannequinHideDescription(LivingEntity mannequin, boolean hideDescription) {
-		if (hideDescription) {
-			((Mannequin) mannequin).setDescription(null);
-		} else {
-			((Mannequin) mannequin).setDescription(Mannequin.defaultDescription());
-		}
+		((Mannequin) mannequin).setHideDescription(hideDescription);
 	}
 
 	public void setMannequinDescription(LivingEntity mannequin, @Nullable String description) {
-		((Mannequin) mannequin).setDescription(description == null ? null : Component.text(description));
+		((Mannequin) mannequin).setDescription(description);
 	}
 
 	public void setMannequinMainHand(LivingEntity mannequin, MainHand mainHand) {
@@ -511,26 +448,15 @@ public final class CompatProviderImpl implements CompatProvider {
 	}
 
 	public void setMannequinProfile(LivingEntity mannequin, @Nullable PlayerProfile profile) {
-		if (profile == null) {
-			// Empty profile:
-			var resolvableProfile = ResolvableProfile.resolvableProfile().build();
-			((Mannequin) mannequin).setProfile(resolvableProfile);
-			return;
-		}
-
-		var paperProfile = Bukkit.createProfileExact(profile.getUniqueId(), profile.getName());
-		paperProfile.setTextures(profile.getTextures());
-		var resolvableProfile = ResolvableProfile.resolvableProfile(paperProfile);
-		((Mannequin) mannequin).setProfile(resolvableProfile);
+		((Mannequin) mannequin).setPlayerProfile(profile);
 	}
 
 	// MC 1.21.11+ TODO Can maybe be removed once we only support Bukkit 1.21.11+
 
-	// Paper-specific
 	@Override
 	public void setZombieNautilusVariant(LivingEntity zombieNautilus, NamespacedKey variant) {
 		var registry = this.getRegistry(ZombieNautilus.Variant.class);
-		ZombieNautilus.Variant variantValue = Unsafe.nullable(registry.get(variant));
+		ZombieNautilus.Variant variantValue = registry.get(variant);
 		if (variantValue == null) {
 			variantValue = ZombieNautilus.Variant.TEMPERATE; // Default
 		}
@@ -538,17 +464,17 @@ public final class CompatProviderImpl implements CompatProvider {
 		((ZombieNautilus) zombieNautilus).setVariant(variantValue);
 	}
 
-	// Paper-specific
 	@Override
 	public NamespacedKey cycleZombieNautilusVariant(NamespacedKey variant, boolean backwards) {
 		var registry = this.getRegistry(ZombieNautilus.Variant.class);
-		ZombieNautilus.Variant variantValue = Unsafe.nullable(registry.get(variant));
+		ZombieNautilus.Variant variantValue = registry.get(variant);
 		if (variantValue == null) {
 			variantValue = ZombieNautilus.Variant.TEMPERATE; // Default
 		}
 		assert variantValue != null;
 
-		return RegistryUtils.cycleKeyed(ZombieNautilus.Variant.class, variantValue, backwards).getKey();
+		return RegistryUtils.cycleKeyed(ZombieNautilus.Variant.class, variantValue, backwards)
+				.getKeyOrThrow();
 	}
 
 	// MC 26.2 TODO Can be removed once we only support Bukkit 26.2+

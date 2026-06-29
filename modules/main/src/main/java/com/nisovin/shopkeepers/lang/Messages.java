@@ -273,6 +273,11 @@ public class Messages extends Config {
 			"Cycles the magma cube's size.",
 			"Current size: &e{size}"
 	));
+	public static String buttonSulfurCubeSize = c("&aChoose sulfur cube size");
+	public static List<String> buttonSulfurCubeSizeLore = c(Arrays.asList(
+			"Cycles the sulfur cube's size.",
+			"Current size: &e{size}"
+	));
 	public static String buttonSnowmanPumpkinHead = c("&aToggle pumpkin head");
 	public static List<String> buttonSnowmanPumpkinHeadLore = c(Arrays.asList(
 			"Toggles the snowman's",

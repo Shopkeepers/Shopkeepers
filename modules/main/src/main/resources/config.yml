@@ -373,6 +373,8 @@ shulker-peek-height: 0.3
 slime-max-size: 5
 # The maximum size of magma cube shopkeepers. Must be a value in the range of 1 to 10.
 magma-cube-max-size: 5
+# The maximum size of sulfur cube shopkeepers. Must be a value in the range of 1 to 10.
+sulfur-cube-max-size: 5
 
 # Whether shopkeeper entities make sounds.
 silence-shop-entities: true
