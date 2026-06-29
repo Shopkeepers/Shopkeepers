@@ -14,6 +14,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockShearEntityEvent;
 import org.bukkit.event.block.EntityBlockFormEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityCombustByBlockEvent;
@@ -403,6 +404,13 @@ class BaseEntityShopListener implements Listener {
 	void onBlockIgnited(BlockIgniteEvent event) {
 		var entity = event.getIgnitingEntity();
 		if (entity != null && shopkeeperRegistry.isShopkeeper(entity)) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler()
+	void onBlockShearEntity(BlockShearEntityEvent event) {
+		if (shopkeeperRegistry.isShopkeeper(event.getEntity())) {
 			event.setCancelled(true);
 		}
 	}

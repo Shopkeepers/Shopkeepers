@@ -43,6 +43,7 @@ Date format: (YYYY-MM-DD)
     * Rename debug option `owner-name-updates` to `player-name-updates`.
   * Metrics: Add bStats metric `uses-shop-members`.
 * Mannequin shopkeepers use an "Alex" skinned player head now for their profile editor option to not conflict with the new members editor option.
+* Fix: Prevent shopkeeper mobs from being sheared by dispensers. Block drops were already prevented before, but other effects on the entity or the dispensed item were not prevented previously.
 * Fix: Since the last plugin version, shopkeepers were always marked as "dirty" every time they are loaded, causing a redundant save of all shopkeeper data.
 * Debug: Add option `shopkeeper-dirty` to output additional information whenever a shopkeeper's data is marked as "dirty".
 * API: Add methods to get and edit the player shop members.
