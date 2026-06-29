@@ -16,8 +16,8 @@ Date format: (YYYY-MM-DD)
   * Internal: Paper: Use EntityZapEvent in favor of PigZapEvent.
 * Add player shop members: Shop owners can now allow additional players access to their shops.
   * Editor: Add a new option to the editor of player shops to allow owners to view and edit the shop members.
-    * Click an empty slot and then enter the name or id of a player to add as shop member into the chat.
-    * Left/Right click a member to circle through the different access levels.
+    * Click the nametag item and then enter the name or id of a player to add as shop member into the chat.
+    * Left/Right-click a member to cycle through the different access levels.
     * Shift-click a member to remove them after additional confirmation.
   * Available shop member access levels:
     * Container access.
@@ -30,7 +30,7 @@ Date format: (YYYY-MM-DD)
     * The `deleting-player-shop-returns-creation-item` also returns the shop creation item to players other than the owner if they have full shop access.
     * The `remove-all` command and `ShopkeeperRegistry#getPlayerShopkeepersByOwner` only affects a player's actually owned shops, not shops they have access to.
     * If `set-citizen-npc-owner-of-player-shops` is enabled: Citizens NPCs only support a single owner, so other players, even with full access, won't be able to edit the Citizens NPC.
-    * If a shop member's permission changes, any currently open shopkeeper or container view is automatically closed for them.
+    * If a shop member's access level changes, any currently open shopkeeper or container view is automatically closed for them.
     * The editor layout cannot be customized per-player, so the shop members and delete buttons are always visible to all players with access to the editor, but can only be used by players with full shop access.
   * Config: Add setting `max-members-per-shop` (default: `9`).
     * The shop members feature can be disabled by setting this to `0`.
