@@ -44,7 +44,6 @@ Date format: (YYYY-MM-DD)
 * Debug: Add option `shopkeeper-dirty` to output additional information whenever a shopkeeper's data is marked as "dirty".
 * API: Add methods to get and edit the player shop members.
 * API: Add `PlayerShopkeeper#isOwner(UUID)`.
-* Internal: Also handle the `EntityTransformEvent`, just in case that it is used in the future in cases that are not covered by the NoAI behavior.
 
 **Message changes:**  
 * Removed `not-owner`.
