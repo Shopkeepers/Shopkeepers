@@ -1,6 +1,7 @@
 # Agent Instructions
 
 General readme: @README.md
+
 General contribution notes (also applies here): @CONTRIBUTING.md
 
 We primarily target the Bukkit/Spigot API, but also support Paper. Other server variants are untested and not explicitly supported by us.
@@ -30,6 +31,7 @@ This is a multi-module Gradle project (Java).
 - The Eclipse formatter settings (applies to all projects!) live in the main module's `modules/main/.settings/org.eclipse.jdt.core.prefs`.
 - Indentation uses **tabs** (tab size 4), not spaces.
 - Soft line length limit: 100 columns (wrap if possible without making the code unreadable).
+- Add an empty line after a closing code block (e.g. `if`/`else`/`for`/`while`/`try`, etc.) when more statements follow in the same scope.
 - The same prefs file also holds compiler compliance and null-analysis settings; keep code compatible with them (e.g. respect the `@NonNull`/`@Nullable` null-analysis annotations).
 
 ## Code Comments
@@ -48,5 +50,9 @@ When updating to a new Minecraft/server version, follow the dedicated `Update-Ch
 ## Additional Agent Instructions
 
 - Keep changes minimal: Aim for the smallest possible Git diff. Avoid unrelated reformatting, renames, or refactoring.
+- We store line endings as LF inside the Git repository, but check them out as CRLF on Windows (`autocrlf=true`).
+  - You might be running inside a Linux sandbox/container. I still want you to create and edit files with CRLF line endings so they correctly show up with CRLF line endings on my host system.
+  - When you are running inside a Linux sandbox/container, consider configuring Git `autocrlf=true` for commands like `git diff` to properly ignore line ending differences.
 - Whenever you generated new code or created new files, manually verify afterwards that CRLF line endings and UTF-8 encoding is used.
+- Make changes directly in the checked out repository. Do not create new workspaces or Git worktrees unless the user explicitly instructs you to.
 
