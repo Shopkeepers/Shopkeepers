@@ -54,11 +54,27 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 		return shopkeeperClass;
 	}
 
+	// Internal Text variants of the description methods, to support the advanced text
+	// features without exposing Text in the public API.
+	public abstract Text getDescriptionText();
+
+	public abstract Text getSetupDescriptionText();
+
+	@Override
+	public final String getDescription() {
+		return this.getDescriptionText().toPlainText();
+	}
+
+	@Override
+	public final String getSetupDescription() {
+		return this.getSetupDescriptionText().toPlainText();
+	}
+
 	@Override
 	protected void onSelect(Player player) {
 		TextUtils.sendMessage(player, Messages.selectedShopType,
 				"type", this.getDisplayName(),
-				"description", this.getDescription()
+				"description", this.getDescriptionText()
 		);
 	}
 
@@ -66,8 +82,8 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 		Text text = Messages.shopkeeperCreated;
 		text.setPlaceholderArguments(
 				"type", this.getDisplayName(),
-				"description", this.getDescription(),
-				"setupDesc", this.getSetupDescription()
+				"description", this.getDescriptionText(),
+				"setupDesc", this.getSetupDescriptionText()
 		);
 		return text;
 	}

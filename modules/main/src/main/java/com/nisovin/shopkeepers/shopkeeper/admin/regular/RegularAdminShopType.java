@@ -6,6 +6,7 @@ import java.util.List;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.admin.AbstractAdminShopType;
+import com.nisovin.shopkeepers.text.Text;
 
 public final class RegularAdminShopType
 		extends AbstractAdminShopType<SKRegularAdminShopkeeper> {
@@ -25,12 +26,12 @@ public final class RegularAdminShopType
 	}
 
 	@Override
-	public String getDescription() {
+	public Text getDescriptionText() {
 		return Messages.shopTypeDescAdminRegular;
 	}
 
 	@Override
-	public String getSetupDescription() {
+	public Text getSetupDescriptionText() {
 		return Messages.shopSetupDescAdminRegular;
 	}
 

@@ -11,6 +11,7 @@ import com.nisovin.shopkeepers.shopkeeper.migration.Migration;
 import com.nisovin.shopkeepers.shopkeeper.migration.MigrationPhase;
 import com.nisovin.shopkeepers.shopkeeper.migration.ShopkeeperDataMigrator;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopType;
+import com.nisovin.shopkeepers.text.Text;
 import com.nisovin.shopkeepers.util.data.serialization.InvalidDataException;
 import com.nisovin.shopkeepers.util.logging.Log;
 
@@ -61,12 +62,12 @@ public final class SellingPlayerShopType extends AbstractPlayerShopType<SKSellin
 	}
 
 	@Override
-	public String getDescription() {
+	public Text getDescriptionText() {
 		return Messages.shopTypeDescSelling;
 	}
 
 	@Override
-	public String getSetupDescription() {
+	public Text getSetupDescriptionText() {
 		return Messages.shopSetupDescSelling;
 	}
 

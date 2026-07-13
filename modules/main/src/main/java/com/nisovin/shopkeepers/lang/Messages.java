@@ -37,11 +37,11 @@ public class Messages extends Config {
 	public static String shopTypeTrading = c("Trading shop");
 	public static String shopTypeBook = c("Book shop");
 
-	public static String shopTypeDescAdminRegular = c("has unlimited stock");
-	public static String shopTypeDescSelling = c("sells items to players");
-	public static String shopTypeDescBuying = c("buys items from players");
-	public static String shopTypeDescTrading = c("trades items with players");
-	public static String shopTypeDescBook = c("sells book copies");
+	public static Text shopTypeDescAdminRegular = Text.parse("has unlimited stock");
+	public static Text shopTypeDescSelling = Text.parse("sells items to players");
+	public static Text shopTypeDescBuying = Text.parse("buys items from players");
+	public static Text shopTypeDescTrading = Text.parse("trades items with players");
+	public static Text shopTypeDescBook = Text.parse("sells book copies");
 
 	public static String shopObjectTypeEntity = c("{type}");
 	public static String shopObjectTypeSign = c("sign");
@@ -571,7 +571,7 @@ public class Messages extends Config {
 	public static Text missingCustomTradePerm = Text.parse("&7You do not have the permission to trade with this shop.");
 	public static Text shopCurrentlyClosed = Text.parse("&7This shop is currently closed. Check again later!");
 	public static Text cannotTradeNoOffers = Text.parse("&7This shop currently has no offers. Check again later!");
-	public static String noOffersOpenEditorDescription = c("&eYou can edit this shop by right clicking it while sneaking.");
+	public static Text noOffersOpenEditorDescription = Text.parse("&eYou can edit this shop by right clicking it while sneaking.");
 	public static Text cannotTradeWithOwnShop = Text.parse("&7You cannot trade with your own shop.");
 	public static Text cannotTradeWhileMemberOnline = Text.parse("&7You cannot trade while a member of this shop ('&e{member}&7') is online.");
 	public static Text cannotTradeWithShopMissingContainer = Text.parse("&7You cannot trade with this shop, because its container is missing.");
@@ -617,15 +617,15 @@ public class Messages extends Config {
 
 	public static Text shopkeeperCreated = Text.parse("&aShopkeeper created: &6{type} &7({description})\n{setupDesc}");
 
-	public static String shopSetupDescSelling = c("&e  Add items you want to sell to your container, then\n"
+	public static Text shopSetupDescSelling = Text.parse("&e  Add items you want to sell to your container, then\n"
 			+ "&e  right-click the shop while sneaking to modify costs.");
-	public static String shopSetupDescBuying = c("&e  Add one of each item you want to buy to your container,\n"
+	public static Text shopSetupDescBuying = Text.parse("&e  Add one of each item you want to buy to your container,\n"
 			+ "&e  then right-click the shop while sneaking to modify costs.");
-	public static String shopSetupDescTrading = c("&e  Add items you want to sell to your container, then\n"
+	public static Text shopSetupDescTrading = Text.parse("&e  Add items you want to sell to your container, then\n"
 			+ "&e  right-click the shop while sneaking to modify costs.");
-	public static String shopSetupDescBook = c("&e  Add written and blank books to your container, then\n"
+	public static Text shopSetupDescBook = Text.parse("&e  Add written and blank books to your container, then\n"
 			+ "&e  right-click the shop while sneaking to modify costs.");
-	public static String shopSetupDescAdminRegular = c("&e  Right-click the shop while sneaking to modify trades.");
+	public static Text shopSetupDescAdminRegular = Text.parse("&e  Right-click the shop while sneaking to modify trades.");
 
 	public static String tradeSetupDescHeader = c("&6{shopType}");
 	public static List<String> tradeSetupDescAdminRegular = c(Arrays.asList(
@@ -839,9 +839,9 @@ public class Messages extends Config {
 	));
 
 	public static String villagerInventoryTitle = c("Villager inventory (copy)");
-	public static String setVillagerXp = c("&aSet the villager's XP to &e{xp}");
-	public static String noVillagerTradesChanged = c("&aNo trades have been changed.");
-	public static String villagerTradesChanged = c("&e{changedTrades}&a trades have been changed.");
+	public static Text setVillagerXp = Text.parse("&aSet the villager's XP to &e{xp}");
+	public static Text noVillagerTradesChanged = Text.parse("&aNo trades have been changed.");
+	public static Text villagerTradesChanged = Text.parse("&e{changedTrades}&a trades have been changed.");
 
 	public static Text typeNewVillagerName = Text.parse("&aPlease type the villager's name into the chat.\n"
 			+ "  &aType a dash (-) to remove the name.");

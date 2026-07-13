@@ -4,6 +4,21 @@ Date format: (YYYY-MM-DD)
 ## v2.27.1 (TBA)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
+* Localization: Various messages support hex colors with the `&#` format now.
+  * `no-offers-open-editor-description`
+  * `set-villager-xp`
+  * `no-villager-trades-changed`
+  * `villager-trades-changed`
+  * `shop-type-desc-admin-regular`
+  * `shop-type-desc-selling`
+  * `shop-type-desc-buying`
+  * `shop-type-desc-trading`
+  * `shop-type-desc-book`
+  * `shop-setup-desc-selling`
+  * `shop-setup-desc-buying`
+  * `shop-setup-desc-trading`
+  * `shop-setup-desc-book`
+  * `shop-setup-desc-admin-regular`
 
 ## v2.27.0 (2026-06-29)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

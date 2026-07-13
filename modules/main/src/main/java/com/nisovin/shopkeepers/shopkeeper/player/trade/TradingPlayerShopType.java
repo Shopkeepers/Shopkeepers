@@ -6,6 +6,7 @@ import java.util.List;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopType;
+import com.nisovin.shopkeepers.text.Text;
 
 public final class TradingPlayerShopType extends AbstractPlayerShopType<SKTradingPlayerShopkeeper> {
 
@@ -24,12 +25,12 @@ public final class TradingPlayerShopType extends AbstractPlayerShopType<SKTradin
 	}
 
 	@Override
-	public String getDescription() {
+	public Text getDescriptionText() {
 		return Messages.shopTypeDescTrading;
 	}
 
 	@Override
-	public String getSetupDescription() {
+	public Text getSetupDescriptionText() {
 		return Messages.shopSetupDescTrading;
 	}
 
