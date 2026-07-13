@@ -37,7 +37,9 @@ import com.nisovin.shopkeepers.util.logging.Log;
 public final class EntityUtils {
 
 	private static final double GROUND_DISTANCE_CHECK_OFFSET = 0.98D;
-	private static final double GROUND_DISTANCE_CHECK_RANGE = 1.0D;
+	// Range: This also accounts for partial blocks below the checked location that the entity may
+	// be able to stand on (e.g. on top of chest blocks):
+	private static final double GROUND_DISTANCE_CHECK_RANGE = 1.96D;
 
 	// Temporarily re-used location object:
 	private static final Location SHARED_LOCATION = new Location(null, 0, 0, 0);
