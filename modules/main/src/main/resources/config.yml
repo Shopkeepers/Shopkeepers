@@ -513,8 +513,11 @@ book-empty-trade-item2: 'minecraft:gray_stained_glass_pane'
 book-empty-item1: 'minecraft:barrier'
 book-empty-item2: 'minecraft:barrier'
 
-# The number of pages that can be filled with trades. The maximum is 10.
+# The number of pages that can be filled with trades in admin shops and the villager editor.
+# The maximum is 10.
 max-trades-pages: 5
+# The number of pages that can be filled with trades in player shops. The maximum is 10.
+max-player-shop-trades-pages: 5
 
 # The items used for the buttons and icons in the trades page row.
 # The display name and lore of these items get set via the corresponding

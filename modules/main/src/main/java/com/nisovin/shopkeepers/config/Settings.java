@@ -298,6 +298,7 @@ public class Settings extends Config {
 	public static ItemData bookEmptyItem2 = new ItemData(Material.BARRIER);
 
 	public static int maxTradesPages = 5;
+	public static int maxPlayerShopTradesPages = 5;
 
 	public static ItemData previousPageItem = new ItemData(Material.WRITABLE_BOOK);
 	public static ItemData nextPageItem = new ItemData(Material.WRITABLE_BOOK);
@@ -976,6 +977,16 @@ public class Settings extends Config {
 		} else if (maxTradesPages > 10) {
 			Log.warning(this.getLogPrefix() + "'max-trades-pages' can not be greater than 10!");
 			maxTradesPages = 10;
+		}
+
+		if (maxPlayerShopTradesPages < 1) {
+			Log.warning(this.getLogPrefix()
+					+ "'max-player-shop-trades-pages' can not be less than 1!");
+			maxPlayerShopTradesPages = 1;
+		} else if (maxPlayerShopTradesPages > 10) {
+			Log.warning(this.getLogPrefix()
+					+ "'max-player-shop-trades-pages' can not be greater than 10!");
+			maxPlayerShopTradesPages = 10;
 		}
 
 		if (maxMembersPerShop < 0) {

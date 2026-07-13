@@ -12,6 +12,7 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerDeleteShopkeeperEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
@@ -42,6 +43,15 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 	protected AbstractShopkeeper getShopkeeper() {
 		return shopkeeper;
+	}
+
+	@Override
+	public int getMaxTradesPages() {
+		if (shopkeeper instanceof PlayerShopkeeper) {
+			return Settings.maxPlayerShopTradesPages;
+		}
+
+		return super.getMaxTradesPages();
 	}
 
 	@Override

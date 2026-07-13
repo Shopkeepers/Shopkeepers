@@ -4,7 +4,10 @@ Date format: (YYYY-MM-DD)
 ## v2.27.1 (TBA)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
-* Fixed: Non-flying shopkeeper mobs could not be placed on top of reduced-height blocks such as chests, incorrectly reporting the location as midair.
+* Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
+  * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
+  * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.
+* Fix: Non-flying shopkeeper mobs could not be placed on top of reduced-height blocks such as chests, incorrectly reporting the location as midair.
 * Localization: Various messages support hex colors with the `&#` format now.
   * `no-offers-open-editor-description`
   * `set-villager-xp`
