@@ -42,6 +42,7 @@ This is a multi-module Gradle project (Java).
 - Avoid em dashes!
 - Start sentences in upper-case. Also use upper-case after colons `:`!
 - Only describe the particular component/code element itself. Do not mention internal implementation details of other referenced code or implicitly coupled components!
+- In Javadoc comments, format empty lines as `" * "` (asterisk followed by a single trailing space). Do not strip that trailing space.
 
 ## Minecraft Updates
 
