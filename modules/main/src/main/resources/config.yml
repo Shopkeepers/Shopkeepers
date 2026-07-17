@@ -61,7 +61,7 @@ language: en-default
 # when the plugin is shut down.
 # If you have a large server with many players and/or many shopkeepers, it
 # might be a good idea to disable this for performance reasons.
-save-instantly: true
+save-instantly: false
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Plugin Compatibility
