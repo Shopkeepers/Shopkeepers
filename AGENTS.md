@@ -32,6 +32,7 @@ This is a multi-module Gradle project (Java).
 - Indentation uses **tabs** (tab size 4), not spaces.
 - Soft line length limit: 100 columns (wrap if possible without making the code unreadable).
 - Add an empty line after a closing code block (e.g. `if`/`else`/`for`/`while`/`try`, etc.) when more statements follow in the same scope.
+- Avoid static imports unless instructed otherwise.
 - The same prefs file also holds compiler compliance and null-analysis settings; keep code compatible with them (e.g. respect the `@NonNull`/`@Nullable` null-analysis annotations).
 
 ## Code Comments
