@@ -14,6 +14,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.PriceOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.TradeOffer;
+import com.nisovin.shopkeepers.api.shopkeeper.container.DefaultShopContainerTypes;
+import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainerTypeRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopAccessLevelRegistry;
 import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
@@ -311,6 +313,22 @@ public interface ShopkeepersPlugin extends Plugin {
 	 * @return the default player shop access levels
 	 */
 	public DefaultPlayerShopAccessLevels getDefaultPlayerShopAccessLevels();
+
+	// SHOP CONTAINER TYPES
+
+	/**
+	 * Gets the {@link ShopContainerTypeRegistry}.
+	 * 
+	 * @return the shop container type registry
+	 */
+	public ShopContainerTypeRegistry<?> getShopContainerTypeRegistry();
+
+	/**
+	 * Gets the {@link DefaultShopContainerTypes}.
+	 * 
+	 * @return the default shop container types
+	 */
+	public DefaultShopContainerTypes getDefaultShopContainerTypes();
 
 	// SHOPKEEPER REGISTRY
 

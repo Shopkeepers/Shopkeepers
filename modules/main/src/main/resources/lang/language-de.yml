@@ -71,10 +71,10 @@ button-members: "&aShop-Mitglieder"
 button-members-lore:
 - "Verwalte die Shop-Mitglieder."
 - "Aktuell: &e{memberCount}"
-button-container: "&aShop-Inventar öffnen"
-button-container-lore:
-- Zeigt dir das Inventar
-- deines Verkäufers
+button-containers: "&aShop-Behälter"
+button-containers-lore:
+- "Verwalte die Shop-Behälter."
+- "Aktuell: &e{containerCount}"
 button-trade-notifications: "&aHandelsbenachrichtigungen"
 button-trade-notifications-lore:
 - "Schaltet Handelsbenachrichtigungen"
@@ -382,9 +382,57 @@ player-shop-access-level-edit: "Bearbeiten"
 player-shop-access-level-full: "Voller Zugriff"
 
 player-shop-access-level-description-none: "Kein Zugriff."
-player-shop-access-level-description-container: "Kann auf Shop-Container zugreifen."
-player-shop-access-level-description-edit: "Kann auf Shop-Container zugreifen\nund den Shop bearbeiten."
+player-shop-access-level-description-container: "Kann auf Shop-Behälter zugreifen."
+player-shop-access-level-description-edit: "Kann auf Shop-Behälter zugreifen\nund den Shop bearbeiten."
 player-shop-access-level-description-full: "Volle Bearbeitungsrechte,\neinsließlich der Shop-Mitglieder\nund das Löschen des Shops."
+
+shop-container-type-stock: "Vorrat"
+shop-container-type-earnings: "Erträge"
+shop-container-type-stock-and-earnings: "Vorrat und Erträge"
+
+shop-container-type-description-stock: "Der Shop bezieht seinen Vorrat\naus diesem Behälter."
+shop-container-type-description-earnings: "Der Shop legt seine Erträge\nin diesem Behälter ab."
+shop-container-type-description-stock-and-earnings: "Der Shop bezieht seinen Vorrat aus\nund legt seine Erträge in\ndiesem Behälter ab."
+
+shop-containers-editor-title: "Shop-Behälter"
+
+shop-container-title: "&aShop-Behälter"
+shop-container-none-lore:
+- "&4Kein Behälter vorhanden."
+shop-container-lore:
+- "Position: &e{container_world}, {container_x}, {container_y}, {container_z}"
+- "{container_state}"
+- "Typ: &e{container_type}"
+- "{container_type_description}"
+- "{container_action_change_type}"
+- "{container_action_open}"
+- "{container_action_remove}"
+single-shop-container-lore:
+- "Position: &e{container_world}, {container_x}, {container_y}, {container_z}"
+- "{container_state}"
+- "{container_action_open}"
+
+shop-container-action-change-type: "Links-/Rechtsklick zum Ändern des Typs."
+shop-container-action-open: "Shift-Rechtsklick zum Öffnen."
+single-shop-container-action-open: "Anklicken zum Öffnen des Inventars."
+shop-container-action-remove: "Shift-Linksklick zum Entfernen."
+
+shop-container-state-missing: "Zustand: &4Nicht vorhanden"
+shop-container-state-double-chest: "Zustand: &eDoppeltruhe"
+
+button-add-shop-container: "&aBehälter hinzufügen"
+button-add-shop-container-lore: []
+
+shop-container-missing: "&7Der Behälter ist derzeit nicht vorhanden."
+click-shop-container-to-add: "&aBitte rechtsklicke einen Behälter, um ihn zum Shop hinzuzufügen.\n  &aZum Abbrechen linksklicken."
+container-selection-aborted: "&7Behälterauswahl abgebrochen."
+shop-container-added: "&aBehälter hinzugefügt: &e{container_x}, {container_y}, {container_z}"
+shop-container-removed: "&aBehälter entfernt: &e{container_x}, {container_y}, {container_z}"
+
+confirmation-ui-remove-shop-container-title: "&cBehälter entfernen?"
+confirmation-ui-remove-shop-container-lore:
+- "Du bist dabei, den Behälter"
+- "bei &e({container_x}, {container_y}, {container_z}) zu entfernen."
 
 admin-sign-shop-line1: "&2[SHOP]"
 admin-sign-shop-line2: "&7{shopName}"
@@ -483,7 +531,6 @@ cannot-trade-no-offers: "&7Dieser Shop hat derzeit keine Angebote. Schaue späte
 no-offers-open-editor-description: "&eDu kannst diesen Shop mit Shift+Rechtsklick bearbeiten."
 cannot-trade-with-own-shop: "&7Du kannst nicht mit deinem eigenen Shop handeln."
 cannot-trade-while-member-online: "&7Du kannst nicht handeln, während ein Mitglied dieses Shops ('&e{member}&7') online ist."
-cannot-trade-with-shop-missing-container: "&7Du kannst nicht mit diesem Shop handeln, da sein Behälter fehlt."
 cannot-trade-unexpected-trade: "&7Handel abgebrochen: Die gehandelten Gegenstände entsprechen nicht dem, was dieser Shop erwartet hat."
 cannot-trade-items-not-strictly-matching: "&7Handel abgebrochen: Die angebotenen Gegenstände stimmen nicht exakt mit den benötigten Gegenständen überein."
 cannot-trade-insufficient-storage-space: "&7Handel abgebrochen: Dieser Shop hat nicht genügend Lagerraum."

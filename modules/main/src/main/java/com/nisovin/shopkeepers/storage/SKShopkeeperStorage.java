@@ -561,8 +561,8 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 				|| DataVersion.current().isMinecraftUpgrade(dataVersion)
 				|| DataVersion.current().isShopkeeperStorageUpgrade(dataVersion);
 		if (dataVersionChanged) {
-			Log.info("The save file's data version has changed from '" + dataVersion
-					+ "' to '" + DataVersion.current() + "'.");
+			Log.info("The save file's data version has changed from '" + dataVersion + "' to '"
+					+ DataVersion.current() + "'.");
 			// Update the data version:
 			saveData.set(DATA_VERSION_KEY, DataVersion.current().toString());
 

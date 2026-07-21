@@ -38,16 +38,17 @@ public class BookPlayerShopEditorViewProvider extends PlayerShopEditorViewProvid
 			Set<String> bookTitles = new HashSet<>();
 
 			// Add the shopkeeper's offers:
-			Map<? extends String, ? extends ItemStack> containerBooksByTitle = shopkeeper.getCopyableBooksFromContainer();
+			Map<? extends String, ? extends ItemStack> stockContainerBooksByTitle
+					= shopkeeper.getCopyableBooksFromStockContainers();
 			List<? extends BookOffer> offers = shopkeeper.getOffers();
 			List<TradingRecipeDraft> recipes = new ArrayList<>(Math.max(
 					offers.size(),
-					containerBooksByTitle.size()
+					stockContainerBooksByTitle.size()
 			));
 			offers.forEach(bookOffer -> {
 				String bookTitle = bookOffer.getBookTitle();
 				bookTitles.add(bookTitle);
-				ItemStack bookItem = containerBooksByTitle.get(bookTitle);
+				ItemStack bookItem = stockContainerBooksByTitle.get(bookTitle);
 				if (bookItem == null) {
 					bookItem = shopkeeper.createDummyBook(bookTitle);
 				} else {
@@ -57,8 +58,8 @@ public class BookPlayerShopEditorViewProvider extends PlayerShopEditorViewProvid
 				recipes.add(recipe);
 			});
 
-			// Add new empty recipe drafts for book items from the container without existing offer:
-			containerBooksByTitle.forEach((bookTitle, bookItem) -> {
+			// Add new empty recipe drafts for book items from the stock containers without existing offer:
+			stockContainerBooksByTitle.forEach((bookTitle, bookItem) -> {
 				assert bookTitle != null;
 				if (!bookTitles.add(bookTitle)) {
 					// We already added a recipe for a book with this title.

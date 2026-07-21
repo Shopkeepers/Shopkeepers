@@ -1,5 +1,8 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -7,6 +10,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
+import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.ui.lib.UIState;
@@ -15,12 +19,32 @@ import com.nisovin.shopkeepers.ui.trading.TradingContext;
 import com.nisovin.shopkeepers.ui.trading.TradingView;
 import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
+import com.nisovin.shopkeepers.util.logging.Log;
 
 public class PlayerShopTradingView extends TradingView {
 
+	// Snapshot of a single container's contents during the currently handled trade:
+	protected static final class TradeContainer {
+
+		private final ShopContainer shopContainer;
+		private final Inventory inventory;
+		private final @Nullable ItemStack[] contents;
+
+		private TradeContainer(
+				ShopContainer shopContainer,
+				Inventory inventory,
+				@Nullable ItemStack[] contents
+		) {
+			this.shopContainer = shopContainer;
+			this.inventory = inventory;
+			this.contents = contents;
+		}
+	}
+
 	// State related to the currently handled trade:
-	protected @Nullable Inventory containerInventory = null;
-	protected @Nullable ItemStack @Nullable [] newContainerContents = null;
+	protected final List<TradeContainer> tradeContainers = new ArrayList<>();
+	protected final List<@Nullable ItemStack[]> stockContents = new ArrayList<>();
+	protected final List<@Nullable ItemStack[]> earningsContents = new ArrayList<>();
 
 	protected PlayerShopTradingView(
 			PlayerShopTradingViewProvider provider,
@@ -67,19 +91,38 @@ public class PlayerShopTradingView extends TradingView {
 			}
 		}
 
-		// Check for the shop's container:
-		Inventory containerInventory = shopkeeper.getContainerInventory();
-		if (containerInventory == null) {
-			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeWithShopMissingContainer,
-					"owner", shopkeeper.getOwnerName()
+		// Setup common state information for handling this trade:
+		// Collect the shop's containers, skipping any that are currently missing or invalid:
+		assert tradeContainers.isEmpty();
+		assert stockContents.isEmpty();
+		assert earningsContents.isEmpty();
+
+		for (var container : shopkeeper.getContainers()) {
+			Inventory containerInventory = container.getInventory();
+			if (containerInventory == null) continue;
+
+			var tradeContainer = new TradeContainer(
+					container,
+					containerInventory,
+					containerInventory.getContents()
 			);
-			this.debugPreventedTrade("The shop's container is missing.");
-			return false;
+			tradeContainers.add(tradeContainer);
+
+			// Pre-build the lists of stock and earnings container contents:
+			if (tradeContainer.shopContainer.getType().isStock()) {
+				stockContents.add(tradeContainer.contents);
+			}
+
+			if (tradeContainer.shopContainer.getType().isEarnings()) {
+				earningsContents.add(tradeContainer.contents);
+			}
 		}
 
-		// Setup common state information for handling this trade:
-		this.containerInventory = containerInventory;
-		this.newContainerContents = Unsafe.cast(containerInventory.getContents());
+		if (stockContents.isEmpty() || earningsContents.isEmpty()) {
+			Log.debug(() -> this.getContext().getLogPrefix() + "Missing containers:"
+					+ " Stock: " + stockContents.isEmpty()
+					+ " Earnings: " + earningsContents.isEmpty());
+		}
 
 		return true;
 	}
@@ -88,9 +131,9 @@ public class PlayerShopTradingView extends TradingView {
 	protected void onTradeApplied(Trade trade) {
 		super.onTradeApplied(trade);
 
-		// Apply container content changes:
-		if (containerInventory != null && newContainerContents != null) {
-			containerInventory.setContents(Unsafe.castNonNull(newContainerContents));
+		// Apply the container content changes:
+		for (TradeContainer container : tradeContainers) {
+			container.inventory.setContents(container.contents);
 		}
 	}
 
@@ -99,7 +142,8 @@ public class PlayerShopTradingView extends TradingView {
 		super.onTradeOver(tradingContext);
 
 		// Reset trade related state:
-		containerInventory = null;
-		newContainerContents = null;
+		tradeContainers.clear();
+		stockContents.clear();
+		earningsContents.clear();
 	}
 }

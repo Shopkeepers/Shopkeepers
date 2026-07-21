@@ -6,6 +6,7 @@ import java.util.List;
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUIType;
+import com.nisovin.shopkeepers.ui.containers.ShopContainersEditorUIType;
 import com.nisovin.shopkeepers.ui.editor.EditorUIType;
 import com.nisovin.shopkeepers.ui.equipmentEditor.EquipmentEditorUIType;
 import com.nisovin.shopkeepers.ui.hiring.HiringUIType;
@@ -20,6 +21,7 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 	private final EditorUIType editorUIType = EditorUIType.INSTANCE;
 	private final EquipmentEditorUIType equipmentEditorUIType = EquipmentEditorUIType.INSTANCE;
 	private final ShopMembersEditorUIType shopMembersEditorUIType = ShopMembersEditorUIType.INSTANCE;
+	private final ShopContainersEditorUIType shopContainersEditorUIType = ShopContainersEditorUIType.INSTANCE;
 	private final TradingUIType tradingUIType = TradingUIType.INSTANCE;
 	private final HiringUIType hiringUIType = HiringUIType.INSTANCE;
 	private final VillagerEditorUIType villagerEditorUIType = VillagerEditorUIType.INSTANCE;
@@ -35,6 +37,7 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 		defaults.add(editorUIType);
 		defaults.add(equipmentEditorUIType);
 		defaults.add(shopMembersEditorUIType);
+		defaults.add(shopContainersEditorUIType);
 		defaults.add(tradingUIType);
 		defaults.add(hiringUIType);
 		defaults.add(villagerEditorUIType);
@@ -56,6 +59,11 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 	@Override
 	public ShopMembersEditorUIType getShopMembersEditorUIType() {
 		return shopMembersEditorUIType;
+	}
+
+	@Override
+	public ShopContainersEditorUIType getShopContainersEditorUIType() {
+		return shopContainersEditorUIType;
 	}
 
 	@Override
@@ -99,6 +107,10 @@ public final class SKDefaultUITypes implements DefaultUITypes {
 
 	public static ShopMembersEditorUIType SHOP_MEMBERS_EDITOR() {
 		return getInstance().getShopMembersEditorUIType();
+	}
+
+	public static ShopContainersEditorUIType SHOP_CONTAINERS_EDITOR() {
+		return getInstance().getShopContainersEditorUIType();
 	}
 
 	public static TradingUIType TRADING() {

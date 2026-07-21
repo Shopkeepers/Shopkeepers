@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.util.inventory;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -111,11 +112,13 @@ public final class InventoryUtils {
 		Validate.notNull(contents, "contents is null");
 		Validate.notNull(predicate, "predicate is null");
 		if (amount <= 0) return true;
+
 		int remainingAmount = amount;
 		for (ItemStack itemStack : contents) {
 			if (itemStack == null) continue;
 			if (ItemUtils.isEmpty(itemStack)) continue;
 			if (!predicate.test(itemStack)) continue;
+
 			remainingAmount -= itemStack.getAmount();
 			if (remainingAmount <= 0) {
 				return true;
@@ -218,6 +221,106 @@ public final class InventoryUtils {
 		return containsAtLeast(contents, itemStack, 1);
 	}
 
+	/**
+	 * Checks if the given list of contents contains at least the specified amount of items that are
+	 * accepted by the given {@link Predicate}.
+	 * <p>
+	 * The given Predicate is only invoked for {@link ItemUtils#isEmpty(ItemStack) non-empty}
+	 * ItemStacks.
+	 * 
+	 * @param contentsList
+	 *            the list of contents to search through, not <code>null</code>
+	 * @param predicate
+	 *            the predicate, not <code>null</code>
+	 * @param amount
+	 *            the amount of items to check for
+	 * @return <code>true</code> if at least the specified amount of items was found
+	 */
+	public static boolean containsAtLeast(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadOnly []> contentsList,
+			Predicate<@ReadOnly ? super ItemStack> predicate,
+			int amount
+	) {
+		Validate.notNull(contentsList, "contentsList is null");
+		Validate.notNull(predicate, "predicate is null");
+		if (amount <= 0) return true;
+
+		int remainingAmount = amount;
+		for (var contents : contentsList) {
+			for (ItemStack itemStack : contents) {
+				if (itemStack == null) continue;
+				if (ItemUtils.isEmpty(itemStack)) continue;
+				if (!predicate.test(itemStack)) continue;
+
+				remainingAmount -= itemStack.getAmount();
+				if (remainingAmount <= 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the given list of contents contains at least the specified amount of items that
+	 * {@link ItemData#matches(ItemStack) match} the given {@link ItemData}.
+	 * 
+	 * @param contentsList
+	 *            the list of contents to search through, not <code>null</code>
+	 * @param itemData
+	 *            the item data to check for, not <code>null</code>
+	 * @param amount
+	 *            the amount of items to check for
+	 * @return <code>true</code> if at least the specified amount of items was found
+	 */
+	public static boolean containsAtLeast(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadOnly []> contentsList,
+			ItemData itemData,
+			int amount
+	) {
+		return containsAtLeast(contentsList, ItemUtils.matchingItems(itemData), amount);
+	}
+
+	/**
+	 * Checks if the given list of contents contains at least the specified amount of items that are
+	 * {@link ItemStack#isSimilar(ItemStack) similar} to the given {@link ItemStack}.
+	 * 
+	 * @param contentsList
+	 *            the list of contents to search through, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to check for, not <code>null</code>
+	 * @param amount
+	 *            the amount of items to check for
+	 * @return <code>true</code> if at least the specified amount of items was found
+	 */
+	public static boolean containsAtLeast(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadOnly []> contentsList,
+			@ReadOnly ItemStack itemStack,
+			int amount
+	) {
+		return containsAtLeast(contentsList, ItemUtils.similarItems(itemStack), amount);
+	}
+
+	/**
+	 * Checks if the given list of contents contains at least the specified amount of items that are
+	 * {@link UnmodifiableItemStack#isSimilar(ItemStack) similar} to the given {@link ItemStack}.
+	 * 
+	 * @param contentsList
+	 *            the list of contents to search through, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to check for, not <code>null</code>
+	 * @param amount
+	 *            the amount of items to check for
+	 * @return <code>true</code> if at least the specified amount of items was found
+	 */
+	public static boolean containsAtLeast(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadOnly []> contentsList,
+			UnmodifiableItemStack itemStack,
+			int amount
+	) {
+		return containsAtLeast(contentsList, ItemUtils.similarItems(itemStack), amount);
+	}
+
 	// ItemStack Iterable
 
 	/**
@@ -243,11 +346,13 @@ public final class InventoryUtils {
 		Validate.notNull(contents, "contents is null");
 		Validate.notNull(predicate, "predicate is null");
 		if (amount <= 0) return true;
+
 		int remainingAmount = amount;
 		for (ItemStack itemStack : contents) {
 			if (itemStack == null) continue;
 			if (ItemUtils.isEmpty(itemStack)) continue;
 			if (!predicate.test(itemStack)) continue;
+
 			remainingAmount -= itemStack.getAmount();
 			if (remainingAmount <= 0) {
 				return true;
@@ -365,7 +470,8 @@ public final class InventoryUtils {
 	 */
 	public static int addItems(
 			@ReadOnly @Nullable ItemStack @ReadWrite [] contents,
-			@ReadOnly ItemStack item, int amount
+			@ReadOnly ItemStack item,
+			int amount
 	) {
 		return addItems(contents, UnmodifiableItemStack.ofNonNull(item), amount);
 	}
@@ -485,6 +591,114 @@ public final class InventoryUtils {
 
 		// Not all items did fit into the inventory:
 		return remaining;
+	}
+
+	/**
+	 * Adds the specified amount of items of the given {@link UnmodifiableItemStack} to the given
+	 * list of contents.
+	 * <p>
+	 * This first tries to add the items to contents that already contain a
+	 * {@link UnmodifiableItemStack#isSimilar(ItemStack) similar} item, and then to the remaining
+	 * contents. Within each contents, {@link #addItems(ItemStack[], UnmodifiableItemStack, int)} is
+	 * used.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param item
+	 *            the item to add, not <code>null</code>
+	 * @param amount
+	 *            the amount to add
+	 * @return the amount of items that could not be added, <code>0</code> on complete success
+	 */
+	public static int addItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			UnmodifiableItemStack item,
+			int amount
+	) {
+		Validate.notNull(contentsList, "contentsList is null");
+		Validate.notNull(item, "item is null");
+		Validate.isTrue(amount >= 0, "amount is negative");
+		if (amount == 0) return 0;
+
+		int remaining = amount;
+		// First pass: Contents that already contain a similar item. Second pass: The rest.
+		for (int pass = 0; pass < 2; pass++) {
+			for (var contents : contentsList) {
+				if (remaining <= 0) return 0;
+
+				// Skip if either:
+				// - containsSimilar and pass==1 (already handled in pass 0)
+				// - !containsSimilar and pass==0 (skipped in pass 0)
+				boolean containsSimilar = containsAtLeast(contents, item, 1);
+				if (containsSimilar ? (pass != 0) : (pass == 0)) {
+					continue;
+				}
+
+				remaining = addItems(contents, item, remaining);
+			}
+		}
+		return remaining;
+	}
+
+	/**
+	 * Adds the given {@link ItemStack} to the given list of contents.
+	 * <p>
+	 * See {@link #addItems(List, UnmodifiableItemStack, int)} for details on how the items are
+	 * distributed across the contents.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to add, not <code>null</code>
+	 * @return the amount of items that could not be added, <code>0</code> on complete success
+	 */
+	public static int addItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			@ReadOnly ItemStack itemStack
+	) {
+		return addItems(contentsList, itemStack, ItemUtils.getItemStackAmount(itemStack));
+	}
+
+	/**
+	 * Adds the specified amount of items of the given {@link ItemStack} to the given list of
+	 * contents.
+	 * <p>
+	 * See {@link #addItems(List, UnmodifiableItemStack, int)} for details on how the items are
+	 * distributed across the contents.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param item
+	 *            the item to add, not <code>null</code>
+	 * @param amount
+	 *            the amount to add
+	 * @return the amount of items that could not be added, <code>0</code> on complete success
+	 */
+	public static int addItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			@ReadOnly ItemStack item,
+			int amount
+	) {
+		return addItems(contentsList, UnmodifiableItemStack.ofNonNull(item), amount);
+	}
+
+	/**
+	 * Adds the given {@link UnmodifiableItemStack} to the given list of contents.
+	 * <p>
+	 * See {@link #addItems(List, UnmodifiableItemStack, int)} for details on how the items are
+	 * distributed across the contents.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to add, not <code>null</code>
+	 * @return the amount of items that could not be added, <code>0</code> on complete success
+	 */
+	public static int addItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			UnmodifiableItemStack itemStack
+	) {
+		return addItems(contentsList, itemStack, ItemUtils.getItemStackAmount(itemStack));
 	}
 
 	/**
@@ -610,6 +824,103 @@ public final class InventoryUtils {
 
 		if (removeAll) return 0;
 		return remaining;
+	}
+
+	/**
+	 * Removes the specified amount of items accepted by the given {@link Predicate} from the given
+	 * list of contents.
+	 * <p>
+	 * Within each contents array, {@link #removeItems(ItemStack[], Predicate, int)} is used.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemMatcher
+	 *            the item matcher, not <code>null</code>
+	 * @param amount
+	 *            the amount of items to remove
+	 * @return the amount of items that could not be removed, or <code>0</code> if all items were
+	 *         removed
+	 */
+	public static int removeItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			Predicate<@ReadOnly ? super ItemStack> itemMatcher,
+			int amount
+	) {
+		Validate.notNull(contentsList, "contentsList is null");
+		Validate.notNull(itemMatcher, "itemMatcher is null");
+		Validate.isTrue(amount >= 0, "amount is negative");
+		if (amount == 0) return 0;
+
+		int remaining = amount;
+		for (var contents : contentsList) {
+			if (remaining <= 0) break;
+			remaining = removeItems(contents, itemMatcher, remaining);
+		}
+
+		return remaining;
+	}
+
+	/**
+	 * Removes the given {@link UnmodifiableItemStack} from the given list of contents.
+	 * <p>
+	 * Within each contents array, {@link #removeItems(ItemStack[], Predicate, int)} is used.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to remove, not <code>null</code>
+	 * @return the amount of items that could not be removed, or <code>0</code> if all items were
+	 *         removed
+	 */
+	public static int removeItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			UnmodifiableItemStack itemStack
+	) {
+		Validate.notNull(itemStack, "itemStack is null");
+		return removeItems(contentsList, ItemUtils.similarItems(itemStack), itemStack.getAmount());
+	}
+
+	/**
+	 * Removes the specified amount of items that {@link ItemData#matches(ItemStack) match} the
+	 * given {@link ItemData} from the given list of contents.
+	 * <p>
+	 * Within each contents array, {@link #removeItems(ItemStack[], Predicate, int)} is used.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemData
+	 *            the item data to match, not <code>null</code>
+	 * @param amount
+	 *            the amount of matching items to remove
+	 * @return the amount of items that could not be removed, or <code>0</code> if all items were
+	 *         removed
+	 */
+	public static int removeItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			ItemData itemData,
+			int amount
+	) {
+		return removeItems(contentsList, ItemUtils.matchingItems(itemData), amount);
+	}
+
+	/**
+	 * Removes the given {@link ItemStack} from the given list of contents.
+	 * <p>
+	 * Within each contents array, {@link #removeItems(ItemStack[], Predicate, int)} is used.
+	 * 
+	 * @param contentsList
+	 *            the list of contents, not <code>null</code>
+	 * @param itemStack
+	 *            the item stack to remove, not <code>null</code>
+	 * @return the amount of items that could not be removed, or <code>0</code> if all items were
+	 *         removed
+	 */
+	public static int removeItems(
+			@ReadOnly List<@ReadOnly @Nullable ItemStack @ReadWrite []> contentsList,
+			@ReadOnly ItemStack itemStack
+	) {
+		Validate.notNull(itemStack, "itemStack is null");
+		return removeItems(contentsList, ItemUtils.similarItems(itemStack), itemStack.getAmount());
 	}
 
 	public static void setStorageContents(

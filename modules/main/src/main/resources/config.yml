@@ -5,7 +5,7 @@
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 
 # Determines the required config migrations. Do not edit manually!
-config-version: 11
+config-version: 12
 # Determines the required config item data migrations. Do not edit manually!
 data-version: 4325
 # The initial debugging state of the plugin.
@@ -194,7 +194,9 @@ deleting-player-shop-returns-creation-item: false
 # who is attempting to create the shopkeeper.
 require-container-recently-placed: true
 # The maximum distance a player shopkeeper can be placed from its backing
-# container. This cannot be set to a value greater than 50.
+# container(s).
+# This cannot be set to a value greater than 50: The shop containers are meant
+# to be nearby so that they are loaded when a player interacts with the shop.
 max-container-distance: 15
 # The default maximum number of shops a player can have. Set to -1 to disable
 # this limit.
@@ -211,11 +213,11 @@ max-shops-perm-options: 5,15,25
 protect-containers: true
 # Whether to prevent item movements from and to protected shop containers (via
 # hoppers, droppers, etc.). If you disable this, you and your players will have
-# to somehow else protect their shop container from unauthorized players who may
-# maliciously insert or extract items. This can be rather tricky even for land
-# protection plugins, because items can also be extracted via hopper minecarts.
-# Your land protection plugin would need to prevent other players from placing
-# or pushing those minecarts into a protected region.
+# to somehow else protect their shop containers from unauthorized players who
+# may maliciously insert or extract items. This can be rather tricky even for
+# land protection plugins, because items can also be extracted via hopper
+# minecarts. Your land protection plugin would need to prevent other players
+# from placing or pushing those minecarts into a protected region.
 # Item movement will always be allowed if the container protection is disabled.
 prevent-item-movement: true
 # Whether to prevent copper golems from interacting with protected copper chest
@@ -224,7 +226,9 @@ prevent-item-movement: true
 # players placing copper golems nearby. This setting has no effect if the
 # container protection is disabled.
 prevent-copper-golem-access: true
-# Whether to delete player shopkeepers when their container is broken.
+# Whether to delete player shopkeepers when their last container is broken.
+# This also deletes player shopkeepers that somehow ended up without any
+# container (e.g. save data modified or container removed via the API).
 delete-shopkeeper-on-break-container: false
 
 # If enabled (set to a value greater than 0), Shopkeepers will check for and
@@ -588,11 +592,25 @@ members-item: 'minecraft:player_head'
 # The item used for the add-member shop editor button.
 add-member-item: 'minecraft:name_tag'
 
-# Whether the editor menu of player shops contains an option to open the shop's
-# container.
-enable-container-option-on-player-shop: true
-# The item used for the 'open container' editor button.
+# The maximum number of containers a single player shop can use. Double chests
+# count as a single container.
+# Must be at least 1. The maximum supported value is 36.
+# Prefer a small value: Additional containers have a performance impact, e.g.
+# when processing trades.
+# When this setting is reduced, existing shops still use all their previously
+# added containers, but no new containers can be added. When set to 1, all
+# existing containers are treated as type "stock-and-earnings".
+# If set to 1 and a shop only has a single container, the editor shows that
+# single container instead of a button to open the containers menu.
+max-containers-per-player-shop: 9
+# The item used to represent shop containers in the editor.
 container-item: 'minecraft:chest'
+# The item used for the add-container shop editor button.
+add-container-item: 'minecraft:lime_stained_glass_pane'
+# Whether players can remotely open the inventory of shop containers from the
+# shop editor. If disabled, the shop containers are still shown in the editor,
+# but they cannot be opened.
+enable-player-shop-open-container: true
 
 # The item used for the trade notifications editor button in player shops.
 trade-notifications-item: 'minecraft:bell'

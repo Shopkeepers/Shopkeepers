@@ -76,10 +76,10 @@ button-members: "&aShop members"
 button-members-lore:
 - "Manage the shop members."
 - "Currently: &e{memberCount}"
-button-container: "&aView shop inventory"
-button-container-lore:
-- Lets you view the inventory
-- your shopkeeper is using
+button-containers: "&aShop containers"
+button-containers-lore:
+- "Manage the shop containers."
+- "Currently: &e{containerCount}"
 button-trade-notifications: "&aTrade Notifications"
 button-trade-notifications-lore:
 - "Toggles trade notifications"
@@ -378,6 +378,54 @@ player-shop-access-level-description-container: "Can access shop containers."
 player-shop-access-level-description-edit: "Can access shop containers\nand edit the shop."
 player-shop-access-level-description-full: "Full editing rights,\nincluding the shop members\nand deleting the shop."
 
+shop-container-type-stock: "Stock"
+shop-container-type-earnings: "Earnings"
+shop-container-type-stock-and-earnings: "Stock and Earnings"
+
+shop-container-type-description-stock: "The shop draws its stock\nfrom this container."
+shop-container-type-description-earnings: "The shop deposits its\nearnings into this container."
+shop-container-type-description-stock-and-earnings: "The shop draws its stock from\nand deposits its earnings\ninto this container."
+
+shop-containers-editor-title: "Shop Containers"
+
+shop-container-title: "&aShop Container"
+shop-container-none-lore:
+- "&4No container available."
+shop-container-lore:
+- "Location: &e{container_world}, {container_x}, {container_y}, {container_z}"
+- "{container_state}"
+- "Type: &e{container_type}"
+- "{container_type_description}"
+- "{container_action_change_type}"
+- "{container_action_open}"
+- "{container_action_remove}"
+single-shop-container-lore:
+- "Location: &e{container_world}, {container_x}, {container_y}, {container_z}"
+- "{container_state}"
+- "{container_action_open}"
+
+shop-container-action-change-type: "Left/Right click to change type."
+shop-container-action-open: "Shift right click to open."
+single-shop-container-action-open: "Click to open inventory."
+shop-container-action-remove: "Shift left click to remove."
+
+shop-container-state-missing: "State: &4Missing"
+shop-container-state-double-chest: "State: &eDouble chest"
+
+button-add-shop-container: "&aAdd container"
+button-add-shop-container-lore: []
+
+shop-container-missing: "&7The container is currently missing."
+click-shop-container-to-add: "&aPlease right-click a container to add it to the shop.\n  &aLeft-click to abort."
+container-selection-aborted: "&7Container selection aborted."
+shop-container-added: "&aContainer added: &e{container_x}, {container_y}, {container_z}"
+shop-container-removed: "&aContainer removed: &e{container_x}, {container_y}, {container_z}"
+
+confirmation-ui-remove-shop-container-title: "&cRemove container?"
+confirmation-ui-remove-shop-container-lore:
+- "You are about to remove the"
+- "container at &e({container_x}, {container_y}, {container_z})."
+
 admin-sign-shop-line1: "&2[SHOP]"
 admin-sign-shop-line2: "&7{shopName}"
 admin-sign-shop-line3: ""
@@ -475,7 +523,6 @@ cannot-trade-no-offers: "&7This shop currently has no offers. Check again later!
 no-offers-open-editor-description: "&eYou can edit this shop by right clicking it while sneaking."
 cannot-trade-with-own-shop: "&7You cannot trade with your own shop."
 cannot-trade-while-member-online: "&7You cannot trade while a member of this shop ('&e{member}&7') is online."
-cannot-trade-with-shop-missing-container: "&7You cannot trade with this shop, because its container is missing."
 cannot-trade-unexpected-trade: "&7Trade aborted: The traded items do not match what this shopkeeper expected."
 cannot-trade-items-not-strictly-matching: "&7Trade aborted: The offered items do not exactly match the required items."
 cannot-trade-insufficient-storage-space: "&7Trade aborted: This shop does not have enough storage space."

@@ -140,6 +140,7 @@ public class ContainerSelection {
 			TextUtils.sendMessage(player, Messages.noContainerAccess);
 			return false;
 		}
+
 		return true;
 	}
 }

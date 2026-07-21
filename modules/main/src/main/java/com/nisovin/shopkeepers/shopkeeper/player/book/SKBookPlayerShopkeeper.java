@@ -18,7 +18,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
-import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.book.BookPlayerShopkeeper;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
@@ -101,7 +100,8 @@ public class SKBookPlayerShopkeeper
 
 	@Override
 	public List<? extends TradingRecipe> getTradingRecipes(@Nullable Player player) {
-		Map<? extends String, ? extends ItemStack> containerBooksByTitle = this.getCopyableBooksFromContainer();
+		Map<? extends String, ? extends ItemStack> containerBooksByTitle
+				= this.getCopyableBooksFromStockContainers();
 		boolean hasBlankBooks = this.hasContainerBlankBooks();
 		List<? extends BookOffer> offers = this.getOffers();
 		List<TradingRecipe> recipes = new ArrayList<>(offers.size());
@@ -113,7 +113,7 @@ public class SKBookPlayerShopkeeper
 				outOfStock = true;
 				bookItem = this.createDummyBook(bookTitle);
 			} else {
-				// Create a copy of the book from the container:
+				// Create a copy of the book from the stock containers:
 				assert BookItems.isCopyableBook(bookItem);
 				bookItem = BookItems.copyBook(bookItem);
 			}
@@ -135,20 +135,21 @@ public class SKBookPlayerShopkeeper
 
 	/**
 	 * Gets the {@link BookItems#isCopyableBook(ItemStack) copyable}
-	 * {@link BookItems#isWrittenBook(ItemStack) written book} items from the shopkeeper's
-	 * {@link PlayerShopkeeper#getContainer() container}.
+	 * {@link BookItems#isWrittenBook(ItemStack) written book} items from the shopkeeper's stock
+	 * containers.
 	 * <p>
 	 * Book items without title are omitted. If multiple book items share the same title, only the
 	 * first encountered book item with that title is returned.
 	 * 
-	 * @return the book items mapped by their title, or an empty Map if the container is not found
+	 * @return the book items mapped by their title, or an empty Map if no stock containers are
+	 *         found
 	 */
-	protected Map<? extends String, ? extends ItemStack> getCopyableBooksFromContainer() {
+	protected Map<? extends String, ? extends ItemStack> getCopyableBooksFromStockContainers() {
 		// Linked Map: Preserves the order of encountered items.
 		Map<String, ItemStack> booksByTitle = new LinkedHashMap<>();
-		// Empty if the container is not found:
-		@Nullable ItemStack[] contents = this.getContainerContents();
-		for (ItemStack itemStack : contents) {
+		// Empty if no stock containers are found:
+		@Nullable ItemStack[] stockContainerContents = this.getStockContainerContents();
+		for (ItemStack itemStack : stockContainerContents) {
 			if (itemStack == null) continue;
 			BookMeta bookMeta = BookItems.getBookMeta(itemStack);
 			if (bookMeta == null) continue; // Not a written book
@@ -164,15 +165,26 @@ public class SKBookPlayerShopkeeper
 	}
 
 	/**
-	 * Checks if the shopkeeper's container contains any blank books (i.e. items of type
+	 * Checks if any of the shopkeeper's stock containers contains blank books (i.e. items of type
 	 * {@link Material#WRITABLE_BOOK}).
 	 * 
-	 * @return <code>true</code> if the container is found and contains blank books
+	 * @return <code>true</code> if the stock containers contain blank books
 	 */
 	protected boolean hasContainerBlankBooks() {
-		Inventory containerInventory = this.getContainerInventory();
-		if (containerInventory == null) return false; // Container not found
-		return containerInventory.contains(Material.WRITABLE_BOOK);
+		for (var container : this.getContainers()) {
+			if (!container.getType().isStock()) {
+				continue;
+			}
+
+			Inventory containerInventory = container.getInventory();
+			if (containerInventory == null) continue; // Container not found
+
+			if (containerInventory.contains(Material.WRITABLE_BOOK)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -180,7 +192,7 @@ public class SKBookPlayerShopkeeper
 	 * item with the given title.
 	 * <p>
 	 * This dummy book item is used as a replacement in the shopkeeper editor and trading interface
-	 * if no actual book item with the given title is found in the shopkeeper's container.
+	 * if no actual book item with the given title is found in the shopkeeper's containers.
 	 * 
 	 * @param title
 	 *            the book title

@@ -373,6 +373,22 @@ public class BlockLocation {
 
 	/**
 	 * Checks if the {@link #getWorldName() world name} of this {@link BlockLocation} matches the
+	 * world name of the given other {@link BlockLocation}.
+	 * <p>
+	 * If both locations specify no world, this returns <code>true</code>. If one of the locations
+	 * specifies no world but the other does, this returns <code>false</code>.
+	 * 
+	 * @param other
+	 *            the other {@link BlockLocation} to compare with, not <code>null</code>
+	 * @return <code>true</code> if the world names match
+	 */
+	public final boolean isSameWorld(BlockLocation other) {
+		Validate.notNull(other, "other is null");
+		return Objects.equals(this.worldName, other.worldName);
+	}
+
+	/**
+	 * Checks if the {@link #getWorldName() world name} of this {@link BlockLocation} matches the
 	 * world name of the given {@link Location}.
 	 * <p>
 	 * If both locations specify no world, this returns <code>true</code>. If one of the locations
@@ -400,8 +416,44 @@ public class BlockLocation {
 	 *            the other location, not <code>null</code>
 	 * @return the squared distance
 	 */
+	public final double getDistanceSquared(BlockLocation location) {
+		return this.getDistanceSquared(VECTOR_ZERO, location);
+	}
+
+	/**
+	 * Gets the squared distance between this and the given location.
+	 * <p>
+	 * If the locations are located in different worlds, this returns {@link Double#MAX_VALUE}.
+	 * 
+	 * @param location
+	 *            the other location, not <code>null</code>
+	 * @return the squared distance
+	 */
 	public final double getDistanceSquared(Location location) {
 		return this.getDistanceSquared(VECTOR_ZERO, location);
+	}
+
+	/**
+	 * Gets the squared distance between this and the given location, with an offset added to the
+	 * coordinates of this location.
+	 * <p>
+	 * If the locations are located in different worlds, this returns {@link Double#MAX_VALUE}.
+	 * 
+	 * @param offset
+	 *            the offset to add to the coordinates of this location when calculating the
+	 *            distance, not <code>null</code>
+	 * @param location
+	 *            the other location, not <code>null</code>
+	 * @return the squared distance
+	 */
+	public final double getDistanceSquared(Vector offset, BlockLocation location) {
+		Validate.notNull(offset, "offset is null");
+		if (!this.isSameWorld(location)) return Double.MAX_VALUE;
+
+		double dx = this.getX() + offset.getX() - location.getX();
+		double dy = this.getY() + offset.getY() - location.getY();
+		double dz = this.getZ() + offset.getZ() - location.getZ();
+		return dx * dx + dy * dy + dz * dz;
 	}
 
 	/**

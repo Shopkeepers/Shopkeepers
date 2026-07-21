@@ -12,7 +12,9 @@ import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
+import com.nisovin.shopkeepers.currency.CurrencyInventoryUtils;
 import com.nisovin.shopkeepers.lang.Messages;
+import com.nisovin.shopkeepers.shopkeeper.player.PlayerShopTaxUtils;
 import com.nisovin.shopkeepers.shopkeeper.player.PlayerShopTradingView;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.trading.Trade;
@@ -94,24 +96,23 @@ public class BookPlayerShopTradingView extends PlayerShopTradingView {
 
 		Player tradingPlayer = trade.getTradingPlayer();
 		BookOffer offer = Unsafe.assertNonNull(this.currentOffer);
-		@Nullable ItemStack[] newContainerContents = Unsafe.assertNonNull(this.newContainerContents);
 
-		// Remove a blank book from the container contents:
-		if (InventoryUtils.removeItems(newContainerContents, WRITABLE_BOOK_MATCHER, 1) != 0) {
+		// Remove a blank book from the stock containers:
+		if (InventoryUtils.removeItems(this.stockContents, WRITABLE_BOOK_MATCHER, 1) != 0) {
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientWritableBooks);
 			this.debugPreventedTrade(
-					"The shop's container does not contain any writable (book-and-quill) items."
+					"The shop's containers do not contain any writable (book-and-quill) items."
 			);
 			return false;
 		}
 
-		// Add the earnings to the container contents:
+		// Add the earnings to the earnings containers:
 		// Note: We always use the configured currency items here, ignoring any modifications to the
 		// "received" items during the trade event.
-		int amountAfterTaxes = this.getAmountAfterTaxes(offer.getPrice());
-		if (this.addCurrencyItems(newContainerContents, amountAfterTaxes) != 0) {
+		int amountAfterTaxes = PlayerShopTaxUtils.getAmountAfterTaxes(offer.getPrice());
+		if (CurrencyInventoryUtils.addCurrency(this.earningsContents, amountAfterTaxes) != 0) {
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeInsufficientStorageSpace);
-			this.debugPreventedTrade("The shop's container cannot hold the traded items.");
+			this.debugPreventedTrade("The shop's containers cannot hold the traded items.");
 			return false;
 		}
 

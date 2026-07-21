@@ -51,6 +51,8 @@ import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.SKDefaultShopTypes;
 import com.nisovin.shopkeepers.shopkeeper.SKShopTypesRegistry;
 import com.nisovin.shopkeepers.shopkeeper.migration.ShopkeeperDataMigrator;
+import com.nisovin.shopkeepers.container.SKDefaultShopContainerTypes;
+import com.nisovin.shopkeepers.container.SKShopContainerTypeRegistry;
 import com.nisovin.shopkeepers.shopkeeper.player.members.SKDefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.shopkeeper.player.members.SKPlayerShopAccessLevelRegistry;
 import com.nisovin.shopkeepers.shopkeeper.registry.SKShopkeeperRegistry;
@@ -122,6 +124,10 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 	// Player shop access levels:
 	private final SKPlayerShopAccessLevelRegistry playerShopAccessLevelRegistry = new SKPlayerShopAccessLevelRegistry();
 	private final SKDefaultPlayerShopAccessLevels defaultPlayerShopAccessLevels = new SKDefaultPlayerShopAccessLevels();
+
+	// Shop container types:
+	private final SKShopContainerTypeRegistry shopContainerTypeRegistry = new SKShopContainerTypeRegistry();
+	private final SKDefaultShopContainerTypes defaultShopContainerTypes = new SKDefaultShopContainerTypes();
 
 	// Shopkeeper registry:
 	private final SKShopkeeperRegistry shopkeeperRegistry = new SKShopkeeperRegistry(
@@ -224,6 +230,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		Log.info("Registering defaults.");
 		defaultShopObjectTypes.onRegisterDefaults();
 		playerShopAccessLevelRegistry.registerAll(defaultPlayerShopAccessLevels.getAllAccessLevels());
+		shopContainerTypeRegistry.registerAll(defaultShopContainerTypes.getAllContainerTypes());
 		uiRegistry.registerAll(defaultUITypes.getAllUITypes());
 		shopTypesRegistry.registerAll(defaultShopTypes.getAll());
 		shopObjectTypesRegistry.registerAll(defaultShopObjectTypes.getAll());
@@ -536,6 +543,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		shopTypesRegistry.clearAll();
 		shopObjectTypesRegistry.clearAll();
 		playerShopAccessLevelRegistry.clearAll();
+		shopContainerTypeRegistry.clearAll();
 		uiRegistry.clearAll();
 
 		forcingEntityTeleporter.onDisable();
@@ -679,6 +687,18 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 	@Override
 	public SKDefaultPlayerShopAccessLevels getDefaultPlayerShopAccessLevels() {
 		return defaultPlayerShopAccessLevels;
+	}
+
+	// SHOP CONTAINER TYPES
+
+	@Override
+	public SKShopContainerTypeRegistry getShopContainerTypeRegistry() {
+		return shopContainerTypeRegistry;
+	}
+
+	@Override
+	public SKDefaultShopContainerTypes getDefaultShopContainerTypes() {
+		return defaultShopContainerTypes;
 	}
 
 	// PROTECTED CONTAINERS

@@ -75,7 +75,14 @@ public final class SKPlayerShopMember implements PlayerShopMember {
 				&& !Settings.allowMembersWithFullAccess) {
 			return DefaultPlayerShopAccessLevels.EDIT();
 		}
+
 		return accessLevel;
+	}
+
+	@Override
+	public String toString() {
+		return "SKPlayerShopMember[user=" + user.getName()
+				+ ", accessLevel=" + getAccessLevel().getIdentifier() + "]";
 	}
 
 	// //////////

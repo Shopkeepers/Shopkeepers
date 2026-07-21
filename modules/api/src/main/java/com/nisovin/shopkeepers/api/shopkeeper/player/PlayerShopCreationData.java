@@ -10,7 +10,6 @@ import com.google.common.base.Preconditions;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
-import com.nisovin.shopkeepers.api.shopobjects.virtual.VirtualShopObjectType;
 
 /**
  * Shop creation data specific for player shops.
@@ -157,18 +156,7 @@ public class PlayerShopCreationData extends ShopCreationData {
 			Block shopContainer
 	) {
 		super(creator, shopType, shopObjectType, spawnLocation, targetedBlockFace);
-		// The shop container needs to be located in a world, which is only available for
-		// non-virtual shops:
-		// TODO Decouple shopkeeper/shop object location from shop container location? (allows
-		// containers in different world, and virtual player shopkeepers connected to a container
-		// located in a world)
-		Preconditions.checkArgument(!(shopObjectType instanceof VirtualShopObjectType),
-				"Virtual player shops are not yet supported!");
 		Preconditions.checkNotNull(shopContainer, "shopContainer is null");
-		if (spawnLocation != null) {
-			Preconditions.checkArgument(shopContainer.getWorld().equals(spawnLocation.getWorld()),
-					"The shop container is located in a different world than the spawn location!");
-		}
 		// The creator cannot be null for player shopkeepers:
 		Preconditions.checkNotNull(creator, "creator is null");
 		this.shopContainer = shopContainer;
@@ -176,8 +164,6 @@ public class PlayerShopCreationData extends ShopCreationData {
 
 	/**
 	 * The container that is backing the player shop.
-	 * <p>
-	 * Has to be located in the same world the shopkeeper.
 	 * <p>
 	 * This does not necessarily have to be a chest, but could be another type of supported shop
 	 * container as well.
@@ -192,8 +178,6 @@ public class PlayerShopCreationData extends ShopCreationData {
 
 	/**
 	 * The container that is backing the player shop.
-	 * <p>
-	 * Has to be located in the same world the shopkeeper.
 	 * <p>
 	 * This does not necessarily have to be a chest, but could be another type of supported shop
 	 * container as well.

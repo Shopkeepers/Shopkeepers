@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -29,6 +28,9 @@ import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopkeeper.TradingRecipe;
+import com.nisovin.shopkeepers.api.shopkeeper.container.DefaultShopContainerTypes;
+import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
+import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainerType;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
@@ -39,10 +41,10 @@ import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
-import com.nisovin.shopkeepers.container.ShopContainers;
-import com.nisovin.shopkeepers.container.protection.ProtectedContainers;
+import com.nisovin.shopkeepers.container.SKShopContainer;
 import com.nisovin.shopkeepers.currency.Currencies;
 import com.nisovin.shopkeepers.currency.Currency;
+import com.nisovin.shopkeepers.currency.CurrencyInventoryUtils;
 import com.nisovin.shopkeepers.debug.DebugOptions;
 import com.nisovin.shopkeepers.items.ItemUpdates;
 import com.nisovin.shopkeepers.lang.Messages;
@@ -55,13 +57,13 @@ import com.nisovin.shopkeepers.shopkeeper.migration.Migration;
 import com.nisovin.shopkeepers.shopkeeper.migration.MigrationPhase;
 import com.nisovin.shopkeepers.shopkeeper.migration.ShopkeeperDataMigrator;
 import com.nisovin.shopkeepers.shopkeeper.player.members.SKPlayerShopMember;
+import com.nisovin.shopkeepers.ui.containers.PlayerShopContainersEditorViewProvider;
 import com.nisovin.shopkeepers.ui.members.PlayerShopMembersEditorViewProvider;
 import com.nisovin.shopkeepers.user.SKUser;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
 import com.nisovin.shopkeepers.util.bukkit.BlockLocation;
 import com.nisovin.shopkeepers.util.bukkit.LocationUtils;
-import com.nisovin.shopkeepers.util.bukkit.MutableBlockLocation;
 import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.data.container.DataContainer;
@@ -89,6 +91,92 @@ import com.nisovin.shopkeepers.util.logging.Log;
 public abstract class AbstractPlayerShopkeeper
 		extends AbstractShopkeeper implements PlayerShopkeeper {
 
+	static {
+		// Register shopkeeper data migrations:
+		// TODO Can be removed once all servers are expected to have updated to our new item stack
+		// serialization format.
+		ShopkeeperDataMigrator.registerMigration(new Migration(
+				"hire-cost-item",
+				MigrationPhase.ofShopkeeperClass(AbstractPlayerShopkeeper.class)
+		) {
+			@Override
+			public boolean migrate(
+					ShopkeeperData shopkeeperData,
+					String logPrefix
+			) throws InvalidDataException {
+				@Nullable UnmodifiableItemStack hireCost = shopkeeperData.get(HIRE_COST_ITEM);
+				if (hireCost == null) return false; // Nothing to migrate
+				assert !ItemUtils.isEmpty(hireCost);
+
+				boolean itemMigrated = false;
+				@Nullable UnmodifiableItemStack migratedHireCost = ItemMigration.migrateItemStack(hireCost);
+				if (!ItemUtils.isSimilar(hireCost, migratedHireCost)) {
+					if (ItemUtils.isEmpty(migratedHireCost)) {
+						throw new InvalidDataException("Hire cost item migration failed: " + hireCost);
+					}
+
+					hireCost = migratedHireCost;
+					itemMigrated = true;
+				}
+
+				if (!itemMigrated) return false; // Nothing migrated.
+
+				// Write back the migrated hire cost item:
+				shopkeeperData.set(HIRE_COST_ITEM, hireCost);
+				Log.debug(DebugOptions.itemMigrations, () -> logPrefix + "Migrated hire cost item.");
+				return true;
+			}
+		});
+
+		// Migrate the legacy single-container storage (chestx/y/z) to the new container list:
+		ShopkeeperDataMigrator.registerMigration(new Migration(
+				"container-list",
+				MigrationPhase.ofShopkeeperClass(AbstractPlayerShopkeeper.class)
+		) {
+			@Override
+			public boolean migrate(
+					ShopkeeperData shopkeeperData,
+					String logPrefix
+			) throws InvalidDataException {
+				// Read the legacy container location (null if missing or already migrated):
+				BlockLocation legacyContainer = shopkeeperData.getOrNullIfMissing(CONTAINER);
+				if (legacyContainer == null) return false; // Nothing to migrate
+
+				// Apply the shopkeeper's world to the container: The legacy storage did not store
+				// the container's world, but derived it from the shopkeeper's world.
+				// If the shopkeeper has no world (e.g. missing or a virtual shopkeeper): Flagged as
+				// data error so the shopkeeper is not loaded and can be inspected and migrated
+				// manually.
+				String worldName = shopkeeperData.getOrNullIfMissing(AbstractShopkeeper.WORLD_NAME);
+				if (worldName == null) {
+					throw new InvalidDataException(
+							"Container list migration failed: The shopkeeper has no world!"
+					);
+				}
+
+				var location = new BlockLocation(
+						worldName,
+						legacyContainer.getX(),
+						legacyContainer.getY(),
+						legacyContainer.getZ()
+				);
+
+				// Convert to the new container list format:
+				var container = new SKShopContainer(
+						location,
+						DefaultShopContainerTypes.STOCK_AND_EARNINGS()
+				);
+				shopkeeperData.set(CONTAINERS, Collections.singletonList(container));
+
+				// Remove the legacy container data:
+				shopkeeperData.remove(CONTAINER.getName());
+
+				Log.debug(() -> logPrefix + "Migrated container to the container list format.");
+				return true;
+			}
+		});
+	}
+
 	private static final int CHECK_CONTAINER_PERIOD_SECONDS = 5;
 	private static final CyclicCounter nextCheckingOffset = new CyclicCounter(
 			1,
@@ -99,12 +187,10 @@ public abstract class AbstractPlayerShopkeeper
 	private PlayerShopMember owner = SKPlayerShopMember.EMPTY;
 	private final List<SKPlayerShopMember> members = new ArrayList<SKPlayerShopMember>();
 	private final List<? extends PlayerShopMember> membersView = Collections.unmodifiableList(members);
-	// The world name of this BlockLocation matches the shopkeeper world name.
-	// TODO Allow the container to be located in a world different to that of the shopkeeper? This
-	// could also be useful for virtual player shops, which don't have a world themselves, but would
-	// still need a container block in a world.
-	// Immutable, valid after successful initialization:
-	private BlockLocation container = BlockLocation.EMPTY;
+	// Each container stores its own world, which is usually, but not necessarily, the shopkeeper's
+	// world:
+	private final List<SKShopContainer> containers = new ArrayList<SKShopContainer>();
+	private final List<? extends SKShopContainer> containersView = Collections.unmodifiableList(containers);
 	private boolean notifyOnTrades = NOTIFY_ON_TRADES.getDefaultValue();
 	private @Nullable UnmodifiableItemStack hireCost = null; // Null if not for hire
 
@@ -131,16 +217,24 @@ public abstract class AbstractPlayerShopkeeper
 		super.loadFromCreationData(id, shopCreationData);
 		PlayerShopCreationData playerShopCreationData = (PlayerShopCreationData) shopCreationData;
 		Player owner = Unsafe.assertNonNull(playerShopCreationData.getCreator());
-		Block container = playerShopCreationData.getShopContainer();
+		Block containerBlock = playerShopCreationData.getShopContainer();
 
 		this._setOwner(owner.getUniqueId(), Unsafe.assertNonNull(owner.getName()));
-		this._setContainer(container.getX(), container.getY(), container.getZ());
+
+		SKShopContainer container = new SKShopContainer(
+				BlockLocation.of(containerBlock),
+				DefaultShopContainerTypes.STOCK_AND_EARNINGS()
+		);
+		this._setContainers(Collections.singletonList(container));
 	}
 
 	@Override
 	protected void setup() {
 		this.registerViewProviderIfMissing(DefaultUITypes.SHOP_MEMBERS_EDITOR(), () -> {
 			return new PlayerShopMembersEditorViewProvider(this);
+		});
+		this.registerViewProviderIfMissing(DefaultUITypes.SHOP_CONTAINERS_EDITOR(), () -> {
+			return new PlayerShopContainersEditorViewProvider(this);
 		});
 		this.registerViewProviderIfMissing(DefaultUITypes.HIRING(), () -> {
 			return new PlayerShopHiringViewProvider(this);
@@ -153,7 +247,7 @@ public abstract class AbstractPlayerShopkeeper
 		super.loadDynamicState(shopkeeperData);
 		this.loadOwner(shopkeeperData);
 		this.loadMembers(shopkeeperData);
-		this.loadContainer(shopkeeperData);
+		this.loadContainers(shopkeeperData);
 		this.loadNotifyOnTrades(shopkeeperData);
 		this.loadForHire(shopkeeperData);
 	}
@@ -163,7 +257,7 @@ public abstract class AbstractPlayerShopkeeper
 		super.saveDynamicState(shopkeeperData, saveAll);
 		this.saveOwner(shopkeeperData);
 		this.saveMembers(shopkeeperData);
-		this.saveContainer(shopkeeperData);
+		this.saveContainers(shopkeeperData);
 		this.saveNotifyOnTrades(shopkeeperData);
 		this.saveForHire(shopkeeperData);
 	}
@@ -202,7 +296,7 @@ public abstract class AbstractPlayerShopkeeper
 		super.onAdded(cause);
 
 		// Enable the container protection:
-		this.protectContainer();
+		this.protectContainers();
 	}
 
 	@Override
@@ -210,7 +304,7 @@ public abstract class AbstractPlayerShopkeeper
 		super.onRemoval(cause);
 
 		// Disable the container protection:
-		this.unprotectContainer();
+		this.unprotectContainers();
 	}
 
 	@Override
@@ -247,22 +341,6 @@ public abstract class AbstractPlayerShopkeeper
 		super.populateMessageArguments(messageArguments);
 		messageArguments.put("owner_name", this::getOwnerName);
 		messageArguments.put("owner_uuid", this::getOwnerUUID);
-	}
-
-	@Override
-	protected void onShopkeeperMoved() {
-		super.onShopkeeperMoved();
-
-		// Update the container location and the registered container protection if the shopkeeper
-		// has been moved to a different world:
-		// The container is (currently) assumed to always be located in the same world as the
-		// shopkeeper. If the shopkeeper is moved to a different world, the container is expected to
-		// also have been moved. Otherwise, if the container cannot be found in the new world,
-		// trading will not work.
-		if (!Objects.equals(this.getWorldName(), container.getWorldName())) {
-			// This updates the container's world based on the shopkeeper's current world:
-			this._setContainer(container);
-		}
 	}
 
 	@Override
@@ -686,44 +764,6 @@ public abstract class AbstractPlayerShopkeeper
 			.defaultValue(null)
 			.build();
 
-	static {
-		// Register shopkeeper data migrations:
-		// TODO Can be removed once all servers are expected to have updated to our new item stack
-		// serialization format.
-		ShopkeeperDataMigrator.registerMigration(new Migration(
-				"hire-cost-item",
-				MigrationPhase.ofShopkeeperClass(AbstractPlayerShopkeeper.class)
-		) {
-			@Override
-			public boolean migrate(
-					ShopkeeperData shopkeeperData,
-					String logPrefix
-			) throws InvalidDataException {
-				@Nullable UnmodifiableItemStack hireCost = shopkeeperData.get(HIRE_COST_ITEM);
-				if (hireCost == null) return false; // Nothing to migrate
-				assert !ItemUtils.isEmpty(hireCost);
-
-				boolean itemMigrated = false;
-				@Nullable UnmodifiableItemStack migratedHireCost = ItemMigration.migrateItemStack(hireCost);
-				if (!ItemUtils.isSimilar(hireCost, migratedHireCost)) {
-					if (ItemUtils.isEmpty(migratedHireCost)) {
-						throw new InvalidDataException("Hire cost item migration failed: " + hireCost);
-					}
-
-					hireCost = migratedHireCost;
-					itemMigrated = true;
-				}
-
-				if (!itemMigrated) return false; // Nothing migrated.
-
-				// Write back the migrated hire cost item:
-				shopkeeperData.set(HIRE_COST_ITEM, hireCost);
-				Log.debug(DebugOptions.itemMigrations, () -> logPrefix + "Migrated hire cost item.");
-				return true;
-			}
-		});
-	}
-
 	private void loadForHire(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		assert shopkeeperData != null;
 		this._setForHire(shopkeeperData.get(HIRE_COST_ITEM));
@@ -773,21 +813,20 @@ public abstract class AbstractPlayerShopkeeper
 		return hireCost;
 	}
 
-	// CONTAINER
+	// CONTAINERS
 
-	// TODO Rename the storage keys to containerx/y/z?
-	// TODO Change to a list of containers?
-	// TODO Store container world independently of shopkeeper world?
-	public static final Property<Integer> CONTAINER_X = new BasicProperty<Integer>()
+	// TODO Legacy single-container storage keys (chestx/y/z): Remove once no longer needed for the
+	// migration.
+	private static final Property<Integer> CONTAINER_X = new BasicProperty<Integer>()
 			.dataKeyAccessor("chestx", NumberSerializers.INTEGER)
 			.build();
-	public static final Property<Integer> CONTAINER_Y = new BasicProperty<Integer>()
+	private static final Property<Integer> CONTAINER_Y = new BasicProperty<Integer>()
 			.dataKeyAccessor("chesty", NumberSerializers.INTEGER)
 			.build();
-	public static final Property<Integer> CONTAINER_Z = new BasicProperty<Integer>()
+	private static final Property<Integer> CONTAINER_Z = new BasicProperty<Integer>()
 			.dataKeyAccessor("chestz", NumberSerializers.INTEGER)
 			.build();
-	public static final Property<BlockLocation> CONTAINER = new BasicProperty<BlockLocation>()
+	private static final Property<BlockLocation> CONTAINER = new BasicProperty<BlockLocation>()
 			.name("container")
 			.dataAccessor(new DataAccessor<BlockLocation>() {
 				@Override
@@ -813,119 +852,271 @@ public abstract class AbstractPlayerShopkeeper
 			})
 			.build();
 
-	private void loadContainer(ShopkeeperData shopkeeperData) throws InvalidDataException {
+	public static final Property<List<? extends ShopContainer>> CONTAINERS = new BasicProperty<List<? extends ShopContainer>>()
+			.dataKeyAccessor("containers", SKShopContainer.LIST_SERIALIZER)
+			.useDefaultIfMissing()
+			.defaultValue(Collections.emptyList())
+			.build();
+
+	private void loadContainers(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		assert shopkeeperData != null;
-		this._setContainer(shopkeeperData.get(CONTAINER));
+		this._setContainers(shopkeeperData.get(CONTAINERS));
 	}
 
-	private void saveContainer(ShopkeeperData shopkeeperData) {
+	private void saveContainers(ShopkeeperData shopkeeperData) {
 		assert shopkeeperData != null;
-		shopkeeperData.set(CONTAINER, container);
-	}
-
-	private void protectContainer() {
-		ProtectedContainers protectedContainers = SKShopkeepersPlugin.getInstance().getProtectedContainers();
-		protectedContainers.addContainer(container, this);
-	}
-
-	private void unprotectContainer() {
-		ProtectedContainers protectedContainers = SKShopkeepersPlugin.getInstance().getProtectedContainers();
-		protectedContainers.removeContainer(container, this);
-	}
-
-	protected void _setContainer(int containerX, int containerY, int containerZ) {
-		this._setContainer(new BlockLocation(this.getWorldName(), containerX, containerY, containerZ));
-	}
-
-	protected void _setContainer(BlockLocation container) {
-		Validate.notNull(container, "container is null");
-		if (this.isValid()) {
-			// Disable the protection for the previous container:
-			this.unprotectContainer();
-		}
-
-		// Update the container:
-		// Ensure that the container's world matches the shopkeeper world:
-		BlockLocation newContainer = container;
-		String shopkeeperWorldName = this.getWorldName(); // Can be null for virtual shopkeepers
-		if (!Objects.equals(container.getWorldName(), shopkeeperWorldName)) {
-			MutableBlockLocation containerCopy = container.mutableCopy();
-			containerCopy.setWorldName(shopkeeperWorldName);
-			newContainer = containerCopy;
-		}
-
-		// Ensure that we store an immutable BlockLocation:
-		this.container = newContainer.immutable();
-
-		if (this.isValid()) {
-			// Enable the protection for the new container:
-			this.protectContainer();
-		}
+		shopkeeperData.set(CONTAINERS, containersView);
 	}
 
 	@Override
-	public int getContainerX() {
-		return container.getX();
+	public Collection<? extends SKShopContainer> getContainers() {
+		return containersView;
 	}
 
-	@Override
-	public int getContainerY() {
-		return container.getY();
-	}
-
-	@Override
-	public int getContainerZ() {
-		return container.getZ();
-	}
-
-	public BlockLocation getContainerLocation() {
-		return container;
-	}
-
-	@Override
-	public void setContainer(int containerX, int containerY, int containerZ) {
-		this._setContainer(containerX, containerY, containerZ);
-		this.markDirty();
-	}
-
-	@Override
-	public @Nullable Block getContainer() {
-		return container.getBlock();
-	}
-
-	// Returns null if the container could not be found.
-	public @Nullable Inventory getContainerInventory() {
-		Block container = this.getContainer();
-		if (container != null && ShopContainers.isSupportedContainer(container.getType())) {
-			return ShopContainers.getInventory(container); // Not null
+	// Returns null if this shopkeeper has no container at the given location.
+	private @Nullable SKShopContainer getContainer(BlockLocation location) {
+		Validate.notNull(location, "location is null");
+		for (SKShopContainer container : containers) {
+			if (container.getLocation().equals(location)) {
+				return container;
+			}
 		}
 		return null;
 	}
 
-	// Returns an empty array if the container could not be found.
-	public @Nullable ItemStack[] getContainerContents() {
-		Inventory containerInventory = this.getContainerInventory();
-		if (containerInventory == null) {
-			// Container not found:
-			return InventoryUtils.emptyItemStackArray();
-		} else {
-			return Unsafe.cast(containerInventory.getContents()); // Not null
+	private void protectContainers() {
+		var protectedContainers = SKShopkeepersPlugin.getInstance().getProtectedContainers();
+		for (SKShopContainer container : containers) {
+			protectedContainers.addContainer(container.getLocation(), this);
+		}
+	}
+
+	private void unprotectContainers() {
+		var protectedContainers = SKShopkeepersPlugin.getInstance().getProtectedContainers();
+		for (SKShopContainer container : containers) {
+			protectedContainers.removeContainer(container.getLocation(), this);
+		}
+	}
+
+	protected void _setContainers(List<? extends ShopContainer> containers) {
+		Validate.notNull(containers, "containers is null");
+		for (ShopContainer container : containers) {
+			Validate.notNull(container, "container is null");
+			Validate.isTrue(container instanceof SKShopContainer,
+					"Container is not of type SKShopContainer!");
+		}
+
+		// Disable the protection for the previous containers:
+		if (this.isValid()) {
+			this.unprotectContainers();
+		}
+
+		this.containers.clear();
+		for (ShopContainer container : containers) {
+			this.containers.add((SKShopContainer) container);
+		}
+
+		// Enable the protection for the new containers:
+		if (this.isValid()) {
+			this.protectContainers();
 		}
 	}
 
 	@Override
-	public int getCurrencyInContainer() {
-		int totalCurrency = 0;
-		// Empty if the container is not found:
-		@Nullable ItemStack[] contents = this.getContainerContents();
-		for (ItemStack itemStack : contents) {
-			if (itemStack == null) continue;
-			Currency currency = Currencies.match(itemStack);
-			if (currency != null) {
-				totalCurrency += (itemStack.getAmount() * currency.getValue());
+	public ShopContainer addContainer(
+			String worldName,
+			int containerX,
+			int containerY,
+			int containerZ,
+			ShopContainerType type
+	) {
+		Validate.notEmpty(worldName, "worldName is null or empty");
+		Validate.notNull(type, "type is null");
+		var location = new BlockLocation(worldName, containerX, containerY, containerZ);
+		Validate.isTrue(this.getContainer(location) == null,
+				"There is already a container at this location!");
+
+		List<SKShopContainer> newContainers = new ArrayList<>(containers);
+		var container = new SKShopContainer(location, type);
+		newContainers.add(container);
+		this._setContainers(newContainers);
+		this.markDirty();
+
+		return container;
+	}
+
+	@Override
+	public void removeContainer(
+			String worldName,
+			int containerX,
+			int containerY,
+			int containerZ
+	) {
+		Validate.notEmpty(worldName, "worldName is null or empty");
+		var location = new BlockLocation(worldName, containerX, containerY, containerZ);
+		var container = this.getContainer(location);
+		if (container == null) return;
+
+		List<SKShopContainer> newContainers = new ArrayList<>(containers);
+		newContainers.remove(container);
+		this._setContainers(newContainers);
+		this.markDirty();
+	}
+
+	/**
+	 * Updates the container at the given location, i.e. its {@link ShopContainerType type}.
+	 * <p>
+	 * Unlike removing and re-adding the container, this preserves the container's position in the
+	 * container list.
+	 * 
+	 * @param location
+	 *            the container's location, not <code>null</code>
+	 * @param type
+	 *            the {@link ShopContainerType}, or <code>null</code> to preserve the current type
+	 * @throws IllegalArgumentException
+	 *             if there is no container at the given location
+	 */
+	public void updateContainer(BlockLocation location, @Nullable ShopContainerType type) {
+		Validate.notNull(location, "location is null");
+		var container = this.getContainer(location);
+		if (container == null) {
+			throw new IllegalArgumentException("There is no container at the given location!");
+		}
+
+		// Note: The container location stays the same, so there is no need to update the container
+		// protections.
+
+		// Update the container, preserving its position within the container list:
+		var index = containers.indexOf(container);
+		assert index >= 0 && index < containers.size();
+		var newType = (type == null) ? container.getType() : type;
+		containers.set(index, container.withType(newType));
+		this.markDirty();
+	}
+
+	@Deprecated
+	@Override
+	public int getContainerX() {
+		return this.getFirstContainerLocation().getX();
+	}
+
+	@Deprecated
+	@Override
+	public int getContainerY() {
+		return this.getFirstContainerLocation().getY();
+	}
+
+	@Deprecated
+	@Override
+	public int getContainerZ() {
+		return this.getFirstContainerLocation().getZ();
+	}
+
+	// Returns null if this shopkeeper currently has no containers.
+	private @Nullable SKShopContainer getFirstContainer() {
+		return CollectionUtils.getFirstOrNull(containers);
+	}
+
+	// Returns the first container's location, or BlockLocation#EMPTY if there are no containers.
+	private BlockLocation getFirstContainerLocation() {
+		SKShopContainer firstContainer = this.getFirstContainer();
+		return firstContainer != null ? firstContainer.getLocation() : BlockLocation.EMPTY;
+	}
+
+	@Deprecated
+	@Override
+	public void setContainer(int containerX, int containerY, int containerZ) {
+		SKShopContainer firstContainer = this.getFirstContainer();
+		if (firstContainer == null) {
+			// The shop has no containers yet: Add a new container at the given coordinates, using
+			// the shopkeeper's world.
+			// Error if the shopkeeper has no world (e.g. virtual shops).
+			var worldName = this.getWorldName();
+			Validate.notNull(worldName, "Cannot add container without a world!");
+			assert worldName != null;
+			this.addContainer(
+					worldName,
+					containerX,
+					containerY,
+					containerZ,
+					DefaultShopContainerTypes.STOCK_AND_EARNINGS()
+			);
+			return;
+		}
+
+		// Update the coordinates of the first container:
+		var location = new BlockLocation(firstContainer.getWorldName(), containerX, containerY, containerZ);
+		List<SKShopContainer> newContainers = new ArrayList<>(containers);
+		newContainers.set(0, new SKShopContainer(location, firstContainer.getType()));
+		this._setContainers(newContainers);
+		this.markDirty();
+	}
+
+	@Deprecated
+	@Override
+	public @Nullable Block getContainer() {
+		return this.getFirstContainerLocation().getBlock();
+	}
+
+	// Returns the combined contents of all stock containers.
+	// Returns an empty array if no stock containers could be found.
+	public @Nullable ItemStack[] getStockContainerContents() {
+		return this.getContainerContents(true);
+	}
+
+	// Returns the combined contents of all earnings containers.
+	// Returns an empty array if no earnings containers could be found.
+	public @Nullable ItemStack[] getEarningsContainerContents() {
+		return this.getContainerContents(false);
+	}
+
+	// Returns the combined contents of all stock or earnings containers.
+	// The returned array is only meant to be read (e.g. to search or count items), not written
+	// back. It may (or may not) skip empty item stacks.
+	private @Nullable ItemStack[] getContainerContents(boolean stock) {
+		if (containers.isEmpty()) {
+			return InventoryUtils.emptyItemStackArray();
+		}
+
+		// Fast path for a single container: Return its contents directly (avoids array copy).
+		if (containers.size() == 1) {
+			ShopContainer container = containers.get(0);
+			var type = container.getType();
+			if (stock ? type.isStock() : type.isEarnings()) {
+				Inventory containerInventory = container.getInventory();
+				if (containerInventory != null) {
+					return Unsafe.cast(containerInventory.getContents());
+				}
+			}
+
+			return InventoryUtils.emptyItemStackArray();
+		}
+
+		// Combine the contents of all matching containers, skipping empty item stacks to keep the
+		// returned array (and the downstream iteration) smaller:
+		List<@Nullable ItemStack> contents = new ArrayList<>();
+		for (ShopContainer container : containers) {
+			var type = container.getType();
+			if (stock ? !type.isStock() : !type.isEarnings()) continue;
+
+			Inventory containerInventory = container.getInventory();
+			if (containerInventory == null) continue;
+
+			for (ItemStack itemStack : containerInventory.getContents()) {
+				if (ItemUtils.isEmpty(itemStack)) continue;
+
+				contents.add(itemStack);
 			}
 		}
-		return totalCurrency;
+
+		return contents.toArray(new @Nullable ItemStack[0]);
+	}
+
+	@Override
+	public int getCurrencyInContainer() {
+		// Empty if no stock containers are found:
+		@Nullable ItemStack[] contents = this.getStockContainerContents();
+		return CurrencyInventoryUtils.countCurrency(contents);
 	}
 
 	// Returns null (and logs a warning) if the price cannot be represented correctly by currency
@@ -1021,19 +1212,17 @@ public abstract class AbstractPlayerShopkeeper
 		return this.openWindow(DefaultUITypes.HIRING(), player);
 	}
 
+	@Deprecated
 	@Override
 	public boolean openContainerWindow(Player player) {
-		// Check if the container still exists:
-		Inventory containerInventory = this.getContainerInventory();
-		if (containerInventory == null) {
+		var firstContainer = this.getFirstContainer();
+		if (firstContainer == null) {
 			Log.debug(() -> "Cannot open container inventory for player '" + player.getName()
-					+ "': The block is no longer a valid container!");
+					+ "': The shop has no container!");
 			return false;
 		}
 
-		Log.debug(() -> "Opening container inventory for player '" + player.getName() + "'.");
-		// Open the container directly for the player (no need for a custom UI):
-		return player.openInventory(containerInventory) != null;
+		return firstContainer.openInventoryView(player);
 	}
 
 	@Override
@@ -1042,12 +1231,17 @@ public abstract class AbstractPlayerShopkeeper
 	}
 
 	@Override
+	public boolean openContainersEditorWindow(Player player) {
+		return this.openWindow(DefaultUITypes.SHOP_CONTAINERS_EDITOR(), player);
+	}
+
+	@Override
 	public boolean closeView(Player player) {
 		if (super.closeView(player)) {
 			return true;
 		}
 
-		// Close any views for the shop container:
+		// Close any views for the shop containers:
 		var openInventoryView = player.getOpenInventory();
 		var inventoryBlock = InventoryUtils.getBlock(openInventoryView.getTopInventory());
 		if (inventoryBlock != null) {
@@ -1081,20 +1275,21 @@ public abstract class AbstractPlayerShopkeeper
 		super.onTick();
 	}
 
-	// Deletes the shopkeeper if the container is no longer present (e.g. if it got removed
-	// externally by another plugin, such as WorldEdit, etc.):
+	// Deletes the shopkeeper if none of its containers are present anymore (e.g. if they got
+	// removed externally by another plugin, such as WorldEdit, etc.):
+	// While there is still at least one container remaining, broken containers are kept in the
+	// container list (they show up as "missing" in the editor).
 	private void onTickCheckDeleteIfContainerBroken() {
 		if (!Settings.deleteShopkeeperOnBreakContainer) return;
 		if (!checkContainerLimiter.request()) {
 			return;
 		}
 
-		// This checks if the block is still a valid container:
-		Block containerBlock = this.getContainer();
-		if (containerBlock != null && !ShopContainers.isSupportedContainer(containerBlock.getType())) {
-			// Note: If this shopkeeper is deleted due to the chest having been broken, we will
-			// trigger a delayed save after the ticking of the shopkeepers.
-			SKShopkeepersPlugin.getInstance().getRemoveShopOnContainerBreak().handleBlockBreakage(containerBlock);
-		}
+		// Delete the shopkeeper if none of its containers are valid anymore (all of its containers
+		// are broken, or it has no containers at all, e.g. after they were removed via the API).
+		// Note: If this shopkeeper is deleted here, we will trigger a delayed save after the
+		// ticking of the shopkeepers.
+		SKShopkeepersPlugin.getInstance().getRemoveShopOnContainerBreak()
+				.deleteShopIfContainersBroken(this);
 	}
 }

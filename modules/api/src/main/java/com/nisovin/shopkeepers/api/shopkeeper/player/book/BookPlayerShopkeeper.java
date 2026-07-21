@@ -13,7 +13,7 @@ import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
  * Sells copies of written books in exchange for currency items.
  * <p>
  * Books are identified solely based on their title: There can be at most one offer for books with a
- * certain title. If there are multiple books with the same title in the shop's container, the
+ * certain title. If there are multiple books with the same title in the shop's containers, the
  * shopkeeper uses only the first book it finds.
  */
 public interface BookPlayerShopkeeper extends PlayerShopkeeper {

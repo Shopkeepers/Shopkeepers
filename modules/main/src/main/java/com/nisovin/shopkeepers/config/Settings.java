@@ -60,7 +60,7 @@ public class Settings extends Config {
 	/*
 	 * General Settings
 	 */
-	public static int configVersion = 11;
+	public static int configVersion = 12;
 	// Initial value: Lowest supported Minecraft data version: MC 1.21.5
 	public static int dataVersion = 4325;
 	public static boolean debug = false;
@@ -325,8 +325,10 @@ public class Settings extends Config {
 	public static ItemData membersItem = new ItemData(Material.PLAYER_HEAD);
 	public static ItemData addMemberItem = new ItemData(Material.NAME_TAG);
 
-	public static boolean enableContainerOptionOnPlayerShop = true;
+	public static int maxContainersPerPlayerShop = 9;
 	public static ItemData containerItem = new ItemData(Material.CHEST);
+	public static ItemData addContainerItem = new ItemData(Material.LIME_STAINED_GLASS_PANE);
+	public static boolean enablePlayerShopOpenContainer = true;
 
 	public static ItemData tradeNotificationsItem = new ItemData(Material.BELL);
 	public static ItemData deleteItem = new ItemData(Material.BONE);
@@ -441,7 +443,6 @@ public class Settings extends Config {
 		public static ItemData shopClosedButtonItem = Unsafe.uncheckedNull();
 		public static ItemData nameButtonItem = Unsafe.uncheckedNull();
 		public static ItemData moveButtonItem = Unsafe.uncheckedNull();
-		public static ItemData containerButtonItem = Unsafe.uncheckedNull();
 		public static ItemData deleteButtonItem = Unsafe.uncheckedNull();
 		public static ItemData hireButtonItem = Unsafe.uncheckedNull();
 
@@ -653,11 +654,6 @@ public class Settings extends Config {
 					moveItem,
 					Messages.buttonMove,
 					Messages.buttonMoveLore
-			);
-			containerButtonItem = new ItemData(
-					containerItem,
-					Messages.buttonContainer,
-					Messages.buttonContainerLore
 			);
 			deleteButtonItem = new ItemData(
 					deleteItem,
@@ -996,6 +992,17 @@ public class Settings extends Config {
 			// See PlayerShopMembersEditorView.MAX_INVENTORY_SIZE
 			Log.warning(this.getLogPrefix() + "'max-members-per-shop' can not be larger than 36!");
 			maxMembersPerShop = 36;
+		}
+
+		if (maxContainersPerPlayerShop < 1) {
+			Log.warning(this.getLogPrefix()
+					+ "'max-containers-per-player-shop' can not be less than 1!");
+			maxContainersPerPlayerShop = 1;
+		} else if (maxContainersPerPlayerShop > 36) {
+			// See PlayerShopContainersEditorView.MAX_INVENTORY_SIZE
+			Log.warning(this.getLogPrefix()
+					+ "'max-containers-per-player-shop' can not be larger than 36!");
+			maxContainersPerPlayerShop = 36;
 		}
 
 		if (taxRate < 0) {

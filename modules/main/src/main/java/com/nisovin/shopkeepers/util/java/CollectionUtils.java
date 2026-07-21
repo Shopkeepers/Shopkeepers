@@ -17,6 +17,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
+import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 
 public final class CollectionUtils {
 
@@ -319,6 +320,14 @@ public final class CollectionUtils {
 	// Note: The returned Iterable can only be iterated once!
 	public static <T> Iterable<T> toIterable(Stream<T> stream) {
 		return stream::iterator;
+	}
+
+	public static <T> @Nullable T getFirstOrNull(@ReadOnly List<? extends @Nullable T> list) {
+		return list.isEmpty() ? null : list.get(0);
+	}
+
+	public static <T> @Nullable T getFirstOrNull(@ReadOnly Collection<? extends @Nullable T> collection) {
+		return collection.isEmpty() ? null : collection.iterator().next();
 	}
 
 	@SuppressWarnings("unchecked")

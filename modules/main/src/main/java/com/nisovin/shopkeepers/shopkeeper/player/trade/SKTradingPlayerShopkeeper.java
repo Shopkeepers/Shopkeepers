@@ -105,14 +105,14 @@ public class SKTradingPlayerShopkeeper
 
 	@Override
 	public List<? extends TradingRecipe> getTradingRecipes(@Nullable Player player) {
-		// Empty if the container is not found
-		@Nullable ItemStack[] containerContents = this.getContainerContents();
+		// Empty if no stock containers are found:
+		@Nullable ItemStack[] stockContainerContents = this.getStockContainerContents();
 		List<? extends TradeOffer> offers = this.getOffers();
 		List<TradingRecipe> recipes = new ArrayList<>(offers.size());
 		offers.forEach(offer -> {
 			UnmodifiableItemStack resultItem = offer.getResultItem();
 			boolean outOfStock = !InventoryUtils.containsAtLeast(
-					containerContents,
+					stockContainerContents,
 					resultItem,
 					resultItem.getAmount()
 			);

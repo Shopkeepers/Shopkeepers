@@ -12,6 +12,8 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopTypesRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
+import com.nisovin.shopkeepers.api.shopkeeper.container.DefaultShopContainerTypes;
+import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainerTypeRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.BookOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.PriceOffer;
 import com.nisovin.shopkeepers.api.shopkeeper.offers.TradeOffer;
@@ -157,6 +159,26 @@ public final class ShopkeepersAPI {
 	 */
 	public static DefaultPlayerShopAccessLevels getDefaultPlayerShopAccessLevels() {
 		return getPlugin().getDefaultPlayerShopAccessLevels();
+	}
+
+	// SHOP CONTAINER TYPES
+
+	/**
+	 * Gets the {@link ShopContainerTypeRegistry}.
+	 * 
+	 * @return the shop container type registry
+	 */
+	public static ShopContainerTypeRegistry<?> getShopContainerTypeRegistry() {
+		return getPlugin().getShopContainerTypeRegistry();
+	}
+
+	/**
+	 * Gets the {@link DefaultShopContainerTypes}.
+	 * 
+	 * @return the default shop container types
+	 */
+	public static DefaultShopContainerTypes getDefaultShopContainerTypes() {
+		return getPlugin().getDefaultShopContainerTypes();
 	}
 
 	// SHOPKEEPER REGISTRY

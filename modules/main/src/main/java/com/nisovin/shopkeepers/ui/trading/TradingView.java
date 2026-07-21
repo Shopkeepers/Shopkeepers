@@ -32,15 +32,12 @@ import com.nisovin.shopkeepers.api.trading.TradeEffect;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.compat.Compat;
 import com.nisovin.shopkeepers.config.Settings;
-import com.nisovin.shopkeepers.currency.Currencies;
-import com.nisovin.shopkeepers.currency.Currency;
 import com.nisovin.shopkeepers.debug.Debug;
 import com.nisovin.shopkeepers.debug.DebugOptions;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.lib.View;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
-import com.nisovin.shopkeepers.util.annotations.ReadWrite;
 import com.nisovin.shopkeepers.util.bukkit.ConfigUtils;
 import com.nisovin.shopkeepers.util.bukkit.MerchantUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
@@ -1095,61 +1092,5 @@ public class TradingView extends View {
 	) {
 		Object itemStackData = (itemStack != null) ? itemStack : "<empty>";
 		Log.debug(ConfigUtils.toConfigYamlWithoutTrailingNewline(itemStackName, itemStackData));
-	}
-
-	// SHARED HELPERS
-
-	// Returns a value >= 0 and <= amount.
-	// Note: Depending on the configuration, the amount can end up 0.
-	protected int getAmountAfterTaxes(int amount) {
-		assert amount >= 0;
-		if (Settings.taxRate == 0) return amount;
-
-		int taxes;
-		if (Settings.taxRoundUp) {
-			taxes = (int) Math.ceil(amount * (Settings.taxRate / 100.0D));
-		} else {
-			taxes = (int) Math.floor(amount * (Settings.taxRate / 100.0D));
-		}
-		return Math.max(0, Math.min(amount - taxes, amount));
-	}
-
-	// Returns the amount of items that couldn't be added, or 0 on success.
-	protected int addReceivedItem(
-			@ReadOnly @Nullable ItemStack @ReadWrite [] contents,
-			@Nullable UnmodifiableItemStack receivedItem
-	) {
-		if (ItemUtils.isEmpty(receivedItem)) return 0;
-		assert receivedItem != null;
-
-		int amountAfterTaxes = this.getAmountAfterTaxes(receivedItem.getAmount());
-		if (amountAfterTaxes <= 0) return 0;
-
-		return InventoryUtils.addItems(contents, receivedItem, amountAfterTaxes);
-	}
-
-	protected int addCurrencyItems(@ReadOnly @Nullable ItemStack @ReadWrite [] contents, int amount) {
-		if (amount <= 0) return 0;
-
-		int remaining = amount;
-		// TODO Always store the currency in the most compressed form possible, regardless of
-		// 'highCurrencyMinCost'?
-		if (Currencies.isHighCurrencyEnabled() && remaining > Settings.highCurrencyMinCost) {
-			Currency highCurrency = Currencies.getHigh();
-			// Note: This rounds down, so the remaining amount cannot end up negative after
-			// subtracting the high currency value.
-			int highCurrencyAmount = (remaining / highCurrency.getValue());
-			if (highCurrencyAmount > 0) {
-				ItemStack currencyItems = Currencies.getHigh().getItemData().createItemStack(highCurrencyAmount);
-				int remainingHighCurrency = InventoryUtils.addItems(contents, currencyItems);
-				assert remainingHighCurrency >= 0 && remainingHighCurrency <= highCurrencyAmount;
-				remaining -= (highCurrencyAmount - remainingHighCurrency) * highCurrency.getValue();
-				assert remaining >= 0;
-				if (remaining <= 0) return 0;
-			}
-		}
-
-		ItemStack currencyItems = Currencies.getBase().getItemData().createItemStack(remaining);
-		return InventoryUtils.addItems(contents, currencyItems);
 	}
 }

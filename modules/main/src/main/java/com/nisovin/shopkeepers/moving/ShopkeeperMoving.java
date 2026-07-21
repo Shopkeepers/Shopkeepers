@@ -111,6 +111,8 @@ public class ShopkeeperMoving {
 
 		@Override
 		public void onAborted() {
+			if (!player.isValid()) return;
+
 			TextUtils.sendMessage(player, Messages.shopkeeperMoveAborted);
 		}
 	}

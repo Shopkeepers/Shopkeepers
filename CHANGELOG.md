@@ -4,9 +4,39 @@ Date format: (YYYY-MM-DD)
 ## v2.27.1 (TBA)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
+* Add support for multiple shop containers: Shop owners can now link additional containers to their player shops.
+  * Config:
+    * Add `max-containers-per-player-shop` (default: `9`). Set it to `1` to keep the previous single-container behavior.
+    * Add `add-container-item` (default: `minecraft:lime_stained_glass_pane`) for the add-container button.
+    * Config migration `12`: Rename `enable-container-option-on-player-shop` to `enable-player-shop-open-container`. It only controls now whether players can remotely open a container's inventory from the shop editor. The container information itself is always shown.
+  * Editor: If `max-containers-per-player-shop` is greater than `1`, the container button inside the editor allows shop owners to view and edit the linked shop containers.
+    * Click the green glass pane item and then a nearby container to add it as an additional shop container. The usual checks apply (supported container, not already used by another shop, within `max-container-distance`, etc.).
+    * Left/Right-click a container to cycle through the different container types.
+    * If enabled, shift-right-click a container to remotely open it and inspect its content.
+    * Shift-left-click a container to remove it after additional confirmation.
+  * Available container types:
+    * `Stock`: The shop retrieves trade result items from this container. Trades show as "out-of-stock" if the required result items cannot be found across the stock containers.
+    * `Earnings`: The shop stores received items in this container. The shop prefers to store items in earnings containers that already contain the respective item.
+    * `Stock and Earnings`: The container stores both stock and earnings (default).
+  * If `max-containers-per-player-shop` is `1`, the container editor button behaves similar to before, but includes some additional information now. The single container (and any other previously added containers) automatically act as `Stock and Earnings`.
+  * The container information includes the coordinates, whether the container is a double chest, whether it is missing (i.e. no longer exists in the world), and, if support for multiple containers is enabled, its container type.
+  * `delete-shopkeeper-on-break-container` only takes effect when the last shop container is broken. Broken containers remain in the shop's list of containers and show as "missing".
+  * When moving a player shopkeeper, all of its containers must remain within the configured `max-container-distance`.
+  * Data:
+    * Player shop containers are migrated to a new format to support multiple containers.
+    * Shops may also have no container now.
+    * Bump the shopkeeper data version to `3` to detect and prevent downgrade attempts.
+  * API:
+    * Add `PlayerShopkeeper#getContainers()`, `#addContainer(...)`, `#removeContainer(...)`, and `#openContainersEditorWindow(...)`.
+    * Deprecate the previous single-container methods (`getContainerX/Y/Z`, `setContainer`, `getContainer`). They only affect the first container now and may not return results if the shop has no container, which is also a supported case now.
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
   * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.
+* Fix: When a Citizen NPC player shopkeeper is moved to a different world, the shop containers keep working.
+  * Shop containers can technically be located in different worlds now.
+  * However, we still prevent players from manually moving their shops to a different world (via the max container distance check), because this can affect the performance.
+  * Also, if the `delete-shopkeeper-on-break-container` is enabled, shopkeepers may still get deleted if the world containing their containers is not loaded currently: We cannot differentiate between worlds being gone for good or only temporarily not available.
+* Fix: Trying to create a player shopkeeper in a world different to the world of the selected container resulted in an unhandled exception rather than the intended container distance error message.
 * Fix: Non-flying shopkeeper mobs could not be placed on top of reduced-height blocks such as chests, incorrectly reporting the location as midair.
 * Localization: Various messages support hex colors with the `&#` format now.
   * `no-offers-open-editor-description`
@@ -23,6 +53,41 @@ Date format: (YYYY-MM-DD)
   * `shop-setup-desc-trading`
   * `shop-setup-desc-book`
   * `shop-setup-desc-admin-regular`
+
+Removed messages:  
+* `button-container`
+* `button-container-lore`
+* `cannot-trade-with-shop-missing-container`
+
+Added messages:  
+* `button-containers`
+* `button-containers-lore`
+* `button-add-shop-container`
+* `button-add-shop-container-lore`
+* `shop-containers-editor-title`
+* `shop-container-title`
+* `shop-container-none-lore`
+* `shop-container-lore`
+* `single-shop-container-lore`
+* `shop-container-action-change-type`
+* `shop-container-action-open`
+* `single-shop-container-action-open`
+* `shop-container-action-remove`
+* `shop-container-state-missing`
+* `shop-container-state-double-chest`
+* `shop-container-type-stock`
+* `shop-container-type-earnings`
+* `shop-container-type-stock-and-earnings`
+* `shop-container-type-description-stock`
+* `shop-container-type-description-earnings`
+* `shop-container-type-description-stock-and-earnings`
+* `shop-container-missing`
+* `click-shop-container-to-add`
+* `container-selection-aborted`
+* `shop-container-added`
+* `shop-container-removed`
+* `confirmation-ui-remove-shop-container-title`
+* `confirmation-ui-remove-shop-container-lore`
 
 ## v2.27.0 (2026-06-29)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

@@ -143,7 +143,8 @@ public class PlayerShopMembersEditorView extends View {
 				Messages.buttonAddShopMember,
 				StringUtils.replaceArguments(Messages.buttonAddShopMemberLore,
 						"memberCount", this.getShopkeeperNonNull().getMembers().size(),
-						"maxMembers", Settings.maxMembersPerShop)
+						"maxMembers", Settings.maxMembersPerShop
+				)
 		);
 	}
 

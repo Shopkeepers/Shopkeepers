@@ -103,6 +103,7 @@ public class ProtectedContainers {
 		Validate.notNull(shopkeeper, "shopkeeper is null");
 		List<AbstractPlayerShopkeeper> shopkeepers = protectedContainers.computeIfAbsent(
 				location.immutable(),
+				// There is usually at most one shopkeeper using the same container:
 				key -> new ArrayList<>(1)
 		);
 		assert shopkeepers != null;
@@ -262,6 +263,7 @@ public class ProtectedContainers {
 				}
 			}
 		}
+
 		// Cleanup temporary results list:
 		tempResultsList.clear();
 		return result;
@@ -345,6 +347,7 @@ public class ProtectedContainers {
 				}
 			}
 		}
+
 		return results;
 	}
 

@@ -1102,6 +1102,12 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	 * <p>
 	 * This will not actually move the shop object on its own, until the next time it is spawned or
 	 * teleported to its new location.
+	 * <p>
+	 * Moving player shopkeepers to a world different than their shop containers is not prevented
+	 * here, but highly discouraged, because this can affect the performance of handling trades
+	 * (container chunks may need to be dynamically loaded)! Shop owners can usually already not
+	 * move player shopkeepers into a different world via the editor due to the max container
+	 * distance check.
 	 * 
 	 * @param location
 	 *            the new stored location of this shopkeeper, not <code>null</code>
@@ -1111,9 +1117,6 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 		Validate.notNull(location, "location is null");
 		Validate.isTrue(location.hasWorldName(), "location has no world name");
 
-		// TODO Changing the world is not safe (at least not for all types of shops)! Consider for
-		// example player shops which currently use the shopkeeper's world name to locate their
-		// container.
 		this.location = location.immutable(); // Immutable copy if necessary
 
 		this.updateChunkCoords();

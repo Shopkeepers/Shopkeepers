@@ -11,30 +11,19 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 
-import com.nisovin.shopkeepers.SKShopkeepersPlugin;
-import com.nisovin.shopkeepers.container.ShopContainers;
-
 class RemoveShopOnContainerBreakListener implements Listener {
 
-	private final SKShopkeepersPlugin plugin;
 	private final RemoveShopOnContainerBreak removeShopOnContainerBreak;
 
-	RemoveShopOnContainerBreakListener(
-			SKShopkeepersPlugin plugin,
-			RemoveShopOnContainerBreak removeShopOnContainerBreak
-	) {
-		assert plugin != null && removeShopOnContainerBreak != null;
-		this.plugin = plugin;
+	RemoveShopOnContainerBreakListener(RemoveShopOnContainerBreak removeShopOnContainerBreak) {
+		assert removeShopOnContainerBreak != null;
 		this.removeShopOnContainerBreak = removeShopOnContainerBreak;
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	void onBlockBreak(BlockBreakEvent event) {
 		Block block = event.getBlock();
-		if (ShopContainers.isSupportedContainer(block.getType())
-				&& removeShopOnContainerBreak.handleBlockBreakage(block)) {
-			plugin.getShopkeeperStorage().save();
-		}
+		removeShopOnContainerBreak.handleBlockBreakage(block);
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
