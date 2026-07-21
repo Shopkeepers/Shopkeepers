@@ -253,7 +253,8 @@ public class ShopkeeperTicker {
 		});
 		pendingTickingChanges.clear();
 
-		// Trigger a delayed save if any of the shopkeepers got marked as dirty:
+		// Trigger a delayed save if any of the shopkeepers got marked as dirty or deleted during
+		// the ticking:
 		if (dirty) {
 			plugin.getShopkeeperStorage().saveDelayed();
 		}
@@ -275,7 +276,9 @@ public class ShopkeeperTicker {
 			Log.severe(shopkeeper.getLogPrefix() + "Error during ticking!", e);
 		}
 
-		if (shopkeeper.isDirty()) {
+		// If the shopkeeper was modified or deleted during the tick: Subsequently trigger a delayed
+		// save of the storage.
+		if (shopkeeper.isDirty() || !shopkeeper.isValid()) {
 			dirty = true;
 		}
 	}

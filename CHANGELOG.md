@@ -37,6 +37,7 @@ Date format: (YYYY-MM-DD)
   * However, we still prevent players from manually moving their shops to a different world (via the max container distance check), because this can affect the performance.
   * Also, if the `delete-shopkeeper-on-break-container` is enabled, shopkeepers may still get deleted if the world containing their containers is not loaded currently: We cannot differentiate between worlds being gone for good or only temporarily not available.
 * Fix: Trying to create a player shopkeeper in a world different to the world of the selected container resulted in an unhandled exception rather than the intended container distance error message.
+* Fix: Shopkeepers are stored more promptly to storage now when they are deleted because their containers got destroyed. We previously marked the storage "dirty", but did not actually trigger a delayed save.
 * Fix: Non-flying shopkeeper mobs could not be placed on top of reduced-height blocks such as chests, incorrectly reporting the location as midair.
 * Localization: Various messages support hex colors with the `&#` format now.
   * `no-offers-open-editor-description`

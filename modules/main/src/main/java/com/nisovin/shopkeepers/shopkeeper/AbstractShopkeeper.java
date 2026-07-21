@@ -1915,8 +1915,9 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	 * The ticking of shopkeepers in active chunks may be spread across multiple ticks and might
 	 * therefore not happen for all shopkeepers within the same tick.
 	 * <p>
-	 * If the shopkeeper is marked as {@link #isDirty() dirty}, a
-	 * {@link ShopkeeperStorage#saveDelayed() delayed save} will subsequently be triggered.
+	 * If the shopkeeper is marked as {@link #isDirty() dirty} or {@link #isValid() invalid
+	 * (deleted)} , a {@link ShopkeeperStorage#saveDelayed() delayed save} is subsequently
+	 * triggered.
 	 * <p>
 	 * When overriding this method, consider calling the parent class version of this method.
 	 */
