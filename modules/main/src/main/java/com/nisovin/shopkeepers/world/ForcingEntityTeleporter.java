@@ -86,8 +86,9 @@ public class ForcingEntityTeleporter implements Listener {
 		CompletableFuture<Boolean> result = SKShopkeepersPlugin.getInstance().getFoliaLib().getScheduler().teleportAsync(entity, toLocation);
 
 		// This reset is required if the teleport did not actually trigger an event (e.g. on Spigot
-		// instead of Paper servers):
-		this.resetForcedEntityTeleport();
+		// instead of Paper servers). We wait for the teleport to complete before resetting: The
+		// teleport is async, so resetting right away would race with the event being fired for it.
+		result.whenComplete((success, throwable) -> this.resetForcedEntityTeleport());
 
 		// MC-44654: For some entities (e.g. end crystals), the server does not automatically send
 		// an update packet to the client when their position changes. We force the client-side

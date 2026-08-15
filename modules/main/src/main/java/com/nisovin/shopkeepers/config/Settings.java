@@ -76,7 +76,7 @@ public class Settings extends Config {
 	/*
 	 * Shopkeeper Data
 	 */
-	public static boolean saveInstantly = true;
+	public static boolean saveInstantly = false;
 
 	/*
 	 * Plugin Compatibility

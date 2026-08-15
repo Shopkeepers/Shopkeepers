@@ -50,10 +50,9 @@ public final class SchedulerUtils {
 
 	public static int getActiveAsyncTasks(Plugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
-		return getFoliaLib().getScheduler().getAllTasks().stream().filter(it -> {
-			System.out.println("Task: " + it.toString() + ", async=" + it.isAsync() + ", cancelled=" + it.isCancelled());
-			return !it.isCancelled();
-		}).toList().size();
+		return (int) getFoliaLib().getScheduler().getAllTasks().stream()
+				.filter(it -> it.isAsync() && !it.isCancelled())
+				.count();
 	}
 
 	private static void validatePluginTask(Runnable task) {
@@ -176,8 +175,6 @@ public final class SchedulerUtils {
 		}
 		return null;
 	}
-
-
 
 	public static @NonNull CompletableFuture<@NonNull Void> runTaskGloballyOrOmit(Runnable task) {
 		validatePluginTask(task);
