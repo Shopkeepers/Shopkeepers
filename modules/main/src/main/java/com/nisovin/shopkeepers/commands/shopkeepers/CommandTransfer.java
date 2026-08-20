@@ -11,8 +11,6 @@ import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperFilter;
 import com.nisovin.shopkeepers.commands.arguments.TargetShopkeeperFallback;
-import com.nisovin.shopkeepers.commands.arguments.UserByNameArgument;
-import com.nisovin.shopkeepers.commands.arguments.UserByUUIDArgument;
 import com.nisovin.shopkeepers.commands.arguments.UserNameArgument;
 import com.nisovin.shopkeepers.commands.arguments.UserUUIDArgument;
 import com.nisovin.shopkeepers.commands.lib.Command;
@@ -22,7 +20,6 @@ import com.nisovin.shopkeepers.commands.lib.arguments.FirstOfArgument;
 import com.nisovin.shopkeepers.commands.lib.context.CommandContextView;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils.TargetShopkeeperFilter;
 import com.nisovin.shopkeepers.commands.util.UserArgumentUtils;
-import com.nisovin.shopkeepers.commands.util.UserArgumentUtils.UserNameMatcher;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
@@ -33,9 +30,6 @@ class CommandTransfer extends Command {
 	private static final String ARGUMENT_NEW_OWNER = "new-owner";
 	private static final String ARGUMENT_NEW_OWNER_UUID = "new-owner:uuid";
 	private static final String ARGUMENT_NEW_OWNER_NAME = "new-owner:name";
-
-	private static final UserByNameArgument USER_BY_NAME_ARGUMENT = new UserByNameArgument(ARGUMENT_NEW_OWNER);
-	private static final UserByUUIDArgument USER_BY_UUID_ARGUMENT = new UserByUUIDArgument(ARGUMENT_NEW_OWNER);
 
 	CommandTransfer() {
 		super("transfer");
@@ -71,33 +65,10 @@ class CommandTransfer extends Command {
 
 		// TODO Move this logic into the argument itself, but avoid looking up the offline player by
 		// name more than once per command invocation.
-		User newOwner;
-		if (newOwnerUUID != null) {
-			newOwner = UserArgumentUtils.findUser(newOwnerUUID);
-			if (newOwner == null) {
-				var error = USER_BY_UUID_ARGUMENT.getInvalidArgumentErrorMsg(newOwnerUUID.toString());
-				TextUtils.sendMessage(sender, error);
-				return;
-			}
-		} else {
-			assert newOwnerName != null;
-			var matchingUsers = UserNameMatcher.EXACT.match(newOwnerName, true).toList();
-			if (matchingUsers.isEmpty()) {
-				var error = USER_BY_NAME_ARGUMENT.getInvalidArgumentErrorMsg(newOwnerName);
-				TextUtils.sendMessage(sender, error);
-				return;
-			}
-
-			if (matchingUsers.size() > 1) {
-				UserArgumentUtils.handleAmbiguousUserName(
-						sender,
-						newOwnerName,
-						matchingUsers
-				);
-				return;
-			}
-
-			newOwner = matchingUsers.getFirst();
+		@Nullable User newOwner = UserArgumentUtils.resolveUser(sender, newOwnerUUID, newOwnerName);
+		if (newOwner == null) {
+			// Abort. Sender feedback was already handled.
+			return;
 		}
 
 		// Check access:

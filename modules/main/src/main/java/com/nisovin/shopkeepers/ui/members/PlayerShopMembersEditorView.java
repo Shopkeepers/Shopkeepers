@@ -23,7 +23,6 @@ import com.nisovin.shopkeepers.api.shopkeeper.player.members.PlayerShopMember;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.util.UserArgumentUtils;
-import com.nisovin.shopkeepers.commands.util.UserArgumentUtils.UserNameMatcher;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
@@ -216,31 +215,14 @@ public class PlayerShopMembersEditorView extends View {
 		}
 
 		// Parse the target player by uuid or name:
-		@Nullable User targetUser = null;
 		@Nullable UUID memberUuid = ConversionUtils.parseUUID(normalizedInput);
-		if (memberUuid != null) {
-			targetUser = UserArgumentUtils.findUser(memberUuid);
-		} else {
-			var matchingUsers = UserNameMatcher.EXACT.match(normalizedInput, true).toList();
-			if (matchingUsers.size() > 1) {
-				UserArgumentUtils.handleAmbiguousUserName(
-						player,
-						normalizedInput,
-						matchingUsers
-				);
-				return;
-			}
-
-			if (!matchingUsers.isEmpty()) {
-				targetUser = matchingUsers.getFirst();
-			}
-		}
-
+		@Nullable User targetUser = UserArgumentUtils.resolveUser(
+				player,
+				memberUuid,
+				normalizedInput
+		);
 		if (targetUser == null) {
-			TextUtils.sendMessage(player, Messages.commandPlayerArgumentInvalid,
-					"argument", input
-			);
-			return;
+			return; // Already notified
 		}
 
 		if (shopkeeper.isOwner(targetUser.getUniqueId())) {

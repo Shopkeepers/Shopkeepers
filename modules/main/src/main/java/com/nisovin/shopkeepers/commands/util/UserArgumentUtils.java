@@ -16,11 +16,13 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.commands.arguments.AmbiguousUserNameHandler;
 import com.nisovin.shopkeepers.commands.lib.util.ObjectMatcher;
+import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.user.SKUser;
 import com.nisovin.shopkeepers.util.bukkit.EntityUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.java.StreamUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
+import com.nisovin.shopkeepers.util.java.Validate;
 
 public final class UserArgumentUtils {
 
@@ -324,6 +326,57 @@ public final class UserArgumentUtils {
 		}
 
 		return false;
+	}
+
+	// Resolves the user by either uuid (precedence if specified) or name.
+	// Returns null if no matching user could be determined, in which case the sender was already
+	// notified.
+	public static @Nullable User resolveUser(
+			CommandSender sender,
+			@Nullable UUID userUniqueId,
+			@Nullable String userName
+	) {
+		Validate.isTrue(userUniqueId != null || userName != null, "Missing user argument!");
+
+		if (userUniqueId != null) {
+			var user = findUser(userUniqueId);
+			if (user == null) {
+				TextUtils.sendMessage(sender, Messages.commandPlayerArgumentInvalid,
+						"argument", userUniqueId.toString()
+				);
+				return null;
+			}
+
+			return user;
+		}
+		assert userName != null;
+
+		// If null: Sender feedback was already handled.
+		return resolveUserByName(sender, userName);
+	}
+
+	// Returns null if no matching user could be determined, in which case the sender was already
+	// notified.
+	public static @Nullable User resolveUserByName(CommandSender sender, String userName) {
+		// Also checks for offline players:
+		var matchingUsers = UserNameMatcher.EXACT.match(userName, true).toList();
+		if (matchingUsers.isEmpty()) {
+			TextUtils.sendMessage(sender, Messages.commandPlayerArgumentInvalid,
+					"argument", userName
+			);
+			return null;
+		}
+
+		if (matchingUsers.size() > 1) {
+			handleAmbiguousUserName(
+					sender,
+					userName,
+					matchingUsers
+			);
+			return null;
+		}
+
+		return matchingUsers.getFirst();
 	}
 
 	private UserArgumentUtils() {

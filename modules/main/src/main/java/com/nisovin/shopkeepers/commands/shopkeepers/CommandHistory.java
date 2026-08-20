@@ -15,12 +15,10 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
-import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperArgument;
 import com.nisovin.shopkeepers.commands.arguments.ShopkeeperUUIDArgument;
 import com.nisovin.shopkeepers.commands.arguments.TargetShopkeeperArgument;
-import com.nisovin.shopkeepers.commands.arguments.UserByNameArgument;
 import com.nisovin.shopkeepers.commands.lib.Command;
 import com.nisovin.shopkeepers.commands.lib.CommandException;
 import com.nisovin.shopkeepers.commands.lib.CommandInput;
@@ -36,7 +34,6 @@ import com.nisovin.shopkeepers.commands.lib.arguments.PlayerUUIDArgument;
 import com.nisovin.shopkeepers.commands.lib.arguments.PositiveIntegerArgument;
 import com.nisovin.shopkeepers.commands.lib.context.CommandContextView;
 import com.nisovin.shopkeepers.commands.util.UserArgumentUtils;
-import com.nisovin.shopkeepers.commands.util.UserArgumentUtils.UserNameMatcher;
 import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
 import com.nisovin.shopkeepers.debug.Debug;
 import com.nisovin.shopkeepers.debug.DebugOptions;
@@ -84,9 +81,6 @@ class CommandHistory extends Command {
 	private static final String ARGUMENT_OWNER = "owner";
 	private static final String ARGUMENT_OWNER_UUID = ARGUMENT_OWNER + ":uuid";
 	private static final String ARGUMENT_OWNER_NAME = ARGUMENT_OWNER + ":name";
-
-	private static final UserByNameArgument PLAYER_BY_NAME_ARGUMENT = new UserByNameArgument(ARGUMENT_PLAYER_NAME);
-	private static final UserByNameArgument OWNER_BY_NAME_ARGUMENT = new UserByNameArgument(ARGUMENT_OWNER_NAME);
 
 	private static final String ARGUMENT_PAGE = "page";
 
@@ -249,7 +243,7 @@ class CommandHistory extends Command {
 			playerSelector = new PlayerSelector.ByUUID(playerUUID, selectorPlayerName);
 		} else {
 			assert playerName != null;
-			var playerUser = this.resolveUserByName(sender, playerName, PLAYER_BY_NAME_ARGUMENT);
+			var playerUser = UserArgumentUtils.resolveUserByName(sender, playerName);
 			if (playerUser == null) {
 				// Abort. Sender feedback was already handled.
 				return;
@@ -341,7 +335,7 @@ class CommandHistory extends Command {
 
 			shopSelector = new ShopSelector.ByOwnerUUID(ownerUUID, selectorOwnerName);
 		} else if (ownerName != null) {
-			var ownerUser = this.resolveUserByName(sender, ownerName, OWNER_BY_NAME_ARGUMENT);
+			var ownerUser = UserArgumentUtils.resolveUserByName(sender, ownerName);
 			if (ownerUser == null) {
 				// Abort. Sender feedback was already handled.
 				return;
@@ -403,31 +397,6 @@ class CommandHistory extends Command {
 					Log.severe("Error while retrieving trading history!", exception);
 					return null;
 				});
-	}
-
-	private @Nullable User resolveUserByName(
-			CommandSender sender,
-			String userName,
-			UserByNameArgument userByNameArgument
-	) {
-		// Also checks for offline players:
-		var matchingUsers = UserNameMatcher.EXACT.match(userName, true).toList();
-		if (matchingUsers.isEmpty()) {
-			var error = userByNameArgument.getInvalidArgumentErrorMsg(userName);
-			TextUtils.sendMessage(sender, error);
-			return null;
-		}
-
-		if (matchingUsers.size() > 1) {
-			UserArgumentUtils.handleAmbiguousUserName(
-					sender,
-					userName,
-					matchingUsers
-			);
-			return null;
-		}
-
-		return matchingUsers.getFirst();
 	}
 
 	private void sendTradingHistory(CommandSender sender, TradingHistoryRequest historyRequest, TradingHistoryResult historyResult) {
