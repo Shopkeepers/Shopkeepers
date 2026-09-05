@@ -18,6 +18,10 @@ public final class Ticks {
 	 */
 	public static final double DURATION_SECONDS = 1.0D / PER_SECOND;
 	/**
+	 * The expected duration of a single tick in minutes.
+	 */
+	public static final double DURATION_MINUTES = DURATION_SECONDS / TimeUnit.MINUTES.toSeconds(1);
+	/**
 	 * The expected duration of a single tick in milliseconds.
 	 */
 	public static final long DURATION_MILLIS = TimeUnit.SECONDS.toMillis(1L) / PER_SECOND;
@@ -46,6 +50,28 @@ public final class Ticks {
 	 */
 	public static long fromSeconds(double seconds) {
 		return NumberConversions.round(seconds / DURATION_SECONDS);
+	}
+
+	/**
+	 * Converts the given duration in ticks into minutes.
+	 * 
+	 * @param ticks
+	 *            the duration in ticks
+	 * @return the duration in minutes
+	 */
+	public static double toMinutes(long ticks) {
+		return ticks * DURATION_MINUTES;
+	}
+
+	/**
+	 * Converts the given duration in minutes into ticks, rounding to the nearest tick.
+	 * 
+	 * @param minutes
+	 *            the duration in minutes
+	 * @return the duration in ticks
+	 */
+	public static long fromMinutes(double minutes) {
+		return NumberConversions.round(minutes / DURATION_MINUTES);
 	}
 
 	/**
