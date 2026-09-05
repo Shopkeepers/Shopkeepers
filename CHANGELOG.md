@@ -32,6 +32,9 @@ Date format: (YYYY-MM-DD)
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
   * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.
+* Fix: A player shop's members are cleared now whenever its owner changes, for example via `/shopkeeper transfer` or when another player hires the shop. Member access granted by the previous owner is not meant to carry over. If the current owner re-hires a shop, the previous members are preserved.
+  * Fix: This also resolves that transferring or hiring a shop to one of its own members previously left that player listed as both the owner and a member, which made the shop fail to load.
+  * API: This also applies to `PlayerShopkeeper#setOwner(...)`.
 * Command: `/shopkeeper transfer` informs the new owner about the received shop now, if they are online.
 * Fix: When a Citizen NPC player shopkeeper is moved to a different world, the shop containers keep working.
   * Shop containers can technically be located in different worlds now.

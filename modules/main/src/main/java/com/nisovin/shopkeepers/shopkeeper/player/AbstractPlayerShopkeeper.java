@@ -426,14 +426,25 @@ public abstract class AbstractPlayerShopkeeper
 
 	// TODO Add to API
 	public void setOwner(User owner) {
+		this.onOwnerChanging(owner.getUniqueId());
 		this._setOwner(owner);
 		this.markDirty();
 	}
 
 	@Override
 	public void setOwner(UUID ownerUUID, String ownerName) {
+		this.onOwnerChanging(ownerUUID);
 		this._setOwner(ownerUUID, ownerName);
 		this.markDirty();
+	}
+
+	// Invoked when the owner is about to change.
+	private void onOwnerChanging(UUID newOwnerId) {
+		if (this.getOwnerUUID().equals(newOwnerId)) return;
+
+		// The shop members were granted access by the previous owner, so they do not carry over to
+		// the new owner. This also ensures that the new owner is not also listed as a member.
+		this._setMembers(Collections.emptyList());
 	}
 
 	private void _setOwner(UUID ownerUUID, String ownerName) {

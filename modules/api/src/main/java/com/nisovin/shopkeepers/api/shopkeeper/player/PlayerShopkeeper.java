@@ -28,6 +28,8 @@ public interface PlayerShopkeeper extends Shopkeeper {
 
 	/**
 	 * Sets the owner of this shop.
+	 * <p>
+	 * Changing the owner to a different player also clears the {@link #getMembers() shop members}.
 	 * 
 	 * @param player
 	 *            the owner of this shop, not <code>null</code>
@@ -36,6 +38,8 @@ public interface PlayerShopkeeper extends Shopkeeper {
 
 	/**
 	 * Sets the owner of this shop.
+	 * <p>
+	 * Changing the owner to a different player also clears the {@link #getMembers() shop members}.
 	 * 
 	 * @param ownerUUID
 	 *            the owner's uuid, not <code>null</code>
