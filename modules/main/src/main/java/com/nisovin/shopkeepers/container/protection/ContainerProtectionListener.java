@@ -44,7 +44,12 @@ class ContainerProtectionListener implements Listener {
 
 		Block block = Unsafe.assertNonNull(event.getClickedBlock());
 		Player player = event.getPlayer();
-		if (protectedContainers.isProtectedContainer(block, player)) {
+		var protectionResult = protectedContainers.checkContainerProtection(
+				block,
+				player,
+				ContainerProtectionCheck.ACCESS
+		);
+		if (!protectionResult.isAllowed()) {
 			// TODO Always allow access to own shop containers, even if cancelled by other plugins?
 			Log.debug(() -> "Cancelled container interaction by '" + player.getName() + "' at '"
 					+ TextUtils.getLocationString(block) + "': Protected container.");
@@ -57,10 +62,15 @@ class ContainerProtectionListener implements Listener {
 	void onBlockBreak(BlockBreakEvent event) {
 		Block block = event.getBlock();
 		Player player = event.getPlayer();
-		if (protectedContainers.isProtectedContainer(block, player)) {
+		var protectionResult = protectedContainers.checkContainerProtection(block, player);
+		if (!protectionResult.isAllowed()) {
 			Log.debug(() -> "Cancelled breaking of container block by '" + player.getName()
-					+ "' at '" + TextUtils.getLocationString(block) + "': Protected container.");
-			TextUtils.sendMessage(player, Messages.cannotBreakShopContainer);
+					+ "' at '" + TextUtils.getLocationString(block) + "': "
+					+ getProtectionDescription(protectionResult) + ".");
+			var message = (protectionResult == ContainerProtectionResult.PROTECTED_HIREABLE)
+					? Messages.cannotBreakHiredShopContainer
+					: Messages.cannotBreakShopContainer;
+			TextUtils.sendMessage(player, message);
 
 			event.setCancelled(true);
 		}
@@ -101,18 +111,29 @@ class ContainerProtectionListener implements Listener {
 	) {
 		Player player = event.getPlayer();
 		for (Block containerBlock : containerBlocks) {
-			if (!protectedContainers.isProtectedContainer(containerBlock, player)) {
-				continue;
-			}
+			var protectionResult = protectedContainers.checkContainerProtection(containerBlock, player);
+			if (protectionResult.isAllowed()) continue;
 
 			Block block = event.getBlock();
 			Log.debug(() -> "Cancelled placing of " + blockName + " block by '" + player.getName()
-					+ "' at '" + TextUtils.getLocationString(block)
-					+ "': Protected container nearby.");
-			TextUtils.sendMessage(player, Messages.cannotPlaceBlockNearShopContainer);
+					+ "' at '" + TextUtils.getLocationString(block) + "': "
+					+ getProtectionDescription(protectionResult) + " nearby.");
+			var message = (protectionResult == ContainerProtectionResult.PROTECTED_HIREABLE)
+					? Messages.cannotPlaceBlockNearHiredShopContainer
+					: Messages.cannotPlaceBlockNearShopContainer;
+			TextUtils.sendMessage(player, message);
 
 			event.setCancelled(true);
 			return;
+		}
+	}
+
+	// The description of the given protection, used for the debug output.
+	private static String getProtectionDescription(ContainerProtectionResult protectionResult) {
+		if (protectionResult == ContainerProtectionResult.PROTECTED_HIREABLE) {
+			return "Hireable shop container";
+		} else {
+			return "Protected container";
 		}
 	}
 

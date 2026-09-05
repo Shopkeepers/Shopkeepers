@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.commands.shopkeepers;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
@@ -30,6 +32,9 @@ import com.nisovin.shopkeepers.commands.lib.util.PlayerArgumentUtils;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils.OwnedPlayerShopsResult;
 import com.nisovin.shopkeepers.lang.Messages;
+import com.nisovin.shopkeepers.playershops.expiration.ShopExpirationTimeFormat;
+import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
+import com.nisovin.shopkeepers.text.Text;
 import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 
@@ -206,11 +211,25 @@ class CommandList extends Command {
 			);
 		}
 
+		Instant now = Instant.now();
+
 		int startIndex = (page - 1) * ENTRIES_PER_PAGE;
 		int endIndex = Math.min(startIndex + ENTRIES_PER_PAGE, shopsCount);
 		for (int index = startIndex; index < endIndex; index++) {
 			Shopkeeper shopkeeper = shops.get(index);
 			String shopName = shopkeeper.getName(); // Can be empty
+
+			// Empty if the shop does not expire:
+			Text expiration = Text.EMPTY;
+			if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop) {
+				@Nullable Instant expirationTime = playerShop.getExpiration();
+				if (expirationTime != null) {
+					expiration = Messages.listShopsEntryExpiration.setPlaceholderArguments(
+							"timeLeft", ShopExpirationTimeFormat.getTimeLeftText(expirationTime, now)
+					);
+				}
+			}
+
 			// TODO Add shop info as hover text.
 			// TODO Add owner name/uuid as message arguments?
 			// TODO Move into shopkeeper.
@@ -227,7 +246,8 @@ class CommandList extends Command {
 					"shopName", (shopName.isEmpty() ? "" : (shopName + " ")),
 					"location", shopkeeper.getPositionString(),
 					"shopType", shopkeeper.getType().getIdentifier(),
-					"objectType", shopkeeper.getShopObject().getType().getIdentifier()
+					"objectType", shopkeeper.getShopObject().getType().getIdentifier(),
+					"expiration", expiration
 			);
 		}
 	}

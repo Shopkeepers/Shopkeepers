@@ -88,6 +88,7 @@ public class PlayerShopContainersEditorView extends View {
 	private void updateInventory(Inventory inventory) {
 		inventory.clear();
 
+		var player = this.getPlayer();
 		var playerShop = this.getShopkeeperNonNull();
 		containers = new ArrayList<>(playerShop.getContainers());
 
@@ -99,14 +100,20 @@ public class PlayerShopContainersEditorView extends View {
 				break;
 			}
 
-			var editorItem = ShopContainerEditorUtils.createContainerItem(playerShop, container, false);
+			var editorItem = ShopContainerEditorUtils.createContainerItem(
+					playerShop,
+					container,
+					false,
+					player
+			);
 			inventory.setItem(slotIndex, editorItem);
 
 			slotIndex += 1;
 		}
 
 		if (containers.size() >= Settings.maxContainersPerPlayerShop
-				|| containers.size() >= inventorySize) {
+				|| containers.size() >= inventorySize
+				|| !ShopContainerEditorUtils.isAdditionSupported(playerShop, player)) {
 			addContainerButtonSlot = -1;
 		} else {
 			addContainerButtonSlot = containers.size();
@@ -184,7 +191,7 @@ public class PlayerShopContainersEditorView extends View {
 		// Shift-left-click, or any shift click if remote container opening is disabled: Remove the
 		// container after confirmation.
 		if (event.isShiftClick()) {
-			if (!ShopContainerEditorUtils.isRemovalSupported(shopkeeper)) {
+			if (!ShopContainerEditorUtils.isRemovalSupported(shopkeeper, player)) {
 				return;
 			}
 
@@ -257,7 +264,7 @@ public class PlayerShopContainersEditorView extends View {
 
 					// The number of containers might have changed in the meantime: Silently abort
 					// if the container can no longer be removed (e.g. it is now the last one).
-					if (!ShopContainerEditorUtils.isRemovalSupported(shopkeeper)) {
+					if (!ShopContainerEditorUtils.isRemovalSupported(shopkeeper, player)) {
 						return;
 					}
 
@@ -383,6 +390,12 @@ public class PlayerShopContainersEditorView extends View {
 		private void addContainer(Block containerBlock) {
 			if (!shopkeeper.isValid()) {
 				TextUtils.sendMessage(player, Messages.shopNoLongerExists);
+				return;
+			}
+
+			// The shop might have been set for hire in the meantime: Silently abort if containers
+			// can no longer be added.
+			if (!ShopContainerEditorUtils.isAdditionSupported(shopkeeper, player)) {
 				return;
 			}
 

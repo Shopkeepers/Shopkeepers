@@ -121,6 +121,11 @@ public class Messages extends Config {
 			"Closes and removes",
 			"this shopkeeper"
 	));
+	public static String buttonRestoreForHire = c("&4Put up for hire");
+	public static List<String> buttonRestoreForHireLore = c(Arrays.asList(
+			"Removes this shop from you",
+			"and offers it for hire again"
+	));
 
 	public static String buttonSignVariant = c("&aChoose sign variant");
 	public static List<String> buttonSignVariantLore = c(Arrays.asList(
@@ -538,7 +543,7 @@ public class Messages extends Config {
 	public static String forHireTitle = c("For Hire");
 	public static String buttonHire = c("&aHire");
 	public static List<String> buttonHireLore = c(Arrays.asList(
-			"Buy this shopkeeper"
+			"Hire this shopkeeper"
 	));
 
 	public static String tradingTitlePrefix = c("&2");
@@ -614,6 +619,7 @@ public class Messages extends Config {
 	public static Text zombieVillagerCuringDisabled = Text.parse("&7Curing of zombie villagers is disabled.");
 	public static Text mustHoldHireItem = Text.parse("&7You have to hold the required hire item in your hand.");
 	public static Text setForHire = Text.parse("&aThis shopkeeper can now be hired.");
+	public static Text setNotForHire = Text.parse("&aThis shopkeeper is no longer for hire.");
 	public static Text hired = Text.parse("&aYou have hired this shopkeeper!");
 	public static Text missingHirePerm = Text.parse("&7You do not have the permission to hire shopkeepers.");
 	public static Text cannotHire = Text.parse("&7You cannot afford to hire this shopkeeper.");
@@ -624,6 +630,7 @@ public class Messages extends Config {
 	public static Text missingTradePerm = Text.parse("&7You do not have the permission to trade with this shop.");
 	public static Text missingCustomTradePerm = Text.parse("&7You do not have the permission to trade with this shop.");
 	public static Text shopCurrentlyClosed = Text.parse("&7This shop is currently closed. Check again later!");
+	public static Text cannotTradeShopForHire = Text.parse("&7This shop cannot be traded with because it is for hire.");
 	public static Text cannotTradeNoOffers = Text.parse("&7This shop currently has no offers. Check again later!");
 	public static Text noOffersOpenEditorDescription = Text.parse("&eYou can edit this shop by right clicking it while sneaking.");
 	public static Text cannotTradeWithOwnShop = Text.parse("&7You cannot trade with your own shop.");
@@ -912,18 +919,38 @@ public class Messages extends Config {
 	public static Text listAdminShopsHeader = Text.parse("&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})");
 	public static Text listAllShopsHeader = Text.parse("&9There are &e{shopsCount} &9shops in total: &e(Page {page} of {maxPage})");
 	public static Text listPlayerShopsHeader = Text.parse("&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})");
-	public static Text listShopsEntry = Text.parse("  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}");
+	public static Text listShopsEntry = Text.parse("  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}{expiration}");
+	public static Text listShopsEntryExpiration = Text.parse("&8, expiration: {timeLeft}");
+
+	public static Text listExpiringShopsHeader = Text.parse("&9Player '&e{player}&9' has &e{shopsCount} &9shops that are about to expire:");
+	public static Text noExpiringShops = Text.parse("&9Player '&e{player}&9' has no shops that are about to expire.");
+
+	public static Text shopExpirationNotificationHeader = Text.parse("&eSome of your shops are about to expire:");
+	public static Text shopExpirationNotificationEntry = Text.parse("  &e{shopId}) &7{shopName}&r&8at &7({location})&8, expires in {timeLeft}");
+	public static Text shopExpirationNotificationMore = Text.parse("  &7And &e{count}&7 more shop(s).");
+	public static Text shopExpirationNotificationHint = Text.parse("&7Use &e/shopkeeper expiration&7 to list your expiring shops.");
+	public static Text shopExpired = Text.parse("&7Your shop {shopName}&7at &7({location})&7 has expired!");
+	public static Text shopExpirationInfo = Text.parse("&7This shop will expire in {timeLeft}&7.");
 
 	public static Text shopRemoved = Text.parse("&aThe shopkeeper has been removed.");
 	public static Text shopAlreadyRemoved = Text.parse("&7The shopkeeper has already been removed.");
 	public static Text shopNoLongerExists = Text.parse("&7The shopkeeper no longer exists.");
 	public static Text shopRemovalCancelled = Text.parse("&cA plugin has prevented the removal of the shopkeeper.");
 
+	public static Text cannotDeleteHiredShop = Text.parse("&7You cannot delete a hired shop.");
+	public static Text cannotMoveHiredShop = Text.parse("&7You cannot move a hired shop.");
+	public static Text shopRestoredForHire = Text.parse("&aThis shop can now be hired again.");
+	public static Text shopAlreadyForHire = Text.parse("&7This shop is already offered for hire.");
+	public static Text setNotForHireToDeleteHint = Text.parse("&7To delete this shop: Use &e/shopkeeper setNotForHire&7 first.");
 	public static Text cannotInteractShopContainer = Text.parse("&7You cannot interact with this shop container.");
 	public static Text cannotBreakShopContainer = Text.parse("&7You cannot break the container of another player's shop.");
+	public static Text cannotBreakHiredShopContainer = Text.parse("&7You cannot break the container of a hired shop.");
 	public static Text cannotPlaceBlockNearShopContainer = Text.parse("&7You cannot place this block next to the container of another player's shop.");
+	public static Text cannotPlaceBlockNearHiredShopContainer = Text.parse("&7You cannot place this block next to the container of a hired shop.");
+
 	public static Text shopsAlreadyRemoved = Text.parse("&e{shopsCount}&7 of the shops have already been removed.");
 	public static Text shopRemovalsCancelled = Text.parse("&cPlugins have prevented the removal of &e{shopsCount}&c of the shops.");
+	public static Text hiredShopsNotRemoved = Text.parse("&e{shopsCount}&7 hired shops were not removed.");
 	public static Text adminShopsRemoved = Text.parse("&e{shopsCount} &aadmin shops have been removed.");
 	public static Text shopsOfPlayerRemoved = Text.parse("&e{shopsCount} &ashops of player '&e{player}&a' have been removed.");
 	public static Text playerShopsRemoved = Text.parse("&e{shopsCount} &aplayer shops have been removed.");
@@ -949,6 +976,13 @@ public class Messages extends Config {
 	public static List<String> confirmationUiDeleteShopConfirmLore = c(Arrays.asList(
 			"This will irrevocably",
 			"remove this shop!"
+	));
+
+	public static String confirmationUiRestoreShopForHireTitle = c("&cReally set this shop for hire?");
+	public static List<String> confirmationUiRestoreShopForHireConfirmLore = c(Arrays.asList(
+			"This will remove the shop",
+			"from you and offer it",
+			"for hire again!"
 	));
 
 	public static String confirmationUiDeleteVillagerTitle = c("&cReally delete this villager?");
@@ -1059,7 +1093,9 @@ public class Messages extends Config {
 	public static Text commandDescriptionTeleport = Text.parse("Teleports to a shop.");
 	public static Text commandDescriptionSettradeperm = Text.parse("Sets, removes (-) or displays (?) the trading permission.");
 	public static Text commandDescriptionSettradedcommand = Text.parse("Sets, removes (-) or displays (?) the traded command of the held item.");
-	public static Text commandDescriptionSetforhire = Text.parse("Sets one of your shops for sale.");
+	public static Text commandDescriptionSetforhire = Text.parse("Offers one of your shops for hire.");
+	public static Text commandDescriptionSetnotforhire = Text.parse("Stops offering one of your shops for hire.");
+	public static Text commandDescriptionExpiration = Text.parse("Lists the shops of a player that are about to expire.");
 	public static Text commandDescriptionSnapshotList = Text.parse("Lists the snapshots of a shop.");
 	public static Text commandDescriptionSnapshotCreate = Text.parse("Creates a new shop snapshot.");
 	public static Text commandDescriptionSnapshotRemove = Text.parse("Removes a specific or all snapshots of a shop.");

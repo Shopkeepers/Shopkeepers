@@ -425,6 +425,14 @@ public interface Shopkeeper {
 	 */
 	public List<? extends TradingRecipe> getTradingRecipes(@Nullable Player player);
 
+	/**
+	 * Clears the shopkeeper's trade offers.
+	 * <p>
+	 * Note: Retrieving or setting up the trade offers differs depending on the type of shopkeeper,
+	 * but clearing them is supported by every type of shopkeeper.
+	 */
+	public void clearOffers();
+
 	// SHOPKEEPER UIs
 
 	/**

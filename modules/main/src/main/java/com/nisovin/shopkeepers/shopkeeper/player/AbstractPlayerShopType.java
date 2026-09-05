@@ -13,7 +13,6 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerCreatePlayerShopkeeperEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
-import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
@@ -98,8 +97,7 @@ public abstract class AbstractPlayerShopType<T extends AbstractPlayerShopkeeper>
 
 		// Check the max shops limit:
 		if (maxShopsLimit != Integer.MAX_VALUE) {
-			ShopkeeperRegistry shopkeeperRegistry = SKShopkeepersPlugin.getInstance().getShopkeeperRegistry();
-			int count = shopkeeperRegistry.getPlayerShopkeepersByOwner(creator.getUniqueId()).size();
+			int count = PlayerShopsLimit.getOwnedShopsCount(creator.getUniqueId());
 			if (count >= maxShopsLimit) {
 				TextUtils.sendMessage(creator, Messages.tooManyShops);
 				return false;

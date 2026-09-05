@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.api.shopkeeper.player;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -95,6 +96,18 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 * @return the owner of this shop, or <code>null</code> if the owner is offline
 	 */
 	public @Nullable Player getOwner();
+
+	/**
+	 * Gets the timestamp at which the current owner acquired this shop.
+	 * <p>
+	 * This is the basis of the shop's expiration (if enabled) and is reset when the shop owner
+	 * changes, the shop is hired (including when it is hired by the same owner again), or the
+	 * expiration is {@link #resetExpiration() reset}.
+	 * 
+	 * @return the timestamp at which the current owner acquired this shop / the expiration basis,
+	 *         not <code>null</code>
+	 */
+	public Instant getOwnedSince();
 
 	// MEMBERS
 
@@ -241,44 +254,130 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	// HIRING
 
 	/**
-	 * Checks whether this shopkeeper is for hire.
+	 * Checks whether this shopkeeper is currently offered for hire, i.e. it is both
+	 * {@link #isHireable() hireable} and has not yet been {@link #setHired() hired}.
 	 * <p>
-	 * The shopkeeper is for hire if a {@link #getHireCost() hiring cost item} is set.
+	 * Note: The shopkeeper retains its hire cost item after having been {@link #setHired() hired},
+	 * for example to later be able to restore its for-hire state with the same hire cost. I.e. it
+	 * remains {@link #isHireable() hireable} but is no longer {@link #isForHire() for hire}.
 	 * 
-	 * @return <code>true</code> if this shopkeeper is for hire
+	 * @return <code>true</code> if this shopkeeper is currently offered for hire
 	 */
 	public boolean isForHire();
 
 	/**
-	 * Sets this shopkeeper for hire using the given hiring cost item.
+	 * Sets this shopkeeper for hire using the given hire cost item.
 	 * <p>
 	 * The given item stack is copied before it is stored by the shopkeeper.
 	 * 
 	 * @param hireCost
-	 *            the hiring cost item, or <code>null</code> or empty to set this shopkeeper not for
+	 *            the hire cost item, or <code>null</code> or empty to set this shopkeeper not for
 	 *            hire
+	 * @see #setForHire(UnmodifiableItemStack)
 	 */
 	public void setForHire(@Nullable ItemStack hireCost);
 
 	/**
-	 * Sets this shopkeeper for hire using the given hiring cost item.
+	 * Sets this shopkeeper for hire using the given hire cost item.
 	 * <p>
 	 * The given item stack is assumed to be immutable and therefore not copied before it is stored
 	 * by the shopkeeper.
+	 * <p>
+	 * The shop owner is not changed: They keep their access to the shop until another player hires
+	 * the shopkeeper. However, the shopkeeper can no longer be traded with while it is for hire and
+	 * it does not count towards the player's max-shops limit.
 	 * 
 	 * @param hireCost
-	 *            the hiring cost item, or <code>null</code> or empty to set this shopkeeper not for
+	 *            the hire cost item, or <code>null</code> or empty to set this shopkeeper not for
 	 *            hire
 	 */
 	public void setForHire(@Nullable UnmodifiableItemStack hireCost);
 
 	/**
-	 * Gets the hiring cost item of this shopkeeper.
+	 * Sets this shopkeeper for hire using its current (retained) {@link #getHireCost() hire cost
+	 * item}.
+	 * <p>
+	 * This has no effect if this shopkeeper is not {@link #isHireable() hireable}.
 	 * 
-	 * @return an unmodifiable view on the hiring cost item, or <code>null</code> if this shopkeeper
-	 *         is not for hire
+	 * @see #setForHire(UnmodifiableItemStack)
+	 */
+	public void setForHire();
+
+	/**
+	 * Marks this shopkeeper as hired, i.e. sets it as no longer {@link #isForHire() for hire}, but
+	 * preserves its {@link #getHireCost() hire cost} item, i.e. its {@link #isHireable() hireable}
+	 * state.
+	 * <p>
+	 * This also {@link #resetExpiration() resets the shop's expiration} in order to account for the
+	 * current owner re-hiring the previously expired shop.
+	 * <p>
+	 * This has no effect if the shopkeeper is not {@link #isForHire() for hire} currently.
+	 */
+	public void setHired();
+
+	/**
+	 * Gets the hire cost item of this shopkeeper.
+	 * <p>
+	 * A shopkeeper retains its hire cost item after having been {@link #setHired() hired}, so a
+	 * non-empty hire cost item does not imply that the shopkeeper is currently {@link #isForHire()
+	 * for hire}.
+	 * 
+	 * @return an unmodifiable view on the hire cost item, or <code>null</code> if this shopkeeper
+	 *         has no hire cost item
 	 */
 	public @Nullable UnmodifiableItemStack getHireCost();
+
+	/**
+	 * Checks whether this shopkeeper has a non-empty {@link #getHireCost() hire cost item}
+	 * assigned.
+	 * <p>
+	 * A shopkeeper retains its hire cost item after having been {@link #setHired() hired}, so this
+	 * does not imply that the shopkeeper is currently {@link #isForHire() for hire}.
+	 * 
+	 * @return <code>true</code> if this shopkeeper has a non-empty hire cost item
+	 */
+	public boolean isHireable();
+
+	// EXPIRATION
+
+	/**
+	 * Gets the timestamp at which this shopkeeper expires.
+	 * <p>
+	 * This is derived from the configured expiration duration and the time at which the current
+	 * owner {@link #getOwnedSince() acquired} this shopkeeper. It is therefore not a fixed
+	 * timestamp, but can change when the plugin configuration changes. Shopkeepers that are
+	 * currently {@link #isForHire() for hire} do not expire.
+	 * <p>
+	 * Note: This may recalculate and then persist the shopkeeper's cached expiration, and can
+	 * therefore trigger a delayed save of the shopkeeper data.
+	 * 
+	 * @return the timestamp at which this shopkeeper expires, or <code>null</code> if it does not
+	 *         expire
+	 */
+	public @Nullable Instant getExpiration();
+
+	/**
+	 * Resets this shopkeeper's {@link #getExpiration() expiration} by setting its
+	 * {@link #getOwnedSince() owned since} timestamp to the current time.
+	 * <p>
+	 * The current owner thereby gets the full expiration duration again.
+	 * <p>
+	 * This always updates the owned since timestamp, even if this shopkeeper does not currently
+	 * expire, for example while it is {@link #isForHire() for hire}.
+	 */
+	public void resetExpiration();
+
+	/**
+	 * Expires this shopkeeper.
+	 * <p>
+	 * If this shopkeeper has a {@link #getHireCost() hire cost item}, it is {@link #setForHire()
+	 * restored to its for hire state}. Otherwise, it is {@link #delete() deleted}.
+	 * <p>
+	 * This processes the expiration immediately, without checking whether expiration is enabled,
+	 * whether this shopkeeper has actually reached its {@link #getExpiration() expiration}, and
+	 * without calling the {@code PlayerShopkeeperExpireEvent}.
+	 */
+	public void expire();
 
 	// CONTAINERS
 

@@ -29,6 +29,56 @@ Date format: (YYYY-MM-DD)
   * API:
     * Add `PlayerShopkeeper#getContainers()`, `#addContainer(...)`, `#removeContainer(...)`, and `#openContainersEditorWindow(...)`.
     * Deprecate the previous single-container methods (`getContainerX/Y/Z`, `setContainer`, `getContainer`). They only affect the first container now and may not return results if the shop has no container, which is also a supported case now.
+* Add player shop expiration: Player shops can now be configured to expire after a certain duration.
+  * Config:
+    * Add setting `player-shop-expiration-days` (default: `0`, disabled): If greater than `0`, fully owned player shops (i.e. those that were not hired) expire and get deleted this many days after their current owner acquired them (i.e. after creation or transfer).
+    * Add setting `hired-player-shop-expiration-days` (default: `0`, disabled): If greater than `0`, hired player shops expire and revert back to their for-hire state this many days after they were hired.
+      * Note: Since we previously did not remember the previous hiring cost item once a shop was hired, this only applies to shopkeepers that are set for hire after this update. Existing previously hired player shops behave like fully owned player shops.
+      * Expiration has no effect on shops that are currently already waiting to be hired.
+      * Hiring a shop resets its expiration, even if it is hired again by its current owner, e.g. after it expired and reverted back to its for-hire state.
+    * Add setting `notify-shop-members-about-expiration` (default: `true`): Controls whether shop owners and members are notified when their shops are about to expire.
+      * If enabled, we notify players roughly 7 days, 3 days, 1 day, 12 hours, 1 hour and 10 minutes before their shop expires (configurable via `player-shop-expiration-notification-thresholds`), so they have a chance to clear their shop containers in time.
+      * We remember when we last notified each player, so we avoid notifying again for the same shop and notification threshold.
+      * Regardless of this setting, we always inform players about the expiration duration when they create or acquire a shop, and when a shop just expired and they happen to be online currently. However, we do not notify about shops that expired while they were offline.
+    * Add setting `player-shop-expiration-notification-thresholds` (default: `10080,4320,1440,720,60,10`): A comma-separated list of the notification thresholds in minutes before expiration at which shop members are reminded.
+      * The default corresponds to 7 days, 3 days, 1 day, 12 hours, 1 hour, and 10 minutes before expiration.
+      * Note: The expiration duration and notification thresholds are only rough estimates. For performance reasons, the plugin only checks for expirations and pending notifications every few minutes. Thresholds below this check interval may therefore not be reached before the shop expires.
+  * Expiration is checked roughly every 5 minutes, starting 5 minutes after plugin startup.
+    * Deleting an expired shop automatically unlocks its containers.
+    * All expirations are logged to the server log.
+  * Command: The `/shopkeeper list` output indicates when player shops will expire.
+  * Command: Add `/shopkeeper expiration [player]` (alias `/shopkeeper expiry`) to manually list up to the next 8 shops of a player that are about to expire.
+    * Permission: Without the optional player argument, this lists your own expiring shops (permission `shopkeeper.expiration.own`, default: `true`).
+    * Permission: The player can be specified by name or uuid, which also accounts for offline shop members (permission `shopkeeper.expiration.others`, default: `op`).
+    * This command can also be used from the console, in which case the player argument is required.
+    * Note: Since the expiration duration is only an estimate, some of the listed shops may already have reached their expiration time, but not have been expired yet.
+  * Data:
+    * Player shops now store when their current owner acquired the shop (`ownedSince`) and their cached expiration time (`expiration`), as well as which players have already been notified about which expiration thresholds (`expirationNotifications`). Timestamps are stored in the ISO-8601 instant format, thresholds in the ISO-8601 duration format.
+    * For shops that already existed before this update, we do not know when their current owner acquired them. When a shopkeeper is loaded and is missing `ownedSince`, we initialize it to the current timestamp.
+    * The for-hire state is decoupled from the hire cost item now: Player shops store a separate `forHire` flag now, and hired shops retain their hire cost item so that the for-hire state can later be restored. Existing for-hire shops are migrated automatically.
+  * API:
+    * Add `PlayerShopkeeper#getOwnedSince()`, `#getExpiration()`, `#resetExpiration()`, and `#expire()`.
+    * Add the cancellable `PlayerShopkeeperExpireEvent`: Called whenever a player shop is about to expire.
+* Changes to the hiring of player shops:
+  * Previously, hiring a shopkeeper fully transferred the ownership, including the ability of the new owner to delete the shopkeeper. Admins trying to use this feature to manage a controlled market area on their server had to manually monitor for stale market booths and set up new hireable shopkeepers over time. Now, owners of hired shopkeepers are more restricted in what they can do. And in combination with the new shop expiration feature (see setting `hired-player-shop-expiration-days`), it is now possible to set up temporarily hired shops that automatically revert back to their for-hire state once they expire.
+  * Change: Hired player shops can no longer be deleted by their shop members. Instead, the "delete" button in the editor reverts the shop to the for-hire state.
+    * This also applies to admins, so that they do not unknowingly observe a behavior that differs from what other players get, and to also allow them to revert the shop to the for-hire state via the editor. Players with the `shopkeeper.setforhire` permission additionally receive a hint that they can use the new `/shopkeeper setNotForHire` command first in order to then fully delete the shop afterwards.
+  * Command: `/shopkeeper remove` and `/shopkeeper removeAll` only deletes hired shopkeepers if the command executor has the `shopkeeper.bypass` permission.
+  * Change: Members of a hired player shop can access the shop containers, but are otherwise affected by the same restrictions as other players. I.e. they cannot break or build near the containers of the hired shop. Players with the `shopkeeper.bypass` permission are exempt from these restrictions, as before.
+  * Change: Hired player shops can no longer be moved via the editor, except by players with the `shopkeeper.setforhire` permission.
+  * Change: The containers of hired player shops can no longer be added or removed via the editor, except by players with the `shopkeeper.setforhire` permission.
+  * Change: Hiring a player shop clears its previous trade offers, unless the current owner re-hires the shop.
+  * Change: Shops that are currently for hire no longer count towards the `max-shops-per-player` limit (and the `shopkeeper.maxshops.<count>` permissions) of the current/previous owner. Without this change, players would not be able to re-hire their expired shopkeepers, or create or hire other shopkeepers after their previously hired shopkeeper(s) expired.
+  * Manual migration: Setting shops for hire requires the `shopkeeper.setforhire` permission, which is only granted to admins by default. If you assigned this permission to normal players in the past, it is recommended that you remove this permission from them again, because with these for-hire shops no longer counting towards the per-player shop limit, players with this permission can now create an unlimited number of shopkeepers on the server.
+  * Command: Add command `/shopkeeper setNotForHire` (permission `shopkeeper.setforhire`, same as for the `setForHire` command) to stop offering one of your shops for hire again and clearing its previously set hire cost item.
+  * Fix: Shops that are currently for hire can also no longer be traded with when the UI is attempted to be opened remotely via command or via the API.
+  * Fix: Automatically close any currently open hiring UIs when a shop stops being for hire or its hiring cost item changes. Players were already not able to hire these shops via the stale hiring UI before, but now we immediately close the stale UIs.
+  * Change: If `hired-player-shop-expiration-days` is enabled, `player-shopkeeper-inactive-days` restores hired shops of inactive players to their for-hire state instead of deleting them.
+  * API:
+    * Add `PlayerShopkeeper#isHireable()`, `#setHired()`, `#setForHire()`.
+    * `PlayerShopkeeper#isForHire()` no longer implies that `#getHireCost()` is `null` when it returns `false`: A shop retains its hire cost item after having been hired.
+    * Add `Shopkeeper#clearOffers()`: Removes all trade offers, regardless of the type of shopkeeper.
+    * Shops that are already for hire are no longer included in `PlayerInactiveEvent#getShopkeepers()`, because they are not affected by the player inactivity handling. The event is no longer called at all for shop owners whose remaining shops are already all for hire.
 * Change: Inform players when the container protection prevents them from interacting with a shop container, breaking it, or placing a block next to it.
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
@@ -37,6 +87,7 @@ Date format: (YYYY-MM-DD)
   * Fix: This also resolves that transferring or hiring a shop to one of its own members previously left that player listed as both the owner and a member, which made the shop fail to load.
   * API: This also applies to `PlayerShopkeeper#setOwner(...)`.
 * Command: `/shopkeeper transfer` informs the new owner about the received shop now, if they are online.
+* Command: `/shopkeeper transfer` automatically resets the for-hire state of the transferred shop, but preserves the hire cost item, as if the new owner had just hired the shop.
 * Fix: When a Citizen NPC player shopkeeper is moved to a different world, the shop containers keep working.
   * Shop containers can technically be located in different worlds now.
   * However, we still prevent players from manually moving their shops to a different world (via the max container distance check), because this can affect the performance.
@@ -95,9 +146,39 @@ Added messages:
 * `confirmation-ui-remove-shop-container-title`
 * `confirmation-ui-remove-shop-container-lore`
 * `shop-received`
+* `list-shops-entry-expiration`
+* `list-expiring-shops-header`
+* `no-expiring-shops`
+* `shop-expiration-notification-header`
+* `shop-expiration-notification-entry`
+* `shop-expiration-notification-more`
+* `shop-expiration-notification-hint`
+* `shop-expired`
+* `shop-expiration-info`
+* `set-not-for-hire`
+* `cannot-trade-shop-for-hire`
+* `cannot-delete-hired-shop`
+* `cannot-move-hired-shop`
+* `shop-restored-for-hire`
+* `shop-already-for-hire`
+* `set-not-for-hire-to-delete-hint`
 * `cannot-interact-shop-container`
 * `cannot-break-shop-container`
+* `cannot-break-hired-shop-container`
 * `cannot-place-block-near-shop-container`
+* `cannot-place-block-near-hired-shop-container`
+* `button-restore-for-hire`
+* `button-restore-for-hire-lore`
+* `confirmation-ui-restore-shop-for-hire-title`
+* `confirmation-ui-restore-shop-for-hire-confirm-lore`
+* `hired-shops-not-removed`
+* `command-description-setnotforhire`
+* `command-description-expiration`
+
+Changed messages:  
+* `list-shops-entry`: Added the `{expiration}` placeholder.
+* `button-hire-lore`: Consistently use the "hire" instead of "sale" wording.
+* `command-description-setforhire`: Consistently use the "hire" instead of "sale" wording.
 
 ## v2.27.0 (2026-06-29)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

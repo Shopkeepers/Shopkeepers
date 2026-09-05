@@ -13,7 +13,6 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerShopkeeperHireEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
-import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
@@ -79,12 +78,6 @@ public class PlayerShopHiringView extends HiringView {
 		return true;
 	}
 
-	private int getOwnedShopsCount(Player player) {
-		assert player != null;
-		ShopkeeperRegistry shopkeeperRegistry = SKShopkeepersPlugin.getInstance().getShopkeeperRegistry();
-		return shopkeeperRegistry.getPlayerShopkeepersByOwner(player.getUniqueId()).size();
-	}
-
 	@Override
 	protected void onInventoryClickEarly(InventoryClickEvent event) {
 		super.onInventoryClickEarly(event);
@@ -94,12 +87,16 @@ public class PlayerShopHiringView extends HiringView {
 		}
 
 		Player player = this.getPlayer();
-		PlayerShopkeeper shopkeeper = this.getShopkeeperNonNull();
+		AbstractPlayerShopkeeper shopkeeper = this.getShopkeeperNonNull();
 		int slot = event.getRawSlot();
 		if (slot == HIRE_BUTTON_1_SLOT || slot == HIRE_BUTTON_2_SLOT) {
-			// TODO Prevent hiring own shops?
-			// Actually: This feature was originally meant for admins to set up pre-existing shops.
 			// Handle hiring:
+
+			// Note: Players can also hire their own shops. This is relevant when a shop reverted to
+			// its for-hire state, for example after it expired, and its owner wants to hire it
+			// again, or when an admin who set up the shop for hire wants to hire it themselves in
+			// their normal "player" role.
+
 			// Check if the player can hire (create) this type of shopkeeper:
 			if (!this.canPlayerHireShopType(player, shopkeeper)) {
 				// Missing permission to hire this type of shopkeeper:
@@ -108,15 +105,16 @@ public class PlayerShopHiringView extends HiringView {
 				return;
 			}
 
-			UnmodifiableItemStack hireCost = shopkeeper.getHireCost();
-			if (hireCost == null) {
+			if (!shopkeeper.isForHire()) {
 				// The shopkeeper is no longer for hire.
-				// TODO Maybe instead ensure that we always close all hiring UIs when the hiring
-				// item changes.
-				// TODO Send a feedback message to the player
+				// We usually already close any hiring UIs whenever the for-hire state or the hire
+				// cost item changes, so this is only a safeguard (view closing may be delayed).
+				// TODO Send a feedback message to the player?
 				this.abortDelayed();
 				return;
 			}
+
+			UnmodifiableItemStack hireCost = Unsafe.assertNonNull(shopkeeper.getHireCost());
 
 			// Check if the player can afford to hire the shopkeeper, and calculate the resulting
 			// player inventory:
@@ -147,9 +145,11 @@ public class PlayerShopHiringView extends HiringView {
 			}
 
 			// Check max shops limit:
+			// Note: This shopkeeper is currently for hire and therefore not counted, even if the
+			// player already owns it.
 			maxShopsLimit = hireEvent.getMaxShopsLimit();
 			if (maxShopsLimit != Integer.MAX_VALUE) {
-				int ownedShopsCount = this.getOwnedShopsCount(player);
+				int ownedShopsCount = PlayerShopsLimit.getOwnedShopsCount(player.getUniqueId());
 				if (ownedShopsCount >= maxShopsLimit) {
 					TextUtils.sendMessage(player, Messages.tooManyShops);
 					this.abortDelayed();
@@ -160,10 +160,25 @@ public class PlayerShopHiringView extends HiringView {
 			// Hire the shopkeeper:
 			// Apply player inventory changes:
 			InventoryUtils.setContents(playerInventory, newPlayerInventoryContents);
-			shopkeeper.setForHire((UnmodifiableItemStack) null);
+
+			// Reset the trade offers if they were set up by a different previous owner:
+			if (!shopkeeper.isOwner(player)) {
+				shopkeeper.clearOffers();
+			}
+
+			// Note: This preserves the hire cost item in case the shopkeeper later reverts to the
+			// for-hire state.
+			shopkeeper.setHired();
 			shopkeeper.setOwner(player);
 			shopkeeper.save();
 			TextUtils.sendMessage(player, Messages.hired);
+
+			// Additionally inform the new owner about the shop's expiration, if applicable:
+			SKShopkeepersPlugin.getInstance()
+					.getPlayerShops()
+					.getPlayerShopsExpiration()
+					.getNotifier()
+					.informAboutExpiration(player, shopkeeper);
 
 			// Close all open windows for the shopkeeper:
 			shopkeeper.abortUISessionsDelayed();

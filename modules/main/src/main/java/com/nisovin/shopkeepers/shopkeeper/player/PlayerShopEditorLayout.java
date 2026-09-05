@@ -97,8 +97,9 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 		return new ActionButton() {
 			@Override
 			public @Nullable ItemStack getIcon(EditorView editorView) {
+				Player player = editorView.getPlayer();
 				AbstractPlayerShopkeeper shopkeeper = getShopkeeper();
-				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper)) {
+				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper, player)) {
 					ItemStack iconItem = Settings.containerItem.createItemStack();
 					String containerCount = String.valueOf(shopkeeper.getContainers().size());
 					String displayName = StringUtils.replaceArguments(Messages.buttonContainers,
@@ -123,14 +124,19 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 					);
 				}
 
-				return ShopContainerEditorUtils.createContainerItem(shopkeeper, container, true);
+				return ShopContainerEditorUtils.createContainerItem(
+						shopkeeper,
+						container,
+						true,
+						player
+				);
 			}
 
 			@Override
 			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
 				Player player = editorView.getPlayer();
 				AbstractPlayerShopkeeper shopkeeper = getShopkeeper();
-				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper)) {
+				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper, player)) {
 					// Closing the UI also triggers a save of the current editor state:
 					editorView.closeDelayedAndRunTask(() -> {
 						// Open the shop containers editor:

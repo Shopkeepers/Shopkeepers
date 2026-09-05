@@ -16,9 +16,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerInactiveEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
-import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.user.User;
 import com.nisovin.shopkeepers.config.Settings;
+import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.registry.SKShopkeeperRegistry;
 import com.nisovin.shopkeepers.util.bukkit.SchedulerUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
@@ -27,14 +27,15 @@ import com.nisovin.shopkeepers.util.java.Validate;
 import com.nisovin.shopkeepers.util.logging.Log;
 
 /**
- * Identifies and deletes the shops that are owned by inactive players.
+ * Identifies and processes the shops that are owned by inactive players, i.e. deletes them or
+ * reverts them to the for-hire state.
  */
-class DeleteShopsOfInactivePlayersProcedure {
+class ProcessShopsOfInactivePlayersProcedure {
 
 	private static class InactivePlayerData {
 
 		private final int lastSeenDaysAgo;
-		private final List<PlayerShopkeeper> shopkeepers = new ArrayList<>();
+		private final List<AbstractPlayerShopkeeper> shopkeepers = new ArrayList<>();
 
 		InactivePlayerData(int lastSeenDaysAgo) {
 			this.lastSeenDaysAgo = lastSeenDaysAgo;
@@ -44,7 +45,7 @@ class DeleteShopsOfInactivePlayersProcedure {
 			return lastSeenDaysAgo;
 		}
 
-		List<PlayerShopkeeper> getShopkeepers() {
+		List<AbstractPlayerShopkeeper> getShopkeepers() {
 			return shopkeepers;
 		}
 	}
@@ -53,12 +54,17 @@ class DeleteShopsOfInactivePlayersProcedure {
 	private final SKShopkeeperRegistry shopkeeperRegistry;
 	private final int playerInactivityDays;
 
+	// Whether hired player shops expire instead of being deleted:
+	// Only used during the synchronous parts of the operation, and updated to the current value
+	// after the asynchronous part:
+	private boolean restoreHiredShops = Settings.hiredPlayerShopExpirationDays > 0;
+
 	private boolean started = false;
 	// Retrieved once and then reused for all inactivity checks of this procedure:
 	private final long currentTimeMillis = System.currentTimeMillis();
 	private final Map<User, @Nullable InactivePlayerData> inactivePlayers = new HashMap<>();
 
-	public DeleteShopsOfInactivePlayersProcedure(SKShopkeepersPlugin plugin) {
+	public ProcessShopsOfInactivePlayersProcedure(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
 		this.plugin = plugin;
 		this.shopkeeperRegistry = plugin.getShopkeeperRegistry();
@@ -82,7 +88,8 @@ class DeleteShopsOfInactivePlayersProcedure {
 
 		this.collectShopOwners();
 		if (inactivePlayers.isEmpty()) {
-			return; // There are no player shops
+			// There are no player shops that need to be deleted or reverted to the for-hire state:
+			return;
 		}
 
 		this.asyncCheckInactivityOfAllShopOwnersAndContinue();
@@ -92,6 +99,13 @@ class DeleteShopsOfInactivePlayersProcedure {
 	// pruned from shop owners that are not actually inactive.
 	private void collectShopOwners() {
 		shopkeeperRegistry.getAllPlayerShopkeepers().forEach(playerShop -> {
+			// Ignore the shopkeeper if it would be reverted to its for-hire state but already is
+			// for hire: If the owner only has for-hire shops remaining, we skip checking them for
+			// inactivity, because their for-hire shops are not affected by player inactivity.
+			if (this.restoreHiredShops && playerShop.isForHire()) {
+				return;
+			}
+
 			// In this first step, we only collect the existing shop owners, and don't store their
 			// shopkeepers yet. Later, we collect the shopkeepers of only the inactive shop owners.
 			inactivePlayers.put(playerShop.getOwnerUser(), null);
@@ -163,12 +177,21 @@ class DeleteShopsOfInactivePlayersProcedure {
 		assert Bukkit.isPrimaryThread();
 		assert !inactivePlayers.isEmpty();
 		assert !CollectionUtils.containsNull(inactivePlayers.values());
+
+		// Update to the current value in case the settings changed concurrently:
+		this.restoreHiredShops = Settings.hiredPlayerShopExpirationDays > 0;
+
 		this.collectShopsOfInactivePlayers();
 		this.deleteShopsOfInactivePlayers();
 	}
 
 	private void collectShopsOfInactivePlayers() {
 		shopkeeperRegistry.getAllPlayerShopkeepers().forEach(playerShop -> {
+			// Ignore the shop if it would revert to its for-hire state but already is for hire:
+			if (this.restoreHiredShops && playerShop.isForHire()) {
+				return;
+			}
+
 			// If the shop is owned by an inactive player, remember it for removal:
 			User shopOwner = playerShop.getOwnerUser();
 			InactivePlayerData inactivePlayerData = inactivePlayers.get(shopOwner);
@@ -183,10 +206,11 @@ class DeleteShopsOfInactivePlayersProcedure {
 	private void deleteShopsOfInactivePlayers() {
 		inactivePlayers.forEach((user, nullableInactivePlayerData) -> {
 			InactivePlayerData inactivePlayerData = Unsafe.assertNonNull(nullableInactivePlayerData);
-			List<? extends PlayerShopkeeper> shopkeepers = inactivePlayerData.getShopkeepers();
+			List<? extends AbstractPlayerShopkeeper> shopkeepers = inactivePlayerData.getShopkeepers();
 			if (shopkeepers.isEmpty()) {
 				// We initially found this shop owner and identified them as inactive, but were then
-				// subsequently no longer able to find any shopkeepers that are still owned by them.
+				// subsequently no longer able to find any shopkeepers that are still owned by them
+				// or affected by the player inactivity handling.
 				return;
 			}
 
@@ -206,14 +230,32 @@ class DeleteShopsOfInactivePlayersProcedure {
 				return;
 			}
 
-			// Delete the shopkeepers:
+			// Process the shopkeepers:
 			shopkeepers.forEach(playerShop -> {
 				if (!playerShop.isValid()) {
 					// The shopkeeper has already been removed in the meantime.
 					Log.debug(() -> playerShop.getUniqueIdLogPrefix()
-							+ "Deletion due to inactivity of owner " + playerShop.getOwnerString()
+							+ "Processing due to inactivity of owner " + playerShop.getOwnerString()
 							+ " (last seen " + inactivePlayerData.getLastSeenDaysAgo()
 							+ " days ago)" + " skipped: The shopkeeper has already been removed.");
+					return;
+				}
+
+				// If hired player shops expire, restore hired shops to their for-hire state instead
+				// of deleting them. This matches how these shops are handled when they expire.
+				// Note: The inactive player remains the owner of these shops while they are for
+				// hire.
+				if (this.restoreHiredShops && playerShop.isHireable()) {
+					// Skip if already for hire:
+					if (playerShop.isForHire()) {
+						return;
+					}
+
+					Log.info(playerShop.getUniqueIdLogPrefix()
+							+ "Restored to its for-hire state due to inactivity of owner "
+							+ playerShop.getOwnerString() + " (last seen "
+							+ inactivePlayerData.getLastSeenDaysAgo() + " days ago).");
+					playerShop.setForHire();
 					return;
 				}
 

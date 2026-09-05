@@ -89,6 +89,10 @@ button-delete: "&4Delete"
 button-delete-lore:
 - Closes and removes
 - this shopkeeper
+button-restore-for-hire: "&4Put up for hire"
+button-restore-for-hire-lore:
+- Removes this shop from you
+- and offers it for hire again
 
 button-sign-variant: "&aChoose sign variant"
 button-sign-variant-lore:
@@ -439,7 +443,7 @@ player-sign-shop-line4: "&eRight click!"
 for-hire-title: "For Hire"
 button-hire: "&aHire"
 button-hire-lore:
-- Buy this shopkeeper
+- Hire this shopkeeper
 
 trading-title-prefix: "&2"
 trading-title-default: "Shopkeeper"
@@ -511,6 +515,7 @@ traded-command-view-unset: "&aThe item has no traded command assigned."
 zombie-villager-curing-disabled: "&7Curing of zombie villagers is disabled."
 must-hold-hire-item: "&7You have to hold the required hire item in your hand."
 set-for-hire: "&aThis shopkeeper can now be hired."
+set-not-for-hire: "&aThis shopkeeper is no longer for hire."
 hired: "&aYou have hired this shopkeeper!"
 missing-hire-perm: "&7You do not have the permission to hire shopkeepers."
 cannot-hire: "&7You cannot afford to hire this shopkeeper."
@@ -520,6 +525,7 @@ villager-for-hire: "&aThe villager offered his services as a shopkeeper in excha
 missing-trade-perm: "&7You do not have the permission to trade with this shop."
 missing-custom-trade-perm: "&7You do not have the permission to trade with this shop."
 shop-currently-closed: "&7This shop is currently closed. Check again later!"
+cannot-trade-shop-for-hire: "&7This shop cannot be traded with because it is for hire."
 cannot-trade-no-offers: "&7This shop currently has no offers. Check again later!"
 no-offers-open-editor-description: "&eYou can edit this shop by right clicking it while sneaking."
 cannot-trade-with-own-shop: "&7You cannot trade with your own shop."
@@ -771,18 +777,38 @@ teleport-success: "&aPlayer '&e{player}&a' was teleported to shopkeeper '&e{shop
 list-admin-shops-header: "&9There are &e{shopsCount} &9admin shops: &e(Page {page} of {maxPage})"
 list-all-shops-header: "&9There are &e{shopsCount} &9shops in total: &e(Page {page} of {maxPage})"
 list-player-shops-header: "&9Player '&e{player}&9' has &e{shopsCount} &9shops: &e(Page {page} of {maxPage})"
-list-shops-entry: "  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}"
+list-shops-entry: "  &e{shopId}) &7{shopName}&r&8at &7({location})&8, type: &7{shopType}&8, object: &7{objectType}{expiration}"
+list-shops-entry-expiration: "&8, expiration: {timeLeft}"
+
+list-expiring-shops-header: "&9Player '&e{player}&9' has &e{shopsCount} &9shops that are about to expire:"
+no-expiring-shops: "&9Player '&e{player}&9' has no shops that are about to expire."
+
+shop-expiration-notification-header: "&eSome of your shops are about to expire:"
+shop-expiration-notification-entry: "  &e{shopId}) &7{shopName}&r&8at &7({location})&8, expires in {timeLeft}"
+shop-expiration-notification-more: "  &7And &e{count}&7 more shop(s)."
+shop-expiration-notification-hint: "&7Use &e/shopkeeper expiration&7 to list your expiring shops."
+shop-expired: "&7Your shop {shopName}&7at &7({location})&7 has expired!"
+shop-expiration-info: "&7This shop will expire in {timeLeft}&7."
 
 shop-removed: "&aThe shopkeeper has been removed."
 shop-already-removed: "&7The shopkeeper has already been removed."
 shop-no-longer-exists: "&7The shopkeeper no longer exists."
 shop-removal-cancelled: "&cA plugin has prevented the removal of the shopkeeper."
 
+cannot-delete-hired-shop: "&7You cannot delete a hired shop."
+cannot-move-hired-shop: "&7You cannot move a hired shop."
+shop-restored-for-hire: "&aThis shop can now be hired again."
+shop-already-for-hire: "&7This shop is already offered for hire."
+set-not-for-hire-to-delete-hint: "&7To delete this shop: Use &e/shopkeeper setNotForHire&7 first."
 cannot-interact-shop-container: "&7You cannot interact with this shop container."
 cannot-break-shop-container: "&7You cannot break the container of another player's shop."
+cannot-break-hired-shop-container: "&7You cannot break the container of a hired shop."
 cannot-place-block-near-shop-container: "&7You cannot place this block next to the container of another player's shop."
+cannot-place-block-near-hired-shop-container: "&7You cannot place this block next to the container of a hired shop."
+
 shops-already-removed: "&e{shopsCount}&7 of the shops have already been removed."
 shop-removals-cancelled: "&cPlugins have prevented the removal of &e{shopsCount}&c of the shops."
+hired-shops-not-removed: "&e{shopsCount}&7 hired shops were not removed."
 admin-shops-removed: "&e{shopsCount} &aadmin shops have been removed."
 shops-of-player-removed: "&e{shopsCount} &ashops of player '&e{player}&a' have been removed."
 player-shops-removed: "&e{shopsCount} &aplayer shops have been removed."
@@ -808,6 +834,12 @@ confirmation-ui-delete-shop-title: "&cReally delete this shop?"
 confirmation-ui-delete-shop-confirm-lore:
 - "This will irrevocably"
 - "remove this shop!"
+
+confirmation-ui-restore-shop-for-hire-title: "&cReally set this shop for hire?"
+confirmation-ui-restore-shop-for-hire-confirm-lore:
+- "This will remove the shop"
+- "from you and offer it"
+- "for hire again!"
 
 confirmation-ui-delete-villager-title: "&cReally delete this villager?"
 confirmation-ui-delete-villager-confirm-lore:
@@ -916,7 +948,9 @@ command-description-transfer: "Transfers the ownership of a shop."
 command-description-teleport: "Teleports to a shop."
 command-description-settradeperm: "Sets, removes (-) or displays (?) the trading permission."
 command-description-settradedcommand: "Sets, removes (-) or displays (?) the traded command of the held item."
-command-description-setforhire: "Sets one of your shops for sale."
+command-description-setforhire: "Offers one of your shops for hire."
+command-description-setnotforhire: "Stops offering one of your shops for hire."
+command-description-expiration: "Lists the shops of a player that are about to expire."
 command-description-snapshot-list: "Lists the snapshots of a shop."
 command-description-snapshot-create: "Creates a new shop snapshot."
 command-description-snapshot-remove: "Removes a specific or all snapshots of a shop."

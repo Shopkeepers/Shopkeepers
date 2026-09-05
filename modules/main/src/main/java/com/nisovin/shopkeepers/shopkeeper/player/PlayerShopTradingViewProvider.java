@@ -30,6 +30,19 @@ public abstract class PlayerShopTradingViewProvider extends TradingViewProvider 
 
 		var shopkeeper = this.getShopkeeper();
 
+		// A shop that is waiting to be hired cannot be traded with:
+		// Interacting with such a shop opens the hiring UI instead. The check here ensures that the
+		// shop can also not be traded with by other means, e.g. remotely via command. Since
+		// for-hire shop's do not count towards the owner's shop limit, this ensures that the hire
+		// state cannot be abused to circumvent the shop limit.
+		if (shopkeeper.isForHire()) {
+			if (!silent) {
+				this.debugNotOpeningUI(player, "Shopkeeper is for hire.");
+				TextUtils.sendMessage(player, Messages.cannotTradeShopForHire);
+			}
+			return false;
+		}
+
 		// Stop opening if trading shall be prevented while a member is online:
 		if (Settings.preventTradingWhileMemberIsOnline
 				&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {

@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.config;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import com.nisovin.shopkeepers.items.ItemUpdates;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.playershops.MaxShopsPermission;
 import com.nisovin.shopkeepers.playershops.PlayerShopsLimit;
+import com.nisovin.shopkeepers.playershops.expiration.PlayerShopsExpiration;
 import com.nisovin.shopkeepers.shopcreation.ShopCreationItem;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
 import com.nisovin.shopkeepers.shopobjects.living.types.MagmaCubeShop;
@@ -124,6 +126,16 @@ public class Settings extends Config {
 	public static boolean deleteShopkeeperOnBreakContainer = false;
 
 	public static int playerShopkeeperInactiveDays = 0;
+
+	/*
+	 * Player Shop Expiration
+	 */
+	public static int playerShopExpirationDays = 0;
+	public static int hiredPlayerShopExpirationDays = 0;
+
+	public static boolean notifyShopMembersAboutExpiration = true;
+	// In minutes. Default: 7d, 3d, 1d, 12h, 1h, 10m
+	public static String playerShopExpirationNotificationThresholds = "10080,4320,1440,720,60,10";
 
 	/*
 	 * Shop (Object) Types
@@ -444,6 +456,7 @@ public class Settings extends Config {
 		public static ItemData nameButtonItem = Unsafe.uncheckedNull();
 		public static ItemData moveButtonItem = Unsafe.uncheckedNull();
 		public static ItemData deleteButtonItem = Unsafe.uncheckedNull();
+		public static ItemData restoreForHireButtonItem = Unsafe.uncheckedNull();
 		public static ItemData hireButtonItem = Unsafe.uncheckedNull();
 
 		public static ItemData deleteVillagerButtonItem = Unsafe.uncheckedNull();
@@ -454,6 +467,10 @@ public class Settings extends Config {
 
 		// Sorted in descending order:
 		public static final List<MaxShopsPermission> maxShopsPermissions = new ArrayList<>();
+
+		// Player shop expiration notification threshold durations, sorted in ascending order:
+		public static final List<Duration> playerShopExpirationNotificationThresholds
+				= new ArrayList<>();
 
 		public static final Set<EntityType> enabledLivingShops = new LinkedHashSet<>();
 
@@ -660,6 +677,12 @@ public class Settings extends Config {
 					Messages.buttonDelete,
 					Messages.buttonDeleteLore
 			);
+			// Uses the same item as the delete button, but a different name and lore:
+			restoreForHireButtonItem = new ItemData(
+					deleteItem,
+					Messages.buttonRestoreForHire,
+					Messages.buttonRestoreForHireLore
+			);
 			hireButtonItem = new ItemData(
 					hireItem,
 					Messages.buttonHire,
@@ -699,6 +722,13 @@ public class Settings extends Config {
 				Log.warning(INSTANCE.getLogPrefix()
 						+ "Ignoring invalid entry in 'max-shops-perm-options': "
 						+ invalidPermissionOption);
+			});
+
+			// Player shop expiration notification thresholds:
+			PlayerShopsExpiration.updateExpirationNotificationThresholds(invalidThreshold -> {
+				Log.warning(INSTANCE.getLogPrefix()
+						+ "Ignoring invalid entry in 'player-shop-expiration-notification-thresholds': "
+						+ invalidThreshold);
 			});
 
 			// Enabled living shop types:
@@ -786,6 +816,9 @@ public class Settings extends Config {
 
 		// Refresh async settings cache:
 		AsyncSettings.refresh();
+
+		// The configured player shop expiration durations might have changed:
+		PlayerShopsExpiration.onSettingsChanged();
 	}
 
 	///// PERSISTENCE

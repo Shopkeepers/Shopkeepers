@@ -212,16 +212,32 @@ class CommandRemoveAll extends Command {
 		String finalTargetPlayerName = targetPlayerName;
 		// This is dangerous: Let the sender first confirm this action.
 		confirmations.awaitConfirmation(sender, () -> {
+			// Shops that can be hired are only removed for senders with the bypass permission: They
+			// are usually meant to be restored to their for-hire state instead of being deleted.
+			boolean canRemoveHireableShops = PermissionUtils.hasPermission(
+					sender,
+					ShopkeepersPlugin.BYPASS_PERMISSION
+			);
+
 			// Note: New shops might have been created in the meantime, but the command only affects
 			// the already determined affected shops.
 			// Remove shops:
 			int invalidShops = 0;
 			int cancelledDeletions = 0;
+			int skippedHireableShops = 0;
 			int actualShopCount = 0;
 			for (Shopkeeper shopkeeper : affectedShops) {
 				// Skip the shopkeeper if it no longer exists:
 				if (!shopkeeper.isValid()) {
 					invalidShops += 1;
+					continue;
+				}
+
+				// Skip the shopkeeper if it can be hired and the sender cannot remove such shops:
+				if (!canRemoveHireableShops
+						&& shopkeeper instanceof PlayerShopkeeper playerShop
+						&& playerShop.isHireable()) {
+					skippedHireableShops += 1;
 					continue;
 				}
 
@@ -253,6 +269,11 @@ class CommandRemoveAll extends Command {
 			if (cancelledDeletions > 0) {
 				TextUtils.sendMessage(sender, Messages.shopRemovalsCancelled,
 						"shopsCount", cancelledDeletions
+				);
+			}
+			if (skippedHireableShops > 0) {
+				TextUtils.sendMessage(sender, Messages.hiredShopsNotRemoved,
+						"shopsCount", skippedHireableShops
 				);
 			}
 			if (allAdmin) {

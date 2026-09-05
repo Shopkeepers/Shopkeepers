@@ -69,7 +69,7 @@ class CommandRemove extends Command {
 
 		AbstractShopkeeper shopkeeper = context.get(ARGUMENT_SHOPKEEPER);
 
-		if (!this.checkDeletePermission(sender, shopkeeper)) {
+		if (!this.checkCanDelete(sender, shopkeeper)) {
 			return;
 		}
 
@@ -80,9 +80,9 @@ class CommandRemove extends Command {
 				return;
 			}
 
-			// Re-check the permission after the deferred confirmation:
+			// Re-check can-delete after the deferred confirmation:
 			try {
-				if (!this.checkDeletePermission(sender, shopkeeper)) {
+				if (!this.checkCanDelete(sender, shopkeeper)) {
 					return;
 				}
 			} catch (NoPermissionException e) {
@@ -113,15 +113,26 @@ class CommandRemove extends Command {
 		TextUtils.sendMessage(sender, Messages.confirmationRequired);
 	}
 
-	// Returns false if the player has no access and was already notified.
+	// Returns false if the player cannot delete this shopkeeper and was already notified, e.g.
+	// because they have no access.
 	// Throws a NoPermissionException if the player has no access and was not notified yet. This can
 	// be handled like any other CommandException (command failure, debug logging, etc.).
-	// Returns true if the player has access.
-	private boolean checkDeletePermission(CommandSender sender, AbstractShopkeeper shopkeeper)
+	// Returns true if the player can delete this shopkeeper.
+	private boolean checkCanDelete(CommandSender sender, AbstractShopkeeper shopkeeper)
 			throws NoPermissionException {
 		// Check that the sender can edit this shop:
 		// Note: More fine-grained player shop access levels and permissions are checked below.
 		if (!shopkeeper.canEdit(sender, false)) {
+			return false;
+		}
+
+		// Shops that can be hired are only deletable with the bypass permission:
+		// These shops are instead usually reverted to their for-hire state, e.g. when deleted via
+		// the editor.
+		if (shopkeeper instanceof PlayerShopkeeper playerShop
+				&& playerShop.isHireable()
+				&& !PermissionUtils.hasPermission(sender, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+			TextUtils.sendMessage(sender, Messages.cannotDeleteHiredShop);
 			return false;
 		}
 

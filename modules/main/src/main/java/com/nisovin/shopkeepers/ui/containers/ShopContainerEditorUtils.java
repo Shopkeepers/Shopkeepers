@@ -9,12 +9,14 @@ import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.container.SKShopContainerType;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.ui.lib.View;
+import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
@@ -28,28 +30,63 @@ public final class ShopContainerEditorUtils {
 	 * Checks whether the given shopkeeper's containers are represented via the containers editor
 	 * (multiple containers are allowed or already present), rather than as a single container
 	 * directly.
+	 * <p>
+	 * If the shopkeeper has a single container and the player is not allowed to add further
+	 * containers, the single container is represented directly.
 	 * 
 	 * @param shopkeeper
 	 *            the shopkeeper, not <code>null</code>
+	 * @param player
+	 *            the editing player, not <code>null</code>
 	 * @return <code>true</code> if the containers editor is used
 	 */
-	public static boolean usesContainersEditor(PlayerShopkeeper shopkeeper) {
-		return Settings.maxContainersPerPlayerShop > 1 || shopkeeper.getContainers().size() > 1;
+	public static boolean usesContainersEditor(PlayerShopkeeper shopkeeper, Player player) {
+		if (shopkeeper.getContainers().size() > 1) return true;
+
+		return Settings.maxContainersPerPlayerShop > 1 && isAdditionSupported(shopkeeper, player);
+	}
+
+	// The containers of hireable shops cannot be edited (added or removed), except by players with
+	// the setforhire permission.
+	private static boolean canEditContainers(PlayerShopkeeper shopkeeper, Player player) {
+		return !shopkeeper.isHireable()
+				|| PermissionUtils.hasPermission(player, ShopkeepersPlugin.SET_FOR_HIRE_PERMISSION);
 	}
 
 	/**
-	 * Checks whether the given shopkeeper's containers can currently be removed via the editor.
+	 * Checks whether the given player can currently add containers to the given shopkeeper via the
+	 * editor.
+	 * 
+	 * @param shopkeeper
+	 *            the shopkeeper, not <code>null</code>
+	 * @param player
+	 *            the editing player, not <code>null</code>
+	 * @return <code>true</code> if containers can be added
+	 */
+	public static boolean isAdditionSupported(PlayerShopkeeper shopkeeper, Player player) {
+		return canEditContainers(shopkeeper, player);
+	}
+
+	/**
+	 * Checks whether the given player can currently remove the given shopkeeper's containers via
+	 * the editor.
 	 * <p>
-	 * We currently prevent users from removing their last shop container. This make it more
+	 * We currently prevent users from removing their last shop container. This makes it more
 	 * complicated to move shopkeepers over long distances (nothing we really supported previously
 	 * either), but avoids issues when "delete-shopkeeper-on-break-container" is enabled.
 	 * 
 	 * @param shopkeeper
 	 *            the shopkeeper, not <code>null</code>
+	 * @param player
+	 *            the editing player, not <code>null</code>
 	 * @return <code>true</code> if containers can be removed
 	 */
-	public static boolean isRemovalSupported(PlayerShopkeeper shopkeeper) {
-		return shopkeeper.getContainers().size() > 1;
+	public static boolean isRemovalSupported(PlayerShopkeeper shopkeeper, Player player) {
+		// The last shop container cannot be removed:
+		if (shopkeeper.getContainers().size() <= 1) return false;
+
+		// Check if the player is allowed to edit the containers:
+		return canEditContainers(shopkeeper, player);
 	}
 
 	/**
@@ -62,24 +99,28 @@ public final class ShopContainerEditorUtils {
 	 * @param singleContainerButton
 	 *            <code>true</code> if the item represents the shop's single container directly (in
 	 *            the main editor), rather than an entry in the containers editor
+	 * @param player
+	 *            the editing player, not <code>null</code>
 	 * @return the editor item
 	 */
 	public static ItemStack createContainerItem(
 			PlayerShopkeeper shopkeeper,
 			ShopContainer container,
-			boolean singleContainerButton
+			boolean singleContainerButton,
+			Player player
 	) {
 		return ItemUtils.setDisplayNameAndLore(
 				Settings.containerItem.createItemStack(),
 				Messages.shopContainerTitle,
-				createContainerLore(shopkeeper, container, singleContainerButton)
+				createContainerLore(shopkeeper, container, singleContainerButton, player)
 		);
 	}
 
 	private static List<? extends String> createContainerLore(
 			PlayerShopkeeper shopkeeper,
 			ShopContainer container,
-			boolean singleContainerButton
+			boolean singleContainerButton,
+			Player player
 	) {
 		List<? extends String> loreTemplate = singleContainerButton
 				? Messages.singleShopContainerLore
@@ -105,7 +146,7 @@ public final class ShopContainerEditorUtils {
 					: Messages.shopContainerActionOpen;
 		}
 
-		String removeAction = isRemovalSupported(shopkeeper)
+		String removeAction = isRemovalSupported(shopkeeper, player)
 				? Messages.shopContainerActionRemove
 				: "";
 

@@ -2,11 +2,14 @@ package com.nisovin.shopkeepers.playershops;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.bukkit.entity.Player;
 
+import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
 import com.nisovin.shopkeepers.util.java.Validate;
@@ -102,5 +105,33 @@ public class PlayerShopsLimit {
 			}
 		}
 		return maxShops;
+	}
+
+	/**
+	 * Gets the number of shops the specified player owns that count towards their
+	 * {@link #getMaxShopsLimit(Player) maximum shops limit}.
+	 * <p>
+	 * Shops that are currently {@link PlayerShopkeeper#isForHire() for hire} are not counted: They
+	 * are waiting to be hired by another player, or the same player again, and cannot be traded
+	 * with in the meantime.
+	 * 
+	 * @param playerId
+	 *            the player's unique id, not <code>null</code>
+	 * @return the number of owned shops that count towards the limit
+	 */
+	public static int getOwnedShopsCount(UUID playerId) {
+		Validate.notNull(playerId, "playerId is null");
+		var shopkeeperRegistry = SKShopkeepersPlugin.getInstance().getShopkeeperRegistry();
+		int count = 0;
+		for (var playerShop : shopkeeperRegistry.getPlayerShopkeepersByOwner(playerId)) {
+			// Shops that are waiting to be hired do not count towards the limit:
+			if (playerShop.isForHire()) {
+				continue;
+			}
+
+			count++;
+		}
+
+		return count;
 	}
 }

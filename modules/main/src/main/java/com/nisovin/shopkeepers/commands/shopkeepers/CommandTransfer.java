@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
 import com.nisovin.shopkeepers.api.user.User;
@@ -78,6 +79,11 @@ class CommandTransfer extends Command {
 			return;
 		}
 
+		// Reset the for-hire state, as if the new owner just hired the shop:
+		// TODO Also automatically reset the previous trade offers here? However, admins would then
+		// no longer be able to only change the shop owner without also clearing the shop offers.
+		shopkeeper.setHired();
+
 		// Set new owner:
 		shopkeeper.setOwner(newOwner);
 
@@ -94,6 +100,13 @@ class CommandTransfer extends Command {
 					"shopName", (shopName.isEmpty() ? "" : (shopName + " ")),
 					"location", shopkeeper.getPositionString()
 			);
+
+			// Additionally inform them about the shop's expiration, if applicable:
+			SKShopkeepersPlugin.getInstance()
+					.getPlayerShops()
+					.getPlayerShopsExpiration()
+					.getNotifier()
+					.informAboutExpiration(newOwnerPlayer, shopkeeper);
 		}
 
 		// Save:

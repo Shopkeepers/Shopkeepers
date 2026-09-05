@@ -11,23 +11,23 @@ import com.nisovin.shopkeepers.util.bukkit.Ticks;
 import com.nisovin.shopkeepers.util.java.Validate;
 
 /**
- * Handles the removal of shops that are owned by inactive players.
+ * Processes shops that are owned by inactive players.
  */
 public class PlayerInactivity {
 
 	private final SKShopkeepersPlugin plugin;
-	private final DeleteInactivePlayerShopsTask task;
+	private final ProcessInactivePlayerShopsTask task;
 
 	public PlayerInactivity(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
 		this.plugin = plugin;
-		this.task = new DeleteInactivePlayerShopsTask(plugin);
+		this.task = new ProcessInactivePlayerShopsTask(plugin);
 	}
 
 	public void onEnable() {
 		if (Settings.playerShopkeeperInactiveDays <= 0) return; // Feature is disabled
 
-		// Delete inactive player shops, once shortly after plugin startup, and then periodically:
+		// Process inactive player shops, once shortly after plugin startup, and then periodically:
 		task.start();
 	}
 
@@ -48,7 +48,7 @@ public class PlayerInactivity {
 	 * primary purpose of this task is to account for servers that keep running for very long
 	 * durations.
 	 */
-	private final class DeleteInactivePlayerShopsTask implements Runnable {
+	private final class ProcessInactivePlayerShopsTask implements Runnable {
 
 		// ~4 hours (can be noticeably longer if the server lags)
 		private static final long INTERVAL_TICKS = Ticks.PER_SECOND * 60 * 60 * 4L;
@@ -56,7 +56,7 @@ public class PlayerInactivity {
 		private final Plugin plugin;
 		private @Nullable BukkitTask task = null;
 
-		public DeleteInactivePlayerShopsTask(Plugin plugin) {
+		public ProcessInactivePlayerShopsTask(Plugin plugin) {
 			Validate.notNull(plugin, "plugin is null");
 			this.plugin = plugin;
 		}
@@ -77,13 +77,14 @@ public class PlayerInactivity {
 
 		@Override
 		public void run() {
-			deleteShopsOfInactivePlayers();
+			processShopsOfInactivePlayers();
 		}
 	}
 
 	// TODO Also add a command to manually detect and then optionally delete inactive player shops?
-	public void deleteShopsOfInactivePlayers() {
+	public void processShopsOfInactivePlayers() {
 		if (Settings.playerShopkeeperInactiveDays <= 0) return; // Feature is disabled
-		new DeleteShopsOfInactivePlayersProcedure(plugin).start();
+
+		new ProcessShopsOfInactivePlayersProcedure(plugin).start();
 	}
 }

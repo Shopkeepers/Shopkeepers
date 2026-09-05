@@ -1,11 +1,15 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.bukkit.Bukkit;
@@ -49,6 +53,7 @@ import com.nisovin.shopkeepers.debug.DebugOptions;
 import com.nisovin.shopkeepers.items.ItemUpdates;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
+import com.nisovin.shopkeepers.playershops.expiration.ShopExpirationNotifications;
 import com.nisovin.shopkeepers.shopcreation.ShopCreationItem;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.SKTradingRecipe;
@@ -58,6 +63,7 @@ import com.nisovin.shopkeepers.shopkeeper.migration.MigrationPhase;
 import com.nisovin.shopkeepers.shopkeeper.migration.ShopkeeperDataMigrator;
 import com.nisovin.shopkeepers.shopkeeper.player.members.SKPlayerShopMember;
 import com.nisovin.shopkeepers.ui.containers.PlayerShopContainersEditorViewProvider;
+import com.nisovin.shopkeepers.ui.lib.UISessionManager;
 import com.nisovin.shopkeepers.ui.members.PlayerShopMembersEditorViewProvider;
 import com.nisovin.shopkeepers.user.SKUser;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
@@ -75,6 +81,7 @@ import com.nisovin.shopkeepers.util.data.serialization.DataAccessor;
 import com.nisovin.shopkeepers.util.data.serialization.InvalidDataException;
 import com.nisovin.shopkeepers.util.data.serialization.bukkit.ItemStackSerializers;
 import com.nisovin.shopkeepers.util.data.serialization.java.BooleanSerializers;
+import com.nisovin.shopkeepers.util.data.serialization.java.InstantSerializers;
 import com.nisovin.shopkeepers.util.data.serialization.java.NumberSerializers;
 import com.nisovin.shopkeepers.util.data.serialization.java.StringSerializers;
 import com.nisovin.shopkeepers.util.data.serialization.java.UUIDSerializers;
@@ -124,6 +131,55 @@ public abstract class AbstractPlayerShopkeeper
 				// Write back the migrated hire cost item:
 				shopkeeperData.set(HIRE_COST_ITEM, hireCost);
 				Log.debug(DebugOptions.itemMigrations, () -> logPrefix + "Migrated hire cost item.");
+				return true;
+			}
+		});
+
+		// Initialize the for-hire flag for shops that were stored before it was decoupled from the
+		// hire cost item:
+		ShopkeeperDataMigrator.registerMigration(new Migration(
+				"for-hire-flag",
+				MigrationPhase.ofShopkeeperClass(AbstractPlayerShopkeeper.class)
+		) {
+			@Override
+			public boolean migrate(
+					ShopkeeperData shopkeeperData,
+					String logPrefix
+			) throws InvalidDataException {
+				if (shopkeeperData.contains(FOR_HIRE.getName())) {
+					return false; // Already migrated
+				}
+
+				// Previously, a shop was for hire if it had a hire cost item:
+				if (!shopkeeperData.contains(HIRE_COST_ITEM.getName())) {
+					return false;
+				}
+
+				shopkeeperData.set(FOR_HIRE, true);
+				Log.debug(() -> logPrefix + "Migrated the for-hire state.");
+				return true;
+			}
+		});
+
+		// Initialize the owned-since timestamp for shops that were stored before it was tracked:
+		ShopkeeperDataMigrator.registerMigration(new Migration(
+				"owned-since",
+				MigrationPhase.ofShopkeeperClass(AbstractPlayerShopkeeper.class)
+		) {
+			@Override
+			public boolean migrate(
+					ShopkeeperData shopkeeperData,
+					String logPrefix
+			) throws InvalidDataException {
+				if (shopkeeperData.contains(OWNED_SINCE.getName())) {
+					return false; // Already migrated
+				}
+
+				// We do not know when the current owner acquired the shop, so we assume that they
+				// acquired it now:
+				shopkeeperData.set(OWNED_SINCE, Instant.now());
+				Log.debug(() -> logPrefix + "Initialized the " + OWNED_SINCE.getName()
+						+ " timestamp.");
 				return true;
 			}
 		});
@@ -185,6 +241,12 @@ public abstract class AbstractPlayerShopkeeper
 
 	// Valid after successful initialization:
 	private PlayerShopMember owner = SKPlayerShopMember.EMPTY;
+	// The timestamp at which the current owner acquired this shop, e.g. via shop creation,
+	// transfer, or by hiring this shop.
+	// Used for example as the reference point for the shop's expiration.
+	// Defaults to the shop's creation time (now). Overwritten when the shop is loaded from data.
+	private Instant ownedSince = Instant.now();
+
 	private final List<SKPlayerShopMember> members = new ArrayList<SKPlayerShopMember>();
 	private final List<? extends PlayerShopMember> membersView = Collections.unmodifiableList(members);
 	// Each container stores its own world, which is usually, but not necessarily, the shopkeeper's
@@ -192,7 +254,24 @@ public abstract class AbstractPlayerShopkeeper
 	private final List<SKShopContainer> containers = new ArrayList<SKShopContainer>();
 	private final List<? extends SKShopContainer> containersView = Collections.unmodifiableList(containers);
 	private boolean notifyOnTrades = NOTIFY_ON_TRADES.getDefaultValue();
-	private @Nullable UnmodifiableItemStack hireCost = null; // Null if not for hire
+
+	private boolean forHire = false;
+	// Preserved when hired to potentially later restore the for-hire state:
+	private @Nullable UnmodifiableItemStack hireCost = null;
+
+	// The cached expiration timestamp that the expiration notifications were last computed against,
+	// or null if the shop does not expire or the expiration timestamp was not calculated yet.
+	// Persisted so that changes to the configured expiration duration can be detected and the
+	// notification state can be reset accordingly:
+	private @Nullable Instant expiration = null;
+	// Whether the cached expiration needs to be recalculated, e.g. because the shop's ownership or
+	// hire state changed. Initially true, so that the expiration is also recalculated for newly
+	// created and loaded shops (the configured expiration durations might have changed since the
+	// shop was saved).
+	private boolean expirationOutdated = true;
+	// Tracks which shop members have already been notified at which expiration notification
+	// thresholds:
+	private ShopExpirationNotifications expirationNotifications = new ShopExpirationNotifications();
 
 	// Initial threshold between [1, CHECK_CONTAINER_PERIOD_SECONDS] for load balancing:
 	private final RateLimiter checkContainerLimiter = new RateLimiter(
@@ -245,21 +324,33 @@ public abstract class AbstractPlayerShopkeeper
 	@Override
 	public void loadDynamicState(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		super.loadDynamicState(shopkeeperData);
+		this.loadOwnedSince(shopkeeperData);
 		this.loadOwner(shopkeeperData);
 		this.loadMembers(shopkeeperData);
 		this.loadContainers(shopkeeperData);
 		this.loadNotifyOnTrades(shopkeeperData);
 		this.loadForHire(shopkeeperData);
+		this.loadExpiration(shopkeeperData);
+		this.loadExpirationNotifications(shopkeeperData);
+
+		// Re-check the expiration whenever the shop is loaded or a snapshot has been applied:
+		this.markExpirationOutdated();
+
+		// Requires the owner, the members, and the notifications to be loaded:
+		this.pruneExpirationNotifications();
 	}
 
 	@Override
 	public void saveDynamicState(ShopkeeperData shopkeeperData, boolean saveAll) {
 		super.saveDynamicState(shopkeeperData, saveAll);
+		this.saveOwnedSince(shopkeeperData);
 		this.saveOwner(shopkeeperData);
 		this.saveMembers(shopkeeperData);
 		this.saveContainers(shopkeeperData);
 		this.saveNotifyOnTrades(shopkeeperData);
 		this.saveForHire(shopkeeperData);
+		this.saveExpiration(shopkeeperData);
+		this.saveExpirationNotifications(shopkeeperData);
 	}
 
 	// ITEM UPDATES
@@ -409,6 +500,12 @@ public abstract class AbstractPlayerShopkeeper
 			})
 			.build();
 
+	// Required. Initialized via a migration for shops that were created before this data was
+	// tracked.
+	public static final Property<Instant> OWNED_SINCE = new BasicProperty<Instant>()
+			.dataKeyAccessor("ownedSince", InstantSerializers.ISO)
+			.build();
+
 	private void loadOwner(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		assert shopkeeperData != null;
 		this._setOwner(shopkeeperData.get(OWNER));
@@ -417,6 +514,14 @@ public abstract class AbstractPlayerShopkeeper
 	private void saveOwner(ShopkeeperData shopkeeperData) {
 		assert shopkeeperData != null;
 		shopkeeperData.set(OWNER, owner.getUser());
+	}
+
+	private void loadOwnedSince(ShopkeeperData shopkeeperData) throws InvalidDataException {
+		this.ownedSince = shopkeeperData.get(OWNED_SINCE);
+	}
+
+	private void saveOwnedSince(ShopkeeperData shopkeeperData) {
+		shopkeeperData.set(OWNED_SINCE, ownedSince);
 	}
 
 	@Override
@@ -439,12 +544,19 @@ public abstract class AbstractPlayerShopkeeper
 	}
 
 	// Invoked when the owner is about to change.
+	// Resets the shop's expiration when its owner changes to a different player (for example via
+	// transfer or hiring), so that the new owner gets a full expiration duration.
 	private void onOwnerChanging(UUID newOwnerId) {
 		if (this.getOwnerUUID().equals(newOwnerId)) return;
 
 		// The shop members were granted access by the previous owner, so they do not carry over to
 		// the new owner. This also ensures that the new owner is not also listed as a member.
 		this._setMembers(Collections.emptyList());
+
+		this.resetExpiration();
+
+		// Note: No pruneExpirationNotifications() required here: resetExpiration() and a subsequent
+		// ensureExpirationUpToDate() will already clear the notifications eventually.
 	}
 
 	private void _setOwner(UUID ownerUUID, String ownerName) {
@@ -493,6 +605,11 @@ public abstract class AbstractPlayerShopkeeper
 		return Bukkit.getPlayer(this.getOwnerUUID());
 	}
 
+	@Override
+	public Instant getOwnedSince() {
+		return ownedSince;
+	}
+
 	// MEMBERS
 
 	public static final Property<List<? extends PlayerShopMember>> MEMBERS = new BasicProperty<List<? extends PlayerShopMember>>()
@@ -519,6 +636,14 @@ public abstract class AbstractPlayerShopkeeper
 		}
 
 		return membersView;
+	}
+
+	// Includes the shop owner:
+	public void forEachMember(Consumer<User> action) {
+		action.accept(this.getOwnerUser());
+		for (PlayerShopMember member : this.getMembers()) {
+			action.accept(member.getUser());
+		}
 	}
 
 	public @Nullable Player getFirstOnlineMember() {
@@ -578,6 +703,7 @@ public abstract class AbstractPlayerShopkeeper
 	public void removeMember(UUID playerUUID) {
 		Validate.isTrue(!this.isOwner(playerUUID), "Cannot remove shop owner from members!");
 		if (members.removeIf(x -> x.getUser().getUniqueId().equals(playerUUID))) {
+			this.pruneExpirationNotifications();
 			this.markDirty();
 		}
 	}
@@ -768,26 +894,37 @@ public abstract class AbstractPlayerShopkeeper
 
 	// HIRING
 
+	// Not omitted when false, so that the presence of the data key reliably indicates whether the
+	// legacy data has already been migrated (separate hire cost and for-hire state data).
+	public static final Property<Boolean> FOR_HIRE = new BasicProperty<Boolean>()
+			.dataKeyAccessor("forHire", BooleanSerializers.LENIENT)
+			.defaultValue(false)
+			.useDefaultIfMissing()
+			.build();
+
 	public static final Property<@Nullable UnmodifiableItemStack> HIRE_COST_ITEM = new BasicProperty<@Nullable UnmodifiableItemStack>()
 			.dataKeyAccessor("hirecost", ItemStackSerializers.UNMODIFIABLE)
 			.validator(ItemStackValidators.Unmodifiable.NON_EMPTY)
-			.nullable() // Null if the shop is not for hire
+			.nullable()
 			.defaultValue(null)
 			.build();
 
 	private void loadForHire(ShopkeeperData shopkeeperData) throws InvalidDataException {
 		assert shopkeeperData != null;
-		this._setForHire(shopkeeperData.get(HIRE_COST_ITEM));
+		boolean forHire = shopkeeperData.get(FOR_HIRE);
+		@Nullable UnmodifiableItemStack hireCost = shopkeeperData.get(HIRE_COST_ITEM);
+		this._setForHire(forHire, hireCost);
 	}
 
 	private void saveForHire(ShopkeeperData shopkeeperData) {
 		assert shopkeeperData != null;
+		shopkeeperData.set(FOR_HIRE, forHire);
 		shopkeeperData.set(HIRE_COST_ITEM, hireCost);
 	}
 
 	@Override
 	public boolean isForHire() {
-		return (hireCost != null);
+		return forHire && this.isHireable();
 	}
 
 	@Override
@@ -797,31 +934,232 @@ public abstract class AbstractPlayerShopkeeper
 
 	@Override
 	public void setForHire(@Nullable UnmodifiableItemStack hireCost) {
-		this._setForHire(hireCost);
+		// A non-empty hire cost item enables hiring. An empty item clears both the for-hire state
+		// and the hire cost item:
+		this._setForHire(true, hireCost);
+		this.markExpirationOutdated();
 		this.markDirty();
 	}
 
-	private void _setForHire(@Nullable UnmodifiableItemStack hireCost) {
-		boolean isForHire = this.isForHire();
-		if (ItemUtils.isEmpty(hireCost)) {
-			// Disable hiring:
-			this.hireCost = null;
+	@Override
+	public void setForHire() {
+		if (hireCost == null) return;
 
-			// If the shopkeeper was previously for hire, reset its name:
-			if (isForHire) {
-				this.setName("");
-			}
+		this.setForHire(hireCost);
+	}
+
+	@Override
+	public void setHired() {
+		if (!this.isForHire()) return;
+
+		// Preserves the hire cost item:
+		this._setForHire(false, hireCost);
+
+		// Reset the expiration:
+		// This also resets the owned-since timestamp when the current owner re-hires the shop.
+		// Note: The shop's ownership is updated separately.
+		this.resetExpiration();
+
+		this.markDirty();
+	}
+
+	// forHire: Only relevant when the hireCost is not null.
+	private void _setForHire(boolean forHire, @Nullable UnmodifiableItemStack hireCost) {
+		boolean wasForHire = this.isForHire();
+		if (ItemUtils.isEmpty(hireCost)) {
+			// Clear the hire cost item and the for-hire state:
+			this.hireCost = null;
+			this.forHire = false;
 		} else {
-			// Set for hire:
 			this.hireCost = Unsafe.assertNonNull(hireCost);
-			this.setName(Messages.forHireTitle);
+			this.forHire = forHire;
 		}
-		// TODO Close any currently open hiring UIs for players.
+
+		if (this.isForHire()) {
+			this.setName(Messages.forHireTitle);
+		} else if (wasForHire) {
+			// If the shopkeeper was previously for hire, reset its name:
+			this.setName("");
+		}
+
+		if (wasForHire) {
+			// Close any currently open hiring UIs, because they may display an outdated for-hire
+			// state or hire cost item:
+			// TODO Send a feedback message to players?
+			UISessionManager.getInstance()
+					.abortUISessionsForContextDelayed(this, DefaultUITypes.HIRING());
+		}
 	}
 
 	@Override
 	public @Nullable UnmodifiableItemStack getHireCost() {
 		return hireCost;
+	}
+
+	@Override
+	public boolean isHireable() {
+		return this.getHireCost() != null;
+	}
+
+	// EXPIRATION
+
+	public static final Property<@Nullable Instant> EXPIRATION = new BasicProperty<@Nullable Instant>()
+			.dataKeyAccessor("expiration", InstantSerializers.ISO)
+			.nullable() // Null if the shop does not expire
+			.defaultValue(null)
+			.omitIfDefault()
+			.build();
+
+	public static final Property<ShopExpirationNotifications> EXPIRATION_NOTIFICATIONS = new BasicProperty<ShopExpirationNotifications>()
+			.dataKeyAccessor("expirationNotifications", ShopExpirationNotifications.SERIALIZER)
+			.defaultValueSupplier(ShopExpirationNotifications::new)
+			.omitIfDefault()
+			.build();
+
+	private void loadExpiration(ShopkeeperData shopkeeperData) throws InvalidDataException {
+		this.expiration = shopkeeperData.get(EXPIRATION);
+	}
+
+	private void saveExpiration(ShopkeeperData shopkeeperData) {
+		shopkeeperData.set(EXPIRATION, expiration);
+	}
+
+	private void loadExpirationNotifications(ShopkeeperData shopkeeperData) throws InvalidDataException {
+		this.expirationNotifications = shopkeeperData.get(EXPIRATION_NOTIFICATIONS);
+	}
+
+	private void saveExpirationNotifications(ShopkeeperData shopkeeperData) {
+		shopkeeperData.set(EXPIRATION_NOTIFICATIONS, expirationNotifications);
+	}
+
+	// The expiration timestamp is cached and only recalculated if it is outdated.
+	@Override
+	public @Nullable Instant getExpiration() {
+		this.ensureExpirationUpToDate();
+		return expiration;
+	}
+
+	/**
+	 * Marks the cached {@link #getExpiration() expiration} timestamp as outdated, so that it is
+	 * recalculated once the next time it is queried.
+	 */
+	public void markExpirationOutdated() {
+		expirationOutdated = true;
+	}
+
+	@Override
+	public void resetExpiration() {
+		ownedSince = Instant.now();
+		this.markExpirationOutdated();
+		this.markDirty();
+	}
+
+	// Recalculates the cached expiration timestamp if it is outdated.
+	// This also has to be called before the expiration notification state is queried or modified,
+	// because recalculating the expiration can reset the notification state.
+	private void ensureExpirationUpToDate() {
+		if (!expirationOutdated) {
+			return;
+		}
+
+		expirationOutdated = false;
+
+		@Nullable Instant newExpiration = null;
+		@Nullable Duration expirationDuration = this.getExpirationDuration();
+		if (expirationDuration != null) {
+			newExpiration = this.getOwnedSince().plus(expirationDuration);
+		}
+
+		if (Objects.equals(newExpiration, expiration)) {
+			return;
+		}
+
+		// The expiration timestamp changed, for example because the configured expiration duration
+		// was changed: Reset the notification state, so that fresh notifications are sent for the
+		// new expiration timestamp.
+		expiration = newExpiration;
+		expirationNotifications.clear();
+
+		// Trigger a delayed save here, because unlike most other data changes, this change is not
+		// triggered by a caller directly, but can occur during any query of the expiration:
+		this.saveDelayed();
+	}
+
+	// Returns the configured expiration duration that applies to this shop, or null if this shop
+	// does not expire (for example while it is for hire).
+	private @Nullable Duration getExpirationDuration() {
+		// For-hire shops do not expire while they are waiting to be hired:
+		if (this.isForHire()) return null;
+
+		int expirationDays = (hireCost != null)
+				? Settings.hiredPlayerShopExpirationDays
+				: Settings.playerShopExpirationDays;
+		if (expirationDays <= 0) return null;
+
+		return Duration.ofDays(expirationDays);
+	}
+
+	/**
+	 * Gets the last expiration notification threshold (i.e. the remaining time before the
+	 * expiration) the specified player has been notified at.
+	 * 
+	 * @param playerId
+	 *            the player's unique id, not <code>null</code>
+	 * @return the last notification threshold, or <code>null</code> if the player has not been
+	 *         notified yet
+	 */
+	public @Nullable Duration getLastExpirationNotified(UUID playerId) {
+		// An outdated expiration can reset the notification state:
+		this.ensureExpirationUpToDate();
+		return expirationNotifications.get(playerId);
+	}
+
+	/**
+	 * Sets the last expiration notification threshold (i.e. the remaining time before the
+	 * expiration) the specified player has been notified at.
+	 * 
+	 * @param playerId
+	 *            the player's unique id, not <code>null</code>
+	 * @param threshold
+	 *            the notification threshold to set, or <code>null</code> to clear the last
+	 *            notification threshold for the player
+	 */
+	public void setLastExpirationNotified(UUID playerId, @Nullable Duration threshold) {
+		// An outdated expiration could subsequently reset the notification state we apply here:
+		this.ensureExpirationUpToDate();
+
+		expirationNotifications.set(playerId, threshold);
+		this.markDirty();
+	}
+
+	// Removes the expiration notification state of players that are no longer shop members.
+	// Note: Owner changes reset the expiration and thereby already clear all notifications.
+	private void pruneExpirationNotifications() {
+		this.ensureExpirationUpToDate();
+
+		if (expirationNotifications.isEmpty()) {
+			return;
+		}
+
+		// Note: isMember also covers the shop owner.
+		boolean removed = expirationNotifications.removeIf(playerId -> {
+			return !this.isMember(playerId);
+		});
+		if (removed) {
+			this.markDirty();
+		}
+	}
+
+	@Override
+	public void expire() {
+		if (this.isHireable()) {
+			// The shop was previously for hire: Restore it to its for-hire state.
+			Log.info(this.getUniqueIdLogPrefix() + "Expired and restored to its for-hire state.");
+			this.setForHire();
+		} else {
+			Log.info(this.getUniqueIdLogPrefix() + "Expired and deleted.");
+			this.delete();
+		}
 	}
 
 	// CONTAINERS

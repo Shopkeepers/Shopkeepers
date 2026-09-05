@@ -84,6 +84,10 @@ button-delete: "&4Entfernen"
 button-delete-lore:
 - Schließt diesen Shop und
 - entfernt den Verkäufer
+button-restore-for-hire: "&4Zum Anheuern anbieten"
+button-restore-for-hire-lore:
+- Nimmt dir diesen Shop und
+- bietet ihn wieder zum Anheuern an
 
 button-sign-variant: "&aSchild-Variante ändern"
 button-sign-variant-lore:
@@ -447,7 +451,7 @@ player-sign-shop-line4: "&eRechtsklick!"
 for-hire-title: "Zum Anheuern"
 button-hire: "&aAnheuern"
 button-hire-lore:
-- Kaufe diesen Shop
+- Heuere diesen Shop an
 
 trading-title-prefix: "&2"
 trading-title-default: "Händler"
@@ -517,17 +521,19 @@ traded-command-view: "&aDer gehandelte Befehl des Gegenstandes ist aktuell '&e{c
 traded-command-view-unset: "&aDem Gegenstand ist kein gehandelter Befehl zugewiesen."
 
 zombie-villager-curing-disabled: "&7Das Heilen von Dorfbewohnerzombies ist deaktiviert."
-must-hold-hire-item: "&7Du musst den zum Kauf benötigten Gegenstand in deiner Hand halten."
-set-for-hire: "&aDieser Shop steht jetzt zum Verkauf."
-hired: "&aDu hast diesen Shop gekauft!"
-missing-hire-perm: "&7Dir fehlt die nötige Berechtigung, um Shops zu kaufen."
-cannot-hire: "&7Du kannst es dir nicht leisten, diesen Shop zu kaufen."
-cannot-hire-shop-type: "&7Dir fehlt die nötige Berechtigung, um diesen Typ von Shop zu kaufen."
+must-hold-hire-item: "&7Du musst den zum Anheuern benötigten Gegenstand in deiner Hand halten."
+set-for-hire: "&aDieser Shop kann jetzt angeheuert werden."
+set-not-for-hire: "&aDieser Shop kann nicht mehr angeheuert werden."
+hired: "&aDu hast diesen Shop angeheuert!"
+missing-hire-perm: "&7Dir fehlt die nötige Berechtigung, um Shops anzuheuern."
+cannot-hire: "&7Du kannst es dir nicht leisten, diesen Shop anzuheuern."
+cannot-hire-shop-type: "&7Dir fehlt die nötige Berechtigung, um diesen Typ von Shop anzuheuern."
 villager-for-hire: "&aDieser Dorfbewohner bietet dir im Tausch für &6{costs}x {hire-item}&a seine Dienste als Händler an."
 
 missing-trade-perm: "&7Du hast nicht die nötige Befugnis, um mit diesem Shop zu handeln."
 missing-custom-trade-perm: "&7Du hast nicht die nötige Befugnis, um mit diesem Shop zu handeln."
 shop-currently-closed: "&7Dieser Shop ist derzeit geschlossen. Schaue später nochmal vorbei!"
+cannot-trade-shop-for-hire: "&7Mit diesem Shop kann nicht gehandelt werden, da er zum Anheuern angeboten wird."
 cannot-trade-no-offers: "&7Dieser Shop hat derzeit keine Angebote. Schaue später nochmal vorbei!"
 no-offers-open-editor-description: "&eDu kannst diesen Shop mit Shift+Rechtsklick bearbeiten."
 cannot-trade-with-own-shop: "&7Du kannst nicht mit deinem eigenen Shop handeln."
@@ -779,18 +785,38 @@ teleport-success: "&aSpieler '&e{player}&a' wurde zu Shop '&e{shop}&a' teleporti
 list-admin-shops-header: "&9Es gibt &e{shopsCount} &9Admin-Shops: &e(Seite {page} von {maxPage})"
 list-all-shops-header: "&9Es gibt insgesamt &e{shopsCount} &9Shops: &e(Seite {page} von {maxPage})"
 list-player-shops-header: "&9Spieler '&e{player}&9' hat &e{shopsCount} &9Shops: &e(Seite {page} von {maxPage})"
-list-shops-entry: "  &e{shopId}) &7{shopName}&r&8an &7({location})&8, Typ: &7{shopType}&8, Objekt: &7{objectType}"
+list-shops-entry: "  &e{shopId}) &7{shopName}&r&8bei &7({location})&8, Typ: &7{shopType}&8, Objekt: &7{objectType}{expiration}"
+list-shops-entry-expiration: "&8, Ablauf: {timeLeft}"
+
+list-expiring-shops-header: "&9Spieler '&e{player}&9' hat &e{shopsCount} &9Shops, die bald ablaufen:"
+no-expiring-shops: "&9Spieler '&e{player}&9' hat keine Shops, die bald ablaufen."
+
+shop-expiration-notification-header: "&eEinige deiner Shops laufen bald ab:"
+shop-expiration-notification-entry: "  &e{shopId}) &7{shopName}&r&8bei &7({location})&8, läuft ab in {timeLeft}"
+shop-expiration-notification-more: "  &7Und &e{count}&7 weitere Shop(s)."
+shop-expiration-notification-hint: "&7Nutze &e/shopkeeper expiration&7, um deine ablaufenden Shops aufzulisten."
+shop-expired: "&7Dein Shop {shopName}&7bei &7({location})&7 ist abgelaufen!"
+shop-expiration-info: "&7Dieser Shop läuft in {timeLeft}&7 ab."
 
 shop-removed: "&aDer Shop wurde entfernt."
 shop-already-removed: "&7Der Shop wurde bereits entfernt."
 shop-no-longer-exists: "&7Der Shop existiert nicht mehr."
 shop-removal-cancelled: "&cEin Plugin hat das Entfernen des Shops verhindert."
 
+cannot-delete-hired-shop: "&7Du kannst einen angeheuerten Shop nicht entfernen."
+cannot-move-hired-shop: "&7Du kannst einen angeheuerten Shop nicht verschieben."
+shop-restored-for-hire: "&aDieser Shop kann jetzt wieder angeheuert werden."
+shop-already-for-hire: "&7Dieser Shop wird bereits zum Anheuern angeboten."
+set-not-for-hire-to-delete-hint: "&7Um diesen Shop zu löschen: Nutze zuerst &e/shopkeeper setNotForHire&7."
 cannot-interact-shop-container: "&7Du kannst nicht mit diesem Shop-Behälter interagieren."
 cannot-break-shop-container: "&7Du kannst den Behälter eines fremden Shops nicht abbauen."
+cannot-break-hired-shop-container: "&7Du kannst den Behälter eines angeheuerten Shops nicht abbauen."
 cannot-place-block-near-shop-container: "&7Du kannst diesen Block nicht neben dem Behälter eines fremden Shops platzieren."
+cannot-place-block-near-hired-shop-container: "&7Du kannst diesen Block nicht neben dem Behälter eines angeheuerten Shops platzieren."
+
 shops-already-removed: "&e{shopsCount}&7 der Shops wurden bereits entfernt."
 shop-removals-cancelled: "&cPlugins haben das Entfernen von &e{shopsCount}&c der Shops verhindert."
+hired-shops-not-removed: "&e{shopsCount}&7 angeheuerte Shops wurden nicht entfernt."
 admin-shops-removed: "&aEs wurden &e{shopsCount} &aAdmin-Shops entfernt."
 shops-of-player-removed: "&aEs wurden &e{shopsCount} &aShops von Spieler '&e{player}&a' entfernt."
 player-shops-removed: "&aEs wurden &e{shopsCount} &aSpieler-Shops entfernt."
@@ -816,6 +842,12 @@ confirmation-ui-delete-shop-title: "&cDiesen Shop wirklich entfernen?"
 confirmation-ui-delete-shop-confirm-lore:
 - "Dadurch wird dieser Shop"
 - "unwiderruflich gelöscht!"
+
+confirmation-ui-restore-shop-for-hire-title: "&cShop zum Anheuern anbieten?"
+confirmation-ui-restore-shop-for-hire-confirm-lore:
+- "Dadurch wird dir dieser Shop"
+- "genommen und wieder zum"
+- "Anheuern angeboten!"
 
 confirmation-ui-delete-villager-title: "&cDorfbewohner entfernen?"
 confirmation-ui-delete-villager-confirm-lore:
@@ -924,7 +956,9 @@ command-description-transfer: "Ändert den Besitzer eines Shops."
 command-description-teleport: "Teleportiert zu einem Shop."
 command-description-settradeperm: "Setzt, entfernt (-) oder zeigt (?) die Handel-Permission an."
 command-description-settradedcommand: "Setzt, entfernt (-) oder zeigt (?) den gehandelten Befehl des gehaltenen Gegenstandes an."
-command-description-setforhire: "Gibt einen deiner Shops zum Verkauf frei."
+command-description-setforhire: "Bietet einen deiner Shops zum Anheuern an."
+command-description-setnotforhire: "Bietet einen deiner Shops nicht mehr zum Anheuern an."
+command-description-expiration: "Listet die Shops eines Spielers auf, die bald ablaufen."
 command-description-snapshot-list: "Listet die Snapshots eines Shops auf."
 command-description-snapshot-create: "Erstellt einen neuen Shop-Snapshot."
 command-description-snapshot-remove: "Löscht einen bestimmten oder alle Snapshots eines Shops."

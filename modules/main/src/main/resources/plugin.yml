@@ -43,6 +43,13 @@ permissions:
         description: List the admin shops
         default: op
 
+    shopkeeper.expiration.own:
+        description: List your shops that are about to expire
+        default: true
+    shopkeeper.expiration.others:
+        description: List the shops of other players that are about to expire
+        default: op
+
     shopkeeper.history.own:
         description: View your own trading history
         default: true
@@ -212,6 +219,8 @@ permissions:
             shopkeeper.list.own: true
             shopkeeper.list.others: true
             shopkeeper.list.admin: true
+            shopkeeper.expiration.own: true
+            shopkeeper.expiration.others: true
             shopkeeper.history.own: true
             shopkeeper.history.admin: true
             shopkeeper.remove.own: true

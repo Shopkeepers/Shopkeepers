@@ -19,6 +19,7 @@ import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperPlacement;
+import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.shopkeeper.registry.SKShopkeeperRegistry;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObjectType;
 import com.nisovin.shopkeepers.text.Text;
@@ -298,6 +299,15 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 
 			// Send creation message to creator:
 			TextUtils.sendMessage(creator, this.getCreatedMessage());
+
+			// Additionally inform the creator about the shop's expiration, if applicable:
+			if (shopkeeper instanceof AbstractPlayerShopkeeper playerShopkeeper) {
+				SKShopkeepersPlugin.getInstance()
+						.getPlayerShops()
+						.getPlayerShopsExpiration()
+						.getNotifier()
+						.informAboutExpiration(creator, playerShopkeeper);
+			}
 
 			// Save:
 			shopkeeper.save();

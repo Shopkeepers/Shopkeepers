@@ -9,7 +9,9 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
+import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerDeleteShopkeeperEvent;
+import com.nisovin.shopkeepers.api.events.ShopkeeperEditedEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
@@ -27,6 +29,7 @@ import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUI;
 import com.nisovin.shopkeepers.ui.confirmations.ConfirmationUIState;
 import com.nisovin.shopkeepers.ui.lib.UIState;
+import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
@@ -100,6 +103,10 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 		return new ActionButton(true) {
 			@Override
 			public @Nullable ItemStack getIcon(EditorView editorView) {
+				if (getHireableShop() != null) {
+					return DerivedSettings.restoreForHireButtonItem.createItemStack();
+				}
+
 				return DerivedSettings.deleteButtonItem.createItemStack();
 			}
 
@@ -108,6 +115,15 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 				// Check if the player is allowed to delete this shopkeeper:
 				if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
 						&& !playerShop.checkAccess(editorView.getPlayer(), DefaultPlayerShopAccessLevels.FULL(), false)) {
+					return true;
+				}
+
+				// A shop that is already for hire cannot be restored any further:
+				var hireableShop = getHireableShop();
+				if (hireableShop != null && hireableShop.isForHire()) {
+					var player = editorView.getPlayer();
+					TextUtils.sendMessage(player, Messages.shopAlreadyForHire);
+					sendSetNotForHireToDeleteHint(player);
 					return true;
 				}
 
@@ -120,10 +136,34 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 		};
 	}
 
+	// Returns the player shopkeeper if it retains a hire cost item, and can therefore not be
+	// deleted, but only be restored to its for-hire state. Returns null otherwise.
+	private @Nullable PlayerShopkeeper getHireableShop() {
+		if (shopkeeper instanceof PlayerShopkeeper playerShop && playerShop.isHireable()) {
+			return playerShop;
+		}
+
+		return null;
+	}
+
+	// Hints players that are able to set shops for hire that they can remove the shop's hire cost
+	// item first in order to then fully delete the shop.
+	private static void sendSetNotForHireToDeleteHint(Player player) {
+		if (PermissionUtils.hasPermission(player, ShopkeepersPlugin.SET_FOR_HIRE_PERMISSION)) {
+			TextUtils.sendMessage(player, Messages.setNotForHireToDeleteHint);
+		}
+	}
+
 	private void requestConfirmationDeleteShop(Player player, UIState previousUIState) {
+		// Note: Shops that are already for hire are rejected before the confirmation is requested.
+		boolean restoreForHire = this.getHireableShop() != null;
 		var config = new ConfirmationUIState(
-				Messages.confirmationUiDeleteShopTitle,
-				Messages.confirmationUiDeleteShopConfirmLore,
+				restoreForHire
+						? Messages.confirmationUiRestoreShopForHireTitle
+						: Messages.confirmationUiDeleteShopTitle,
+				restoreForHire
+						? Messages.confirmationUiRestoreShopForHireConfirmLore
+						: Messages.confirmationUiDeleteShopConfirmLore,
 				() -> {
 					// Delete confirmed.
 					if (!player.isValid()) return;
@@ -136,6 +176,26 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 					// The player's access permission might have changed in the meantime:
 					if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
 							&& !playerShop.checkAccess(player, DefaultPlayerShopAccessLevels.FULL(), false)) {
+						return;
+					}
+
+					// Shops that retain a hire cost item are restored to their for-hire state
+					// instead of being deleted, so that other players can hire them again. This
+					// matches how these shops are handled when they expire.
+					// Note: This applies to admins as well, so that they do not unknowingly observe
+					// a behavior that differs from what other players get.
+					if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
+							&& playerShop.isHireable()) {
+						playerShop.setForHire();
+
+						// Call shopkeeper edited event:
+						Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
+
+						// Save:
+						shopkeeper.save();
+
+						TextUtils.sendMessage(player, Messages.shopRestoredForHire);
+						sendSetNotForHireToDeleteHint(player);
 						return;
 					}
 
@@ -246,11 +306,20 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 			@Override
 			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+				Player player = editorView.getPlayer();
+
+				// Prevent players from moving hired shops, unless the player has the setforhire
+				// permission:
+				if (getHireableShop() != null
+						&& !PermissionUtils.hasPermission(player, ShopkeepersPlugin.SET_FOR_HIRE_PERMISSION)) {
+					TextUtils.sendMessage(player, Messages.cannotMoveHiredShop);
+					return true;
+				}
+
 				// Also triggers a save:
 				editorView.closeDelayed();
 
 				// Start moving:
-				Player player = editorView.getPlayer();
 				ShopkeeperMoving shopkeeperMoving = SKShopkeepersPlugin.getInstance().getShopkeeperMoving();
 				shopkeeperMoving.startMoving(player, shopkeeper);
 

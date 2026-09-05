@@ -200,6 +200,10 @@ require-container-recently-placed: true
 max-container-distance: 15
 # The default maximum number of shops a player can have. Set to -1 to disable
 # this limit.
+# Shops that are currently for hire do not count towards this limit: They are
+# waiting to be hired by another player and cannot be traded with in the
+# meantime. This also allows the owner of an expired shop that reverted to its
+# for-hire state to create new shops, or hire the expired shop again.
 max-shops-per-player: -1
 # A list of permission nodes that can be used to set the maximum number of
 # shops a specific player or group of players can have. Use the permission node
@@ -209,7 +213,11 @@ max-shops-per-player: -1
 max-shops-perm-options: 5,15,25
 
 # Whether to protect player shop containers from being accessed or broken. It
-# is usually recommended keeping this enabled.
+# is usually recommended to keep this enabled.
+# Owners and members of hired shops can access the shop containers, but are
+# otherwise affected by the protection as well, i.e. they cannot break or place
+# blocks next to the containers of hired shops. Disabling this setting also
+# disables the protection of hired shop containers.
 protect-containers: true
 # Whether to prevent item movements from and to protected shop containers (via
 # hoppers, droppers, etc.). If you disable this, you and your players will have
@@ -229,13 +237,59 @@ prevent-copper-golem-access: true
 # Whether to delete player shopkeepers when their last container is broken.
 # This also deletes player shopkeepers that somehow ended up without any
 # container (e.g. save data modified or container removed via the API).
+# This also applies to hired shops: Breaking their last container deletes them
+# instead of restoring their for-hire state. However, unless
+# 'protect-containers' is disabled, shop owners and members are not able to
+# break the containers of their hired shops.
 delete-shopkeeper-on-break-container: false
 
-# If enabled (set to a value greater than 0), Shopkeepers will check for and
-# remove the shops of inactive players once every plugin start. This setting
-# determines how many days ago a player's last login has to be in order for the
-# player to be considered inactive.
+# If set to a value greater than 0, the plugin will periodically check for and
+# remove the shops of inactive players. This setting determines how many days
+# ago a player's last login has to be in order for them to be considered
+# inactive.
+# If 'hired-player-shop-expiration-days' is enabled, hired shops of inactive
+# players are restored to their for-hire state instead of being deleted.
 player-shopkeeper-inactive-days: 0
+
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+# Player Shop Expiration
+# *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
+
+# If enabled (set to a value greater than 0), player shopkeepers are deleted
+# after the configured number of days.
+# This only applies to non-hired shopkeepers. For hired shopkeepers, see
+# setting 'hired-player-shop-expiration-days' instead.
+# Expiration is measured from when the shop was created, hired, or otherwise
+# acquired. Changes to the shop owner or hire state reset the expiration.
+# The expiration duration is only an estimate. The actual shop expiration can
+# be delayed by several minutes.
+# When a shopkeeper is deleted due to expiration, the shop containers and their
+# content remain in the world, but are no longer protected.
+# Be careful when reducing this duration on an existing server: Shops that are
+# already older than the new duration will expire within the next few minutes,
+# without any prior expiration notifications.
+player-shop-expiration-days: 0
+# Like 'player-shop-expiration-days', but only applies to hired shopkeepers.
+# When the hired shopkeeper expires, instead of being deleted, it reverts back
+# to the 'for-hire' state. The previous owner can still access the shop
+# containers until another player hires the shopkeeper.
+hired-player-shop-expiration-days: 0
+
+# Whether to inform shop owners and other members about their shops that are
+# about to expire. Online players are notified at the configured thresholds
+# (see 'player-shop-expiration-notification-thresholds') as the expiration
+# approaches. Players are notified at most once per shop and threshold.
+# Regardless of this setting, players are always informed about a shop's
+# expiration when they create, hire, or are transferred a shop, and when one of
+# their shops expires while they are online.
+notify-shop-members-about-expiration: true
+# The thresholds in minutes before expiration at which shop members are
+# reminded about an approaching expiration, as a comma-separated list.
+# These thresholds are only estimates. The actual notifications can be delayed
+# by several minutes. Thresholds below 5 minutes might have no effect.
+# Default: 7 days, 3 days, 1 day, 12 hours, 1 hour, and 10 minutes before
+# expiration.
+player-shop-expiration-notification-thresholds: "10080,4320,1440,720,60,10"
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
 # Shop (Object) Types

@@ -13,6 +13,7 @@ import org.bukkit.event.HandlerList;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
+import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
@@ -22,6 +23,7 @@ import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.util.bukkit.BlockLocation;
 import com.nisovin.shopkeepers.util.bukkit.BlockUtils;
 import com.nisovin.shopkeepers.util.bukkit.MutableBlockLocation;
+import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 
 /**
@@ -35,6 +37,11 @@ import com.nisovin.shopkeepers.util.java.Validate;
  * The owner and members of a shop corresponding to a protected container, and players with the
  * bypass permission, are not affected by the listed protections. Also, certain protections can be
  * disabled via config settings.
+ * <p>
+ * <b>Hired shopkeepers:</b><br>
+ * For hired shopkeepers, i.e. shops that retain a hire cost item, the shop members can access the
+ * container, but are otherwise affected by the same protections as other players. I.e. they cannot
+ * destroy or build next to the container of their hired shopkeeper.
  * <p>
  * <b>Protections:</b><br>
  * <ul>
@@ -213,7 +220,7 @@ public class ProtectedContainers {
 
 	// Container protection checks:
 
-	// Gets reused by isContainerProtected calls:
+	// Gets reused by the container protection checks:
 	private final List<AbstractPlayerShopkeeper> tempResultsList = new ArrayList<>();
 
 	/**
@@ -236,31 +243,74 @@ public class ProtectedContainers {
 	 * @return <code>true</code> if the block is protected
 	 */
 	public boolean isContainerProtected(Block containerBlock, @Nullable Player player) {
+		return !this.checkProtection(containerBlock, player, ContainerProtectionCheck.DEFAULT)
+				.isAllowed();
+	}
+
+	// Does not check whether the given block actually is a supported type of container.
+	private ContainerProtectionResult checkProtection(
+			Block containerBlock,
+			@Nullable Player player,
+			ContainerProtectionCheck check
+	) {
 		Validate.notNull(containerBlock, "containerBlock is null!");
+		Validate.notNull(check, "check is null");
 
 		this.getShopkeepersUsingContainer(containerBlock, tempResultsList);
-		if (tempResultsList.isEmpty()) {
-			// No protection found:
-			return false;
-		}
-
-		// Protection found:
-		boolean result = true;
-		// Check if the player is affected by the protection:
-		if (player != null) {
-			// We always allow shop members to access their shop container (regardless of other
-			// shopkeepers using the same container):
-			for (AbstractPlayerShopkeeper shopkeeper : tempResultsList) {
-				if (shopkeeper.checkAccess(player, DefaultPlayerShopAccessLevels.CONTAINER(), true)) {
-					result = false;
-					break;
-				}
-			}
-		}
+		ContainerProtectionResult result = this.checkProtection(tempResultsList, player, check);
 
 		// Cleanup temporary results list:
 		tempResultsList.clear();
 		return result;
+	}
+
+	// shopkeepers: The shopkeepers that use the container.
+	private ContainerProtectionResult checkProtection(
+			List<? extends AbstractPlayerShopkeeper> shopkeepers,
+			@Nullable Player player,
+			ContainerProtectionCheck check
+	) {
+		if (shopkeepers.isEmpty()) {
+			// No protection found:
+			return ContainerProtectionResult.ALLOWED;
+		}
+
+		// Protection found. Check if the player is affected by it:
+		if (player == null) {
+			return ContainerProtectionResult.PROTECTED;
+		}
+
+		// We always allow shop members to access their shop container (regardless of other
+		// shopkeepers using the same container):
+		boolean containerAccess = false;
+		// For hireable shops, the shop members can access the container, but they are not allowed
+		// to break the container or place blocks next to it (ContainerProtectionCheck.DEFAULT).
+		boolean hireable = false;
+		for (AbstractPlayerShopkeeper shopkeeper : shopkeepers) {
+			if (!containerAccess
+					&& shopkeeper.hasAccessLevel(player, DefaultPlayerShopAccessLevels.CONTAINER())) {
+				containerAccess = true;
+			}
+
+			if (shopkeeper.isHireable()) {
+				hireable = true;
+			}
+		}
+
+		if (containerAccess && (check == ContainerProtectionCheck.ACCESS || !hireable)) {
+			return ContainerProtectionResult.ALLOWED;
+		}
+
+		// The bypass permission bypasses both kinds of protection:
+		if (PermissionUtils.hasPermission(player, ShopkeepersPlugin.BYPASS_PERMISSION)) {
+			return ContainerProtectionResult.ALLOWED;
+		}
+
+		// The player would usually have access to the shop, but fails the protection check because
+		// we are not checking for access-only and the shop is hireable. -> PROTECTED_HIREABLE.
+		return containerAccess
+				? ContainerProtectionResult.PROTECTED_HIREABLE
+				: ContainerProtectionResult.PROTECTED;
 	}
 
 	/**
@@ -274,27 +324,55 @@ public class ProtectedContainers {
 	 * @return <code>true</code> if the block is a protected container
 	 */
 	public boolean isProtectedContainer(Block block) {
-		return this.isProtectedContainer(block, null);
+		return !this.checkContainerProtection(block, null).isAllowed();
 	}
 
 	/**
-	 * Checks if the given block is a protected shop container.
+	 * Checks the container protection of the given block.
 	 * <p>
 	 * This checks if the specified block actually is a supported type of shop container currently,
-	 * and optionally takes shop editing access for the specified player account.
+	 * and optionally takes the shop container access of the specified player into account.
 	 * 
 	 * @param block
 	 *            the block
 	 * @param player
 	 *            the player to check the protection for, or <code>null</code> to check for
-	 *            protection without taking shop editing access into account
-	 * @return <code>true</code> if the block is a protected container
+	 *            protection without taking shop container access into account
+	 * @return the protection result, not <code>null</code>
+	 * @see #checkContainerProtection(Block, Player, ContainerProtectionCheck)
 	 */
-	public boolean isProtectedContainer(Block block, @Nullable Player player) {
+	public ContainerProtectionResult checkContainerProtection(
+			Block block,
+			@Nullable Player player
+	) {
+		return this.checkContainerProtection(block, player, ContainerProtectionCheck.DEFAULT);
+	}
+
+	/**
+	 * Checks the container protection of the given block.
+	 * <p>
+	 * This checks if the specified block actually is a supported type of shop container currently,
+	 * and optionally takes the shop container access of the specified player into account.
+	 * 
+	 * @param block
+	 *            the block
+	 * @param player
+	 *            the player to check the protection for, or <code>null</code> to check for
+	 *            protection without taking shop container access into account
+	 * @param check
+	 *            the kind of action to check the protection for
+	 * @return the protection result, not <code>null</code>
+	 */
+	public ContainerProtectionResult checkContainerProtection(
+			Block block,
+			@Nullable Player player,
+			ContainerProtectionCheck check
+	) {
 		Validate.notNull(block, "block is null");
 		if (!ShopContainers.isSupportedContainer(block.getType())) {
-			return false;
+			return ContainerProtectionResult.ALLOWED;
 		}
-		return this.isContainerProtected(block, player);
+
+		return this.checkProtection(block, player, check);
 	}
 }
