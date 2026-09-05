@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.util.java;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 public final class TimeUtils {
@@ -36,6 +37,88 @@ public final class TimeUtils {
 	}
 
 	/**
+	 * Gets a display string representing the given duration, omitting all components that are zero
+	 * or smaller than the given minimum unit.
+	 * <p>
+	 * Example: "2d 3h 4m", or "5s" if the minimum unit is {@link ChronoUnit#SECONDS}. Negative
+	 * durations are prefixed with a '-'.
+	 * <p>
+	 * A duration whose magnitude is smaller than the minimum unit is represented as "&lt;1"
+	 * followed by the minimum unit's suffix (for example "&lt;1m"), or as "0" followed by that
+	 * suffix if the duration is zero. Its sign is omitted in that case.
+	 * 
+	 * @param duration
+	 *            the duration
+	 * @param minimumUnit
+	 *            the smallest unit to display: One of {@link ChronoUnit#DAYS},
+	 *            {@link ChronoUnit#HOURS}, {@link ChronoUnit#MINUTES}, or
+	 *            {@link ChronoUnit#SECONDS}
+	 * @return the duration display string
+	 */
+	public static String getDurationString(Duration duration, ChronoUnit minimumUnit) {
+		// This also validates the minimum unit:
+		String minimumUnitSuffix = getDurationUnitSuffix(minimumUnit);
+
+		var negative = duration.isNegative();
+		var absDuration = duration.abs();
+
+		var durationString = new StringBuilder();
+		appendDurationComponent(durationString, absDuration.toDays(), "d");
+
+		if (minimumUnit.compareTo(ChronoUnit.HOURS) <= 0) {
+			appendDurationComponent(durationString, absDuration.toHoursPart(), "h");
+		}
+
+		if (minimumUnit.compareTo(ChronoUnit.MINUTES) <= 0) {
+			appendDurationComponent(durationString, absDuration.toMinutesPart(), "m");
+		}
+
+		if (minimumUnit.compareTo(ChronoUnit.SECONDS) <= 0) {
+			appendDurationComponent(durationString, absDuration.toSecondsPart(), "s");
+		}
+
+		if (durationString.length() == 0) {
+			// The duration is smaller than the minimum unit. We omit its sign in this case:
+			return (absDuration.isZero() ? "0" : "<1") + minimumUnitSuffix;
+		}
+
+		if (negative) {
+			durationString.insert(0, '-');
+		}
+
+		return durationString.toString();
+	}
+
+	private static void appendDurationComponent(
+			StringBuilder durationString,
+			long value,
+			String suffix
+	) {
+		if (value <= 0L) return;
+
+		if (durationString.length() > 0) {
+			durationString.append(' ');
+		}
+
+		durationString.append(value).append(suffix);
+	}
+
+	private static String getDurationUnitSuffix(ChronoUnit unit) {
+		switch (unit) {
+		case DAYS:
+			return "d";
+		case HOURS:
+			return "h";
+		case MINUTES:
+			return "m";
+		case SECONDS:
+			return "s";
+		default:
+			throw new IllegalArgumentException("Unsupported duration unit: " + unit);
+		}
+	}
+
+	/**
 	 * Gets a display string representing the time elapsed since the given instant.
 	 * <p>
 	 * Example: "2d 3h 4m", or "5s" for durations less than one minute.
@@ -45,36 +128,8 @@ public final class TimeUtils {
 	 * @return the string representing the elapsed time
 	 */
 	public static String getTimeAgoString(Instant instant) {
-		var duration = Duration.between(instant, Instant.now());
-		var negative = duration.isNegative(); // instant is in the future
-		duration = duration.abs();
-
-		var days = duration.toDays();
-		var hours = duration.toHoursPart();
-		var minutes = duration.toMinutesPart();
-		var seconds = duration.toSecondsPart();
-
-		var timeAgoString = new StringBuilder();
-		if (negative) {
-			timeAgoString.append('-');
-		}
-		if (days > 0) {
-			timeAgoString.append(days).append("d ");
-		}
-		if (hours > 0) {
-			timeAgoString.append(hours).append("h ");
-		}
-		if (minutes > 0) {
-			timeAgoString.append(minutes).append("m ");
-		}
-
-		// Only include the seconds part for durations less than 1 minute:
-		if (days == 0 && hours == 0 && minutes == 0) {
-			timeAgoString.append(seconds).append("s ");
-		}
-
-		// Return the string without the trailing space:
-		return timeAgoString.substring(0, timeAgoString.length() - 1);
+		// Negative if the instant is in the future:
+		return getDurationString(Duration.between(instant, Instant.now()), ChronoUnit.SECONDS);
 	}
 
 	private TimeUtils() {
