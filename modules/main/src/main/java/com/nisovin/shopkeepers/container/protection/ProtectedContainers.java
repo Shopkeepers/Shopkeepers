@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.type.Chest;
-import org.bukkit.block.data.type.Chest.Type;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -24,21 +20,21 @@ import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.container.ShopContainers;
 import com.nisovin.shopkeepers.shopkeeper.player.AbstractPlayerShopkeeper;
 import com.nisovin.shopkeepers.util.bukkit.BlockLocation;
+import com.nisovin.shopkeepers.util.bukkit.BlockUtils;
 import com.nisovin.shopkeepers.util.bukkit.MutableBlockLocation;
-import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 
 /**
- * <b>Container protection.</b>
+ * Handles container protection.
  * <p>
  * <b>Protected containers:</b><br>
  * A container directly used by a player shopkeeper is 'directly protected'. Any adjacent chests (N,
  * W, S, E) that form a double chest with a directly protected chest are protected as well.
  * <p>
  * <b>Bypass:</b><br>
- * The owner of a shop corresponding to a protected container and players with the bypass permission
- * are not affected by the listed protections. Also, certain protections can be disabled via config
- * settings.
+ * The owner and members of a shop corresponding to a protected container, and players with the
+ * bypass permission, are not affected by the listed protections. Also, certain protections can be
+ * disabled via config settings.
  * <p>
  * <b>Protections:</b><br>
  * <ul>
@@ -92,6 +88,8 @@ public class ProtectedContainers {
 		HandlerList.unregisterAll(inventoryMoveItemListener);
 		protectedContainers.clear();
 	}
+
+	// Protected containers:
 
 	private BlockLocation getSharedKey(String worldName, int x, int y, int z) {
 		sharedBlockLocation.set(worldName, x, y, z);
@@ -163,6 +161,7 @@ public class ProtectedContainers {
 		}
 	}
 
+	// Gets the shopkeepers that are directly using the specified container block:
 	public List<? extends PlayerShopkeeper> getShopkeepers(Block block) {
 		return this.getShopkeepers(
 				block.getWorld().getName(),
@@ -172,52 +171,47 @@ public class ProtectedContainers {
 		);
 	}
 
-	//
+	// Gets the shopkeepers that use the container at the given location (directly or by a connected
+	// chest):
+	public List<? extends PlayerShopkeeper> getShopkeepersUsingContainer(Block containerBlock) {
+		return this.getShopkeepersUsingContainer(containerBlock, new ArrayList<>());
+	}
 
-	// Checks if this exact block is protected:
-	public boolean isContainerDirectlyProtected(
-			String worldName,
-			int x,
-			int y,
-			int z,
-			@Nullable Player player
+	// Gets the shopkeepers that use the container at the given location (directly or by a connected
+	// chest), and adds them to the provided list:
+	private List<? extends AbstractPlayerShopkeeper> getShopkeepersUsingContainer(
+			Block containerBlock,
+			List<AbstractPlayerShopkeeper> results
 	) {
-		List<? extends PlayerShopkeeper> shopkeepers = this._getShopkeepers(worldName, x, y, z);
-		// Check if there are any shopkeepers using this container:
-		if (shopkeepers == null) {
-			return false;
+		Validate.notNull(containerBlock, "containerBlock is null!");
+		Validate.notNull(results, "results is null!");
+
+		// Check if the block is directly used by shopkeepers:
+		List<? extends AbstractPlayerShopkeeper> shopkeepers = this._getShopkeepers(containerBlock);
+		if (shopkeepers != null) {
+			assert !shopkeepers.isEmpty();
+			results.addAll(shopkeepers);
 		}
 
-		assert !shopkeepers.isEmpty();
-		if (player != null) {
-			// Check whether the player is affected by the protection:
-			// Note: The bypass permission does not get checked here but needs to be checked
-			// separately.
-			// We always allow shop owners and members with container access to access the shop
-			// container (regardless of other shopkeepers using the same container):
-			for (PlayerShopkeeper shopkeeper : shopkeepers) {
-				if (shopkeeper.hasAccessLevel(player, DefaultPlayerShopAccessLevels.CONTAINER())) {
-					return false;
-				}
+		// If the block is a chest, check for a connected chest:
+		@Nullable Block connectedChest = BlockUtils.getConnectedChestBlock(containerBlock);
+		if (connectedChest != null) {
+			// Note: In case of block data inconsistency (i.e. connected chest missing or not
+			// mutually connected), we consider the block to be connected (and by that protected)
+			// anyway, because such inconsistencies might also occur during the handling of block
+			// placements.
+			// Minecraft determines double chests by this consistency criteria: Same chest type,
+			// same facing, opposite chest type (opposite connected block faces).
+			shopkeepers = this._getShopkeepers(connectedChest);
+			if (shopkeepers != null) {
+				results.addAll(shopkeepers);
 			}
 		}
 
-		// There exists a protection for this container and the player doesn't own any shopkeeper
-		// using it:
-		return true;
+		return results;
 	}
 
-	public boolean isContainerDirectlyProtected(Block block, Player player) {
-		return this.isContainerDirectlyProtected(
-				block.getWorld().getName(),
-				block.getX(),
-				block.getY(),
-				block.getZ(),
-				player
-		);
-	}
-
-	//
+	// Container protection checks:
 
 	// Gets reused by isContainerProtected calls:
 	private final List<AbstractPlayerShopkeeper> tempResultsList = new ArrayList<>();
@@ -302,95 +296,5 @@ public class ProtectedContainers {
 			return false;
 		}
 		return this.isContainerProtected(block, player);
-	}
-
-	// Gets the shopkeepers which use the container at the given location (directly or by a
-	// connected chest):
-	public List<? extends PlayerShopkeeper> getShopkeepersUsingContainer(Block containerBlock) {
-		return this.getShopkeepersUsingContainer(containerBlock, new ArrayList<>());
-	}
-
-	// Gets the shopkeepers which use the container at the given location (directly or by a
-	// connected chest), and adds them to the provided list:
-	private List<? extends AbstractPlayerShopkeeper> getShopkeepersUsingContainer(
-			Block containerBlock,
-			List<AbstractPlayerShopkeeper> results
-	) {
-		Validate.notNull(containerBlock, "containerBlock is null!");
-		Validate.notNull(results, "results is null!");
-
-		// Check if the block is directly used by shopkeepers:
-		List<? extends AbstractPlayerShopkeeper> shopkeepers = this._getShopkeepers(containerBlock);
-		if (shopkeepers != null) {
-			assert !shopkeepers.isEmpty();
-			results.addAll(shopkeepers);
-		}
-
-		// If the block actually is a chest, check for a connected chest:
-		Material chestType = containerBlock.getType();
-		if (ItemUtils.isChest(chestType)) {
-			Chest chestData = (Chest) containerBlock.getBlockData();
-			BlockFace chestFacing = chestData.getFacing();
-			BlockFace connectedFace = getConnectedBlockFace(chestFacing, chestData.getType());
-			if (connectedFace != null) {
-				Block connectedChest = containerBlock.getRelative(connectedFace);
-				// In case of inconsistency of the block data (i.e. connected chest missing or not
-				// mutually connected), we consider the block to be connected (and by that
-				// protected) anyway, because such inconsistencies might also occur during handling
-				// of block placements.
-				// Minecraft determines double chests by these consistency criteria:
-				// Same chest type, same facing, opposite chest type (opposite connected block
-				// faces).
-				shopkeepers = this._getShopkeepers(connectedChest);
-				if (shopkeepers != null) {
-					results.addAll(shopkeepers);
-				}
-			}
-		}
-
-		return results;
-	}
-
-	private static @Nullable BlockFace getConnectedBlockFace(BlockFace chestFacing, Type chestType) {
-		switch (chestFacing) {
-		case NORTH:
-			switch (chestType) {
-			case RIGHT:
-				return BlockFace.WEST;
-			case LEFT:
-				return BlockFace.EAST;
-			default:
-				return null; // Not connected
-			}
-		case EAST:
-			switch (chestType) {
-			case RIGHT:
-				return BlockFace.NORTH;
-			case LEFT:
-				return BlockFace.SOUTH;
-			default:
-				return null; // Not connected
-			}
-		case SOUTH:
-			switch (chestType) {
-			case RIGHT:
-				return BlockFace.EAST;
-			case LEFT:
-				return BlockFace.WEST;
-			default:
-				return null; // Not connected
-			}
-		case WEST:
-			switch (chestType) {
-			case RIGHT:
-				return BlockFace.SOUTH;
-			case LEFT:
-				return BlockFace.NORTH;
-			default:
-				return null; // Not connected
-			}
-		default:
-			return null; // Invalid chest facing
-		}
 	}
 }
