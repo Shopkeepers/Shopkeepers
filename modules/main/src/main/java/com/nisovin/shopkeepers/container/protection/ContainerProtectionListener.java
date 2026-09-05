@@ -16,8 +16,10 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
+import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.logging.Log;
@@ -39,12 +41,14 @@ class ContainerProtectionListener implements Listener {
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	void onPlayerInteract(PlayerInteractEvent event) {
 		if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
 		Block block = Unsafe.assertNonNull(event.getClickedBlock());
 		Player player = event.getPlayer();
 		if (protectedContainers.isProtectedContainer(block, player)) {
 			// TODO Always allow access to own shop containers, even if cancelled by other plugins?
-			Log.debug(() -> "Cancelled container opening by '" + player.getName() + "' at '"
+			Log.debug(() -> "Cancelled container interaction by '" + player.getName() + "' at '"
 					+ TextUtils.getLocationString(block) + "': Protected container.");
+			TextUtils.sendMessage(player, Messages.cannotInteractShopContainer);
 			event.setCancelled(true);
 		}
 	}
@@ -56,6 +60,8 @@ class ContainerProtectionListener implements Listener {
 		if (protectedContainers.isProtectedContainer(block, player)) {
 			Log.debug(() -> "Cancelled breaking of container block by '" + player.getName()
 					+ "' at '" + TextUtils.getLocationString(block) + "': Protected container.");
+			TextUtils.sendMessage(player, Messages.cannotBreakShopContainer);
+
 			event.setCancelled(true);
 		}
 	}
@@ -64,44 +70,49 @@ class ContainerProtectionListener implements Listener {
 	void onBlockPlace(BlockPlaceEvent event) {
 		Block block = event.getBlock();
 		Material type = block.getType();
-		Player player = event.getPlayer();
 
 		if (ItemUtils.isChest(type)) {
 			// Note: Unconnected chests can be placed.
-			if (protectedContainers.isProtectedContainer(block, player)) {
-				Log.debug(() -> "Cancelled placing of (double) chest block by '" + player.getName()
-						+ "' at '" + TextUtils.getLocationString(block)
-						+ "': Protected chest nearby.");
-				event.setCancelled(true);
-			}
+			this.checkBlockPlacement(event, "(double) chest", block);
 		} else if (type == Material.HOPPER) {
 			// Prevent placement of hoppers that could be used to extract or inject items from/into
-			// a protected
-			// container:
-			Block upperBlock = block.getRelative(BlockFace.UP);
-			if (protectedContainers.isProtectedContainer(upperBlock, player)
-					|| protectedContainers.isProtectedContainer(this.getFacedBlock(block), player)) {
-				Log.debug(() -> "Cancelled placing of hopper block by '" + player.getName()
-						+ "' at '" + TextUtils.getLocationString(block)
-						+ "': Protected container nearby.");
-				event.setCancelled(true);
-			}
+			// a protected container:
+			this.checkBlockPlacement(
+					event,
+					"hopper",
+					block.getRelative(BlockFace.UP),
+					this.getFacedBlock(block)
+			);
 		} else if (type == Material.DROPPER) {
 			// Prevent placement of droppers that could be used to inject items into a protected
 			// container:
-			if (protectedContainers.isProtectedContainer(this.getFacedBlock(block), player)) {
-				Log.debug(() -> "Cancelled placing of dropper block by '" + player.getName()
-						+ "' at '" + TextUtils.getLocationString(block)
-						+ "': Protected container nearby.");
-				event.setCancelled(true);
-			}
+			this.checkBlockPlacement(event, "dropper", this.getFacedBlock(block));
 		} else if (ItemUtils.isRail(type)) {
-			Block upperBlock = block.getRelative(BlockFace.UP);
-			if (protectedContainers.isProtectedContainer(upperBlock, player)) {
-				Log.debug(() -> "Cancelled placing of rail block by '" + player.getName() + "' at '"
-						+ TextUtils.getLocationString(block) + "': Protected container nearby.");
-				event.setCancelled(true);
+			this.checkBlockPlacement(event, "rail", block.getRelative(BlockFace.UP));
+		}
+	}
+
+	// Cancels the block placement if any of the specified nearby container blocks is protected.
+	// blockName: The name of the placed block, used for the debug output.
+	private void checkBlockPlacement(
+			BlockPlaceEvent event,
+			String blockName,
+			@NonNull Block... containerBlocks
+	) {
+		Player player = event.getPlayer();
+		for (Block containerBlock : containerBlocks) {
+			if (!protectedContainers.isProtectedContainer(containerBlock, player)) {
+				continue;
 			}
+
+			Block block = event.getBlock();
+			Log.debug(() -> "Cancelled placing of " + blockName + " block by '" + player.getName()
+					+ "' at '" + TextUtils.getLocationString(block)
+					+ "': Protected container nearby.");
+			TextUtils.sendMessage(player, Messages.cannotPlaceBlockNearShopContainer);
+
+			event.setCancelled(true);
+			return;
 		}
 	}
 

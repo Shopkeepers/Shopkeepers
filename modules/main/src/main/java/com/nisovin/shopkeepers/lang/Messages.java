@@ -919,6 +919,9 @@ public class Messages extends Config {
 	public static Text shopNoLongerExists = Text.parse("&7The shopkeeper no longer exists.");
 	public static Text shopRemovalCancelled = Text.parse("&cA plugin has prevented the removal of the shopkeeper.");
 
+	public static Text cannotInteractShopContainer = Text.parse("&7You cannot interact with this shop container.");
+	public static Text cannotBreakShopContainer = Text.parse("&7You cannot break the container of another player's shop.");
+	public static Text cannotPlaceBlockNearShopContainer = Text.parse("&7You cannot place this block next to the container of another player's shop.");
 	public static Text shopsAlreadyRemoved = Text.parse("&e{shopsCount}&7 of the shops have already been removed.");
 	public static Text shopRemovalsCancelled = Text.parse("&cPlugins have prevented the removal of &e{shopsCount}&c of the shops.");
 	public static Text adminShopsRemoved = Text.parse("&e{shopsCount} &aadmin shops have been removed.");

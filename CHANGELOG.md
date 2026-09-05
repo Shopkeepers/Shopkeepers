@@ -29,6 +29,7 @@ Date format: (YYYY-MM-DD)
   * API:
     * Add `PlayerShopkeeper#getContainers()`, `#addContainer(...)`, `#removeContainer(...)`, and `#openContainersEditorWindow(...)`.
     * Deprecate the previous single-container methods (`getContainerX/Y/Z`, `setContainer`, `getContainer`). They only affect the first container now and may not return results if the shop has no container, which is also a supported case now.
+* Change: Inform players when the container protection prevents them from interacting with a shop container, breaking it, or placing a block next to it.
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
   * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.
@@ -94,6 +95,9 @@ Added messages:
 * `confirmation-ui-remove-shop-container-title`
 * `confirmation-ui-remove-shop-container-lore`
 * `shop-received`
+* `cannot-interact-shop-container`
+* `cannot-break-shop-container`
+* `cannot-place-block-near-shop-container`
 
 ## v2.27.0 (2026-06-29)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
