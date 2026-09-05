@@ -488,6 +488,7 @@ target-shop-is-no-player-shop: "&7The targeted shopkeeper is no player shopkeepe
 unused-container: "&7No shopkeeper is using this container."
 missing-access-level: "&7You do not have the required access level!"
 owner-set: "&aThe new owner is now &e{owner}"
+shop-received: "&aYou are now the owner of the shop &e{shopName}&r&aat &e({location})&a."
 shop-creation-items-given: "&aPlayer &e{player}&a has received &e{amount}&a shop creation item(s)!"
 shop-creation-items-received: "&aYou have received &e{amount}&a shop creation item(s)!"
 unknown-currency: "&cUnknown currency: '&e{currency}&c'"

@@ -32,6 +32,7 @@ Date format: (YYYY-MM-DD)
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
   * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.
+* Command: `/shopkeeper transfer` informs the new owner about the received shop now, if they are online.
 * Fix: When a Citizen NPC player shopkeeper is moved to a different world, the shop containers keep working.
   * Shop containers can technically be located in different worlds now.
   * However, we still prevent players from manually moving their shops to a different world (via the max container distance check), because this can affect the performance.
@@ -89,6 +90,7 @@ Added messages:
 * `shop-container-removed`
 * `confirmation-ui-remove-shop-container-title`
 * `confirmation-ui-remove-shop-container-lore`
+* `shop-received`
 
 ## v2.27.0 (2026-06-29)
 ### Supported MC versions: 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5

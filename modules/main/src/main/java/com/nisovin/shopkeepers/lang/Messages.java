@@ -591,6 +591,7 @@ public class Messages extends Config {
 	public static Text missingAccessLevel = Text.parse("&7You do not have the required access level!");
 	// Placeholders: {owner} -> new owners name
 	public static Text ownerSet = Text.parse("&aThe new owner is now &e{owner}");
+	public static Text shopReceived = Text.parse("&aYou are now the owner of the shop &e{shopName}&r&aat &e({location})&a.");
 	public static Text shopCreationItemsGiven = Text.parse("&aPlayer &e{player}&a has received &e{amount}&a shop creation item(s)!");
 	public static Text shopCreationItemsReceived = Text.parse("&aYou have received &e{amount}&a shop creation item(s)!");
 	public static Text unknownCurrency = Text.parse("&cUnknown currency: '&e{currency}&c'");

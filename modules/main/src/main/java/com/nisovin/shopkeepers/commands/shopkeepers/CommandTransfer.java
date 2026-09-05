@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.shopkeeper.player.members.DefaultPlayerShopAccessLevels;
@@ -83,6 +85,16 @@ class CommandTransfer extends Command {
 		TextUtils.sendMessage(sender, Messages.ownerSet,
 				"owner", TextUtils.getPlayerText(newOwner)
 		);
+
+		// Inform the new owner, if they are online:
+		@Nullable Player newOwnerPlayer = newOwner.getPlayer();
+		if (newOwnerPlayer != null) {
+			String shopName = shopkeeper.getName(); // Can be empty
+			TextUtils.sendMessage(newOwnerPlayer, Messages.shopReceived,
+					"shopName", (shopName.isEmpty() ? "" : (shopName + " ")),
+					"location", shopkeeper.getPositionString()
+			);
+		}
 
 		// Save:
 		ShopkeepersPlugin.getInstance().getShopkeeperStorage().save();
