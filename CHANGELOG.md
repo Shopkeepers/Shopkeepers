@@ -56,6 +56,7 @@ Date format: (YYYY-MM-DD)
     * Player shops now store when their current owner acquired the shop (`ownedSince`) and their cached expiration time (`expiration`), as well as which players have already been notified about which expiration thresholds (`expirationNotifications`). Timestamps are stored in the ISO-8601 instant format, thresholds in the ISO-8601 duration format.
     * For shops that already existed before this update, we do not know when their current owner acquired them. When a shopkeeper is loaded and is missing `ownedSince`, we initialize it to the current timestamp.
     * The for-hire state is decoupled from the hire cost item now: Player shops store a separate `forHire` flag now, and hired shops retain their hire cost item so that the for-hire state can later be restored. Existing for-hire shops are migrated automatically.
+  * Metrics: Add bStats metrics `player-shop-expiration-days` and `hired-player-shop-expiration-days`.
   * API:
     * Add `PlayerShopkeeper#getOwnedSince()`, `#getExpiration()`, `#resetExpiration()`, and `#expire()`.
     * Add the cancellable `PlayerShopkeeperExpireEvent`: Called whenever a player shop is about to expire.

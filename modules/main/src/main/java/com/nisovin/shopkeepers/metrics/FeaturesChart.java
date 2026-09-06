@@ -106,6 +106,16 @@ public class FeaturesChart extends Metrics.DrilldownPie {
 			);
 			addFeatureEntry(
 					allFeatures,
+					"player-shop-expiration-days",
+					Settings.playerShopExpirationDays > 0
+			);
+			addFeatureEntry(
+					allFeatures,
+					"hired-player-shop-expiration-days",
+					Settings.hiredPlayerShopExpirationDays > 0
+			);
+			addFeatureEntry(
+					allFeatures,
 					"tax-rate",
 					Settings.taxRate > 0
 			);
