@@ -74,7 +74,7 @@ Date format: (YYYY-MM-DD)
   * Command: Add command `/shopkeeper setNotForHire` (permission `shopkeeper.setforhire`, same as for the `setForHire` command) to stop offering one of your shops for hire again and clearing its previously set hire cost item.
   * Fix: Shops that are currently for hire can also no longer be traded with when the UI is attempted to be opened remotely via command or via the API.
   * Fix: Automatically close any currently open hiring UIs when a shop stops being for hire or its hiring cost item changes. Players were already not able to hire these shops via the stale hiring UI before, but now we immediately close the stale UIs.
-  * Change: If `hired-player-shop-expiration-days` is enabled, `player-shopkeeper-inactive-days` restores hired shops of inactive players to their for-hire state instead of deleting them.
+  * Change: `player-shopkeeper-inactive-days` restores hired shops of inactive players to their for-hire state instead of deleting them.
   * API:
     * Add `PlayerShopkeeper#isHireable()`, `#setHired()`, `#setForHire()`.
     * `PlayerShopkeeper#isForHire()` no longer implies that `#getHireCost()` is `null` when it returns `false`: A shop retains its hire cost item after having been hired.

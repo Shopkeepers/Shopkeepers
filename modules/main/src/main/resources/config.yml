@@ -247,8 +247,7 @@ delete-shopkeeper-on-break-container: false
 # remove the shops of inactive players. This setting determines how many days
 # ago a player's last login has to be in order for them to be considered
 # inactive.
-# If 'hired-player-shop-expiration-days' is enabled, hired shops of inactive
-# players are restored to their for-hire state instead of being deleted.
+# Hired shops of inactive players are restored to their for-hire state instead.
 player-shopkeeper-inactive-days: 0
 
 # *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*

@@ -54,11 +54,6 @@ class ProcessShopsOfInactivePlayersProcedure {
 	private final SKShopkeeperRegistry shopkeeperRegistry;
 	private final int playerInactivityDays;
 
-	// Whether hired player shops expire instead of being deleted:
-	// Only used during the synchronous parts of the operation, and updated to the current value
-	// after the asynchronous part:
-	private boolean restoreHiredShops = Settings.hiredPlayerShopExpirationDays > 0;
-
 	private boolean started = false;
 	// Retrieved once and then reused for all inactivity checks of this procedure:
 	private final long currentTimeMillis = System.currentTimeMillis();
@@ -99,10 +94,9 @@ class ProcessShopsOfInactivePlayersProcedure {
 	// pruned from shop owners that are not actually inactive.
 	private void collectShopOwners() {
 		shopkeeperRegistry.getAllPlayerShopkeepers().forEach(playerShop -> {
-			// Ignore the shopkeeper if it would be reverted to its for-hire state but already is
-			// for hire: If the owner only has for-hire shops remaining, we skip checking them for
-			// inactivity, because their for-hire shops are not affected by player inactivity.
-			if (this.restoreHiredShops && playerShop.isForHire()) {
+			// Ignore shops that are already for hire: If the owner only has for-hire shops
+			// remaining, we skip checking them for inactivity altogether.
+			if (playerShop.isForHire()) {
 				return;
 			}
 
@@ -178,17 +172,14 @@ class ProcessShopsOfInactivePlayersProcedure {
 		assert !inactivePlayers.isEmpty();
 		assert !CollectionUtils.containsNull(inactivePlayers.values());
 
-		// Update to the current value in case the settings changed concurrently:
-		this.restoreHiredShops = Settings.hiredPlayerShopExpirationDays > 0;
-
 		this.collectShopsOfInactivePlayers();
 		this.deleteShopsOfInactivePlayers();
 	}
 
 	private void collectShopsOfInactivePlayers() {
 		shopkeeperRegistry.getAllPlayerShopkeepers().forEach(playerShop -> {
-			// Ignore the shop if it would revert to its for-hire state but already is for hire:
-			if (this.restoreHiredShops && playerShop.isForHire()) {
+			// Ignore shops that are already for hire:
+			if (playerShop.isForHire()) {
 				return;
 			}
 
@@ -241,11 +232,10 @@ class ProcessShopsOfInactivePlayersProcedure {
 					return;
 				}
 
-				// If hired player shops expire, restore hired shops to their for-hire state instead
-				// of deleting them. This matches how these shops are handled when they expire.
+				// Restore hired shops to their for-hire state instead of deleting them.
 				// Note: The inactive player remains the owner of these shops while they are for
 				// hire.
-				if (this.restoreHiredShops && playerShop.isHireable()) {
+				if (playerShop.isHireable()) {
 					// Skip if already for hire:
 					if (playerShop.isForHire()) {
 						return;

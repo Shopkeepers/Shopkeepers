@@ -14,9 +14,8 @@ import com.nisovin.shopkeepers.api.user.User;
  * This event is called whenever a player is detected to be inactive and their
  * {@link PlayerShopkeeper shopkeepers} are about to be deleted or reverted to the for-hire state.
  * <p>
- * If the plugin is configured to expire hired player shopkeepers back to their for-hire state, this
- * event is not called for shop owners that only have shopkeepers remaining that are already for
- * hire, because those shopkeepers are not affected by the player inactivity handling.
+ * Note: This event is not called for shop owners that only have shopkeepers remaining that are
+ * already for hire, because those shopkeepers are not affected by the player inactivity handling.
  */
 public class PlayerInactiveEvent extends Event implements Cancellable {
 
@@ -52,8 +51,7 @@ public class PlayerInactiveEvent extends Event implements Cancellable {
 	/**
 	 * Gets the user's shopkeepers that are about to be deleted or reverted to the for-hire state.
 	 * <p>
-	 * This does not include shopkeepers that would expire back to the for-hire state but are
-	 * already for hire.
+	 * This does not include shopkeepers that are already for hire.
 	 * <p>
 	 * The returned collection is modifiable: Removing shopkeepers from it will skip their deletion
 	 * / reversion to the for-hire state. Adding shopkeepers to the list is not supported.
