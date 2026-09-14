@@ -30,7 +30,7 @@ import com.nisovin.shopkeepers.commands.lib.context.CommandContextView;
 import com.nisovin.shopkeepers.commands.lib.util.PlayerArgumentUtils;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils;
 import com.nisovin.shopkeepers.commands.util.ShopkeeperArgumentUtils.OwnedPlayerShopsResult;
-import com.nisovin.shopkeepers.event.ShopkeeperEventHelper;
+import com.nisovin.shopkeepers.events.ShopkeeperEventHelper;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;

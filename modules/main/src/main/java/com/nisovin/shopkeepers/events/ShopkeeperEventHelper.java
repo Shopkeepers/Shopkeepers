@@ -1,4 +1,4 @@
-package com.nisovin.shopkeepers.event;
+package com.nisovin.shopkeepers.events;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

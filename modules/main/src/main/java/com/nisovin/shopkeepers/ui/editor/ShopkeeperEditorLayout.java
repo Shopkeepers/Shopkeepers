@@ -20,7 +20,7 @@ import com.nisovin.shopkeepers.api.shopobjects.DefaultShopObjectTypes;
 import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.config.Settings.DerivedSettings;
-import com.nisovin.shopkeepers.event.ShopkeeperEventHelper;
+import com.nisovin.shopkeepers.events.ShopkeeperEventHelper;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.moving.ShopkeeperMoving;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
