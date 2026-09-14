@@ -81,6 +81,11 @@ Date format: (YYYY-MM-DD)
     * Add `Shopkeeper#clearOffers()`: Removes all trade offers, regardless of the type of shopkeeper.
     * Shops that are already for hire are no longer included in `PlayerInactiveEvent#getShopkeepers()`, because they are not affected by the player inactivity handling. The event is no longer called at all for shop owners whose remaining shops are already all for hire.
 * Change: Inform players when the container protection prevents them from interacting with a shop container, breaking it, or placing a block next to it.
+* Config: Add `enable-left-click-interaction` (default: `false`): If enabled, left clicking (attacking) a shopkeeper mob is handled like a normal mob interaction, i.e. it opens the trading or editor menu.
+  * While not officially supported, this may for example be useful for Bedrock players in combination with the Geyser plugin: On Bedrock, not all mobs can be interacted with.
+  * This has no effect on block based shop objects such as sign shopkeepers.
+  * Note: Due to technical limitations, we cannot use Bukkit's damage events to detect players left clicking entities: There are cases in which the server does not call the damage events. This includes the shopkeeper mobs, which we mark as invulnerable in order to disable certain default mob behaviors, such as other mobs considering them as valid targets. Instead, depending on the server implementation, we detect left clicks either via the Paper-specific `PrePlayerAttackEntityEvent` event, or fall back to manual ray tracing on every player arm swing animation to check if the player is in reach of an entity. The latter may not be perfectly accurate and comes with a small performance overhead.
+  * Metrics: Add the bStats metrics entry `enable-left-click-interaction`.
 * Config: Add `max-player-shop-trades-pages` (default: `5`) to configure the number of trades pages of player shops separately.
   * The previous `max-trades-pages` setting now only applies to admin shops and the villager editor.
   * Manual migration: If you previously changed the `max-trades-pages` setting, you will need to manually adjust the new `max-player-shop-trades-pages` setting accordingly.

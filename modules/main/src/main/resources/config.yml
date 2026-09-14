@@ -103,6 +103,19 @@ delete-unspawnable-shopkeepers: false
 # If enabled, Shopkeepers takes into account whether other plugins deny
 # interaction with the shopkeepers.
 check-shop-interaction-result: false
+# If enabled, left clicking (attacking) a shopkeeper mob is handled like a
+# normal mob interaction, i.e. it opens the trading or editor menu.
+# While not officially supported, this may for example be useful for Bedrock
+# players in combination with the Geyser plugin: On Bedrock, not all mobs can
+# be interacted with.
+# This has no effect on block based shop objects such as sign shopkeepers.
+# Note: Due to technical limitations, we cannot use Bukkit's damage events to
+# detect players left clicking entities. Instead, depending on the server
+# implementation, we detect left clicks either via the Paper-specific
+# pre-attack event, or fall back to manual ray tracing on every player arm
+# swing animation to check if the player is in reach of an entity. The latter
+# may not be perfectly accurate and comes with a small performance overhead.
+enable-left-click-interaction: false
 
 # If enabled, players will only be able to place shopkeepers where they have
 # permission from WorldGuard to build or where the 'allow-shop' flag is set.

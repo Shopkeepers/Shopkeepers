@@ -31,6 +31,11 @@ public class FeaturesChart extends Metrics.DrilldownPie {
 			);
 			addFeatureEntry(
 					allFeatures,
+					"enable-left-click-interaction",
+					Settings.enableLeftClickInteraction
+			);
+			addFeatureEntry(
+					allFeatures,
 					"bypass-spawn-blocking",
 					Settings.bypassSpawnBlocking
 			);

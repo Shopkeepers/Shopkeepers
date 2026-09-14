@@ -1,7 +1,9 @@
 package com.nisovin.shopkeepers.shopobjects.entity.base;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.config.Settings;
@@ -18,7 +20,7 @@ public class BaseEntityShops {
 	public BaseEntityShops(SKShopkeepersPlugin plugin) {
 		this.plugin = plugin;
 		this.entityAI = new EntityAI(plugin);
-		this.baseEntityShopListener = new BaseEntityShopListener(plugin);
+		this.baseEntityShopListener = new BaseEntityShopListener(plugin, this);
 	}
 
 	public void onEnable() {
@@ -47,5 +49,21 @@ public class BaseEntityShops {
 		if (Settings.bypassSpawnBlocking) {
 			plugin.getForcingEntitySpawner().forceEntitySpawn(location, entityType);
 		}
+	}
+
+	/**
+	 * Called when a player left clicks an entity. This handles the entity interaction.
+	 * <p>
+	 * This is expected to only be called by the server version specific left-click detection
+	 * implementations when {@link Settings#enableLeftClickInteraction} is enabled.
+	 * 
+	 * @param player
+	 *            the player, not <code>null</code>
+	 * @param clickedEntity
+	 *            the left clicked entity, not <code>null</code>
+	 * @return <code>true</code> if the player interacted with a shopkeeper entity
+	 */
+	public boolean handlePlayerLeftClickEntity(Player player, Entity clickedEntity) {
+		return baseEntityShopListener.onPlayerLeftClickEntity(player, clickedEntity);
 	}
 }

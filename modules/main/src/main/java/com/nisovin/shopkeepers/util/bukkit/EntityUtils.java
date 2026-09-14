@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Difficulty;
 import org.bukkit.FluidCollisionMode;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -466,6 +467,10 @@ public final class EntityUtils {
 
 	public static Stream<Player> getOnlinePlayersStream() {
 		return Unsafe.castNonNull(Bukkit.getOnlinePlayers().stream());
+	}
+
+	public static boolean isSpectator(Entity entity) {
+		return entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR;
 	}
 
 	private EntityUtils() {
