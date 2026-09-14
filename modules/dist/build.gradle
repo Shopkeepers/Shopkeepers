@@ -27,6 +27,8 @@ configurations {
 
 dependencies {
 	api project(':shopkeepers-main') // Includes the Shopkeepers API
+	// Paper-specific features, compiled against the lowest supported Paper API version:
+	shaded project(':shopkeepers-paper')
 	// Separate 'shaded' configuration: Omits these dependencies from the transitively inherited
 	// apiElements and runtimeElements (as well as from the generated POM).
 	// We cannot use compileOnly for this, because the java-library plugin would then cause this
@@ -52,6 +54,7 @@ shadowJar {
 	dependencies {
 		include(project(':shopkeepers-api'))
 		include(project(':shopkeepers-main'))
+		include(project(':shopkeepers-paper'))
 		nmsModules.each { module ->
 			include(project(path: module, configuration: 'remapped'))
 		}

@@ -44,6 +44,7 @@ import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.metrics.PluginMetrics;
 import com.nisovin.shopkeepers.moving.ShopkeeperMoving;
 import com.nisovin.shopkeepers.naming.ShopkeeperNaming;
+import com.nisovin.shopkeepers.paper.PaperCompat;
 import com.nisovin.shopkeepers.playershops.PlayerShops;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperCreation;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopType;
@@ -199,6 +200,10 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 			if (className.startsWith("com.nisovin.shopkeepers.compat.")) {
 				return false;
 			}
+			// Skip Paper-specific classes:
+			if (className.startsWith("com.nisovin.shopkeepers.paper.")) {
+				return false;
+			}
 			if (SKIP_PRELOADING_CLASSES.contains(className)) {
 				return false;
 			}
@@ -256,6 +261,13 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		// Try to load the compat module: Returns false if neither a compatible compat provider nor
 		// the fallback provider could be loaded.
 		this.incompatibleServer = !Compat.load(this);
+		if (this.incompatibleServer) {
+			return;
+		}
+
+		// Try to load the Paper compat module: Returns false if compat module is required but could
+		// not be loaded.
+		this.incompatibleServer = !PaperCompat.load();
 		if (this.incompatibleServer) {
 			return;
 		}
@@ -341,6 +353,11 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 		// Compat module:
 		Compat.getProvider().onEnable();
+
+		// Paper compat module:
+		if (PaperCompat.hasProvider()) {
+			PaperCompat.getProvider().onEnable();
+		}
 
 		// Inform about Spigot exclusive features:
 		if (SpigotFeatures.isSpigotAvailable()) {
@@ -554,6 +571,11 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 
 		// Event debugger:
 		eventDebugger.onDisable();
+
+		// Paper compat module:
+		if (PaperCompat.hasProvider()) {
+			PaperCompat.getProvider().onDisable();
+		}
 
 		// Compat module:
 		if (Compat.hasProvider()) {

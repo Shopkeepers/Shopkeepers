@@ -83,7 +83,8 @@ public interface CompatProvider {
 	}
 
 	// Paper 26.2 has deprecated the PigZapEvent in favor of the Paper-specific EntityZapEvent.
-	// If this returns false, we skip registering the PigZapEvent handler in the plugin core.
+	// If this returns false, we skip registering the PigZapEvent handler in the plugin core, and
+	// the Paper compat module handles the EntityZapEvent instead.
 	public default boolean isHandlePigZapEvent() {
 		return true;
 	}

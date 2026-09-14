@@ -111,6 +111,7 @@ Date format: (YYYY-MM-DD)
   * `shop-setup-desc-trading`
   * `shop-setup-desc-book`
   * `shop-setup-desc-admin-regular`
+* Build: Add `shopkeepers-paper` module and move version unspecific Paper-specific code there.
 
 Removed messages:  
 * `button-container`

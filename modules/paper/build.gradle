@@ -1,0 +1,16 @@
+plugins {
+	id 'java-library'
+	id 'org.checkerframework'
+	id 'eclipse'
+}
+
+dependencies {
+	implementation project(':shopkeepers-main')
+	// Includes the Bukkit API.
+	// Note: We compile against the lowest supported Paper API version. Any Paper API used by this
+	// module is therefore available on all supported server versions. Paper API that was only added
+	// in later versions has to be handled inside the server version specific modules instead.
+	compileOnly libs.paper.api
+}
+
+// This module is not published as a standalone artifact, but is shaded into the final plugin jar.

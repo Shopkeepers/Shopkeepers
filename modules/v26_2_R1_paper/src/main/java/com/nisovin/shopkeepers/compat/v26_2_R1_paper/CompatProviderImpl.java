@@ -117,7 +117,6 @@ public final class CompatProviderImpl implements CompatProvider {
 		}
 	}
 
-	private final LivingEntityShopListener livingEntityShopListener;
 	private final CopperChestProtectionListener copperChestProtectionListener;
 
 	private final TagParser<Tag> tagParser = Unsafe.castNonNull(TagParser.create(NbtOps.INSTANCE));
@@ -126,7 +125,6 @@ public final class CompatProviderImpl implements CompatProvider {
 
 	public CompatProviderImpl() throws Exception {
 		var plugin = SKShopkeepersPlugin.getInstance();
-		livingEntityShopListener = new LivingEntityShopListener(plugin);
 		copperChestProtectionListener = new CopperChestProtectionListener(plugin);
 		craftItemStackHandleField = CraftItemStack.class.getDeclaredField("handle");
 		craftItemStackHandleField.setAccessible(true);
@@ -141,8 +139,6 @@ public final class CompatProviderImpl implements CompatProvider {
 	public void onEnable() {
 		var plugin = SKShopkeepersPlugin.getInstance();
 
-		Bukkit.getPluginManager().registerEvents(livingEntityShopListener, plugin);
-
 		if (Settings.protectContainers && Settings.preventCopperGolemAccess) {
 			Bukkit.getPluginManager().registerEvents(copperChestProtectionListener, plugin);
 		}
@@ -150,7 +146,6 @@ public final class CompatProviderImpl implements CompatProvider {
 
 	@Override
 	public void onDisable() {
-		HandlerList.unregisterAll(livingEntityShopListener);
 		HandlerList.unregisterAll(copperChestProtectionListener);
 	}
 
