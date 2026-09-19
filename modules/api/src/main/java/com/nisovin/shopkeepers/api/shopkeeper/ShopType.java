@@ -2,6 +2,11 @@ package com.nisovin.shopkeepers.api.shopkeeper;
 
 import java.util.List;
 
+import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.types.SelectableType;
 
 /**
@@ -38,4 +43,34 @@ public interface ShopType<T extends Shopkeeper> extends SelectableType {
 	 * @return the trade setup description
 	 */
 	public List<? extends String> getTradeSetupDescription();
+
+	/**
+	 * Checks if this type of shopkeeper can be spawned at the specified location according to any
+	 * shop type specific spawn location validation rules.
+	 * <p>
+	 * This only checks the validation rules of this shop type. Use
+	 * {@link ShopObjectType#isValidSpawnLocation(Location, BlockFace)} to also check whether the
+	 * shop object can be spawned at the location.
+	 * <p>
+	 * If a shopkeeper is specified, its current state is taken into account as well: For player
+	 * shopkeepers, this for example checks that all of the shop's containers are within the
+	 * configured maximum distance.
+	 * 
+	 * @param spawnLocation
+	 *            the spawn location, can be <code>null</code> for virtual shops
+	 * @param targetedBlockFace
+	 *            the block face against which to spawn the shop object, or <code>null</code> if
+	 *            unknown
+	 * @param shopkeeper
+	 *            the shopkeeper for which the spawn location is checked, or <code>null</code> if
+	 *            not available
+	 * @return <code>true</code> if the shopkeeper can be spawned at the given location
+	 * @throws IllegalArgumentException
+	 *             if the given shopkeeper is not of this shop type
+	 */
+	public boolean isValidSpawnLocation(
+			@Nullable Location spawnLocation,
+			@Nullable BlockFace targetedBlockFace,
+			@Nullable Shopkeeper shopkeeper
+	);
 }

@@ -18,7 +18,6 @@ import com.nisovin.shopkeepers.input.interaction.InteractionInput;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperPlacement;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopType;
-import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObjectType;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
@@ -172,7 +171,7 @@ public class ShopkeeperMoving {
 				newLocation,
 				blockFace,
 				null,
-				(AbstractShopkeeper) shopkeeper
+				shopkeeper
 		);
 		if (!isSpawnLocationValid) {
 			TextUtils.sendMessage(player, Messages.shopkeeperMoveAborted);
@@ -180,7 +179,7 @@ public class ShopkeeperMoving {
 		}
 
 		// Move the shopkeeper:
-		((AbstractShopkeeper) shopkeeper).teleport(newLocation, blockFace);
+		shopkeeper.teleport(newLocation, blockFace);
 
 		// Inform the player:
 		TextUtils.sendMessage(player, Messages.shopkeeperMoved);

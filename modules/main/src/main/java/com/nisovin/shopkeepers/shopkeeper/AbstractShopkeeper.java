@@ -1137,19 +1137,7 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 	protected void onShopkeeperMoved() {
 	}
 
-	/**
-	 * Teleports the shopkeeper to a new location.
-	 * <p>
-	 * This updates the shopkeeper's {@link #setLocation(Location, BlockFace) location} and then
-	 * {@link AbstractShopObject#move() moves} the shop object if necessary.
-	 * 
-	 * @param location
-	 *            the new spawn location, not <code>null</code>
-	 * @param attachedBlockFace
-	 *            The block face against which the shopkeeper is attached, or <code>null</code> to
-	 *            not update the block face. This might not be used or stored by the shopkeeper
-	 *            itself, but may be used by the shop object.
-	 */
+	@Override
 	public final void teleport(Location location, @Nullable BlockFace attachedBlockFace) {
 		Validate.notNull(location, "location is null");
 

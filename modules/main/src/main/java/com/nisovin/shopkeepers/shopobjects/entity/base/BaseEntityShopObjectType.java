@@ -209,11 +209,11 @@ public abstract class BaseEntityShopObjectType<T extends BaseEntityShopObject<?>
 
 	@Override
 	public boolean validateSpawnLocation(
-			@Nullable Player creator,
+			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace attachedBlockFace
 	) {
-		if (!super.validateSpawnLocation(creator, spawnLocation, attachedBlockFace)) {
+		if (!super.validateSpawnLocation(player, spawnLocation, attachedBlockFace)) {
 			return false;
 		}
 		assert spawnLocation != null;
@@ -223,8 +223,8 @@ public abstract class BaseEntityShopObjectType<T extends BaseEntityShopObject<?>
 		// Check if the world's difficulty would prevent the mob from spawning:
 		if (EntityUtils.isRemovedOnPeacefulDifficulty(entityType)) {
 			if (world.getDifficulty() == Difficulty.PEACEFUL) {
-				if (creator != null) {
-					TextUtils.sendMessage(creator, Messages.mobCannotSpawnOnPeacefulDifficulty);
+				if (player != null) {
+					TextUtils.sendMessage(player, Messages.mobCannotSpawnOnPeacefulDifficulty);
 				}
 				return false;
 			}
@@ -233,16 +233,16 @@ public abstract class BaseEntityShopObjectType<T extends BaseEntityShopObject<?>
 		if (entityType == EntityType.END_CRYSTAL
 				&& !Settings.allowEndCrystalShopsInTheEnd
 				&& world.getEnvironment() == Environment.THE_END) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.endCrystalDisabledInTheEnd);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.endCrystalDisabledInTheEnd);
 			}
 			return false;
 		}
 
 		if ((attachedBlockFace == BlockFace.DOWN && !this.isDownValidAttachedBlockFace())
 				|| (attachedBlockFace != null && !BlockFaceUtils.isBlockSide(attachedBlockFace))) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.invalidSpawnBlockFace);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.invalidSpawnBlockFace);
 			}
 			return false;
 		}
@@ -251,8 +251,8 @@ public abstract class BaseEntityShopObjectType<T extends BaseEntityShopObject<?>
 		// Note: We don't require a fully empty block for shulkers either, since shulkers can be
 		// placed on non-empty blocks just fine (the block is preserved).
 		if (!spawnBlock.isPassable()) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.spawnBlockNotEmpty);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.spawnBlockNotEmpty);
 			}
 			return false;
 		}
@@ -260,8 +260,8 @@ public abstract class BaseEntityShopObjectType<T extends BaseEntityShopObject<?>
 		if (!EntityUtils.canFly(entityType) && entityType != EntityType.SHULKER) {
 			Location standingLocation = EntityUtils.getStandingLocation(entityType, spawnBlock);
 			if (standingLocation == null) {
-				if (creator != null) {
-					TextUtils.sendMessage(creator, Messages.cannotSpawnMidair);
+				if (player != null) {
+					TextUtils.sendMessage(player, Messages.cannotSpawnMidair);
 				}
 				return false;
 			}

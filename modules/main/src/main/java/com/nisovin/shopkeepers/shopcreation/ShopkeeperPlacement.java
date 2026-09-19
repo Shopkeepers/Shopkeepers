@@ -7,10 +7,10 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
+import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperRegistry;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopType;
-import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.shopobjects.AbstractShopObjectType;
 import com.nisovin.shopkeepers.util.bukkit.BlockFaceUtils;
 import com.nisovin.shopkeepers.util.bukkit.LocationUtils;
@@ -90,7 +90,7 @@ public class ShopkeeperPlacement {
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace blockFace,
 			@Nullable ShopCreationData shopCreationData,
-			@Nullable AbstractShopkeeper shopkeeper
+			@Nullable Shopkeeper shopkeeper
 	) {
 		// Check shop-object type specific validation rules:
 		// This is expected to also send feedback to the player if necessary.

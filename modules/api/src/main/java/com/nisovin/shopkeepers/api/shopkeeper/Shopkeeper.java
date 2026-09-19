@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.events.UpdateItemEvent;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObject;
+import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.api.storage.ShopkeeperStorage;
 import com.nisovin.shopkeepers.api.ui.UIRegistry;
 import com.nisovin.shopkeepers.api.ui.UISession;
@@ -237,6 +239,55 @@ public interface Shopkeeper {
 	 * @see #isVirtual()
 	 */
 	public @Nullable ChunkCoords getChunkCoords();
+
+	/**
+	 * Teleports this shopkeeper to the given location.
+	 * <p>
+	 * This updates the shopkeeper's stored location, {@link #getYaw() yaw}, and attached block
+	 * face, and then moves the shop object to its new location if it is currently spawned.
+	 * <p>
+	 * Unlike when shopkeepers are created or moved via the editor, this does not validate the new
+	 * location. The validations that usually apply are:
+	 * <ul>
+	 * <li>{@link ShopObjectType#isValidSpawnLocation(Location, BlockFace)}: Whether the shop object
+	 * can be spawned at the new location.
+	 * <li>{@link ShopkeeperRegistry#getShopkeepersAtLocation(Location)}: Whether another shopkeeper
+	 * already occupies the new location.
+	 * <li>{@link ShopType#isValidSpawnLocation(Location, BlockFace, Shopkeeper)}: Shop type
+	 * specific rules, such as the maximum container distance of player shops, and the restrictions
+	 * of supported protection plugins.
+	 * </ul>
+	 * Callers are responsible for performing these checks themselves if they want to respect them.
+	 * Teleporting a shopkeeper to a location that these checks would reject can have the following
+	 * effects:
+	 * <ul>
+	 * <li>Block based shop objects replace whatever block occupies their new location, without
+	 * dropping it.
+	 * <li>Shop objects that cannot be spawned at the new location may remain despawned until the
+	 * shopkeeper is moved to a valid location again. Depending on the server and plugin
+	 * configuration, non-spawnable shopkeepers may also get automatically deleted.
+	 * <li>Several shopkeepers can end up at the same location.
+	 * <li>The containers of player shops can end up outside the configured maximum container
+	 * distance, or even in a different world, which is discouraged, because it can affect the
+	 * performance of handling trades.
+	 * <li>Shopkeepers can end up inside areas that are protected by other plugins.
+	 * </ul>
+	 * This marks the shopkeeper as dirty, so that its new location is persisted with the next save,
+	 * but it does not trigger a save itself. This also calls no event by itself.
+	 * 
+	 * @param location
+	 *            the new location, not <code>null</code>, has to provide a loaded world
+	 * @param attachedBlockFace
+	 *            The block face against which the shopkeeper is attached, or <code>null</code> to
+	 *            not update the block face. This might not be used or stored by the shopkeeper
+	 *            itself, but is forwarded to the shop object.
+	 * @throws IllegalStateException
+	 *             if this shopkeeper is {@link #isVirtual() virtual}
+	 * @throws IllegalArgumentException
+	 *             if the given location provides no world, if its world is no longer loaded, or if
+	 *             the given block face is not valid for the shop object
+	 */
+	public void teleport(Location location, @Nullable BlockFace attachedBlockFace);
 
 	// OPEN STATE
 

@@ -15,6 +15,7 @@ import com.nisovin.shopkeepers.api.events.PlayerCreateShopkeeperEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopType;
+import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopkeeperCreateException;
 import com.nisovin.shopkeepers.api.shopobjects.ShopObjectType;
 import com.nisovin.shopkeepers.lang.Messages;
@@ -336,10 +337,27 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 		return true;
 	}
 
+	@Override
+	public final boolean isValidSpawnLocation(
+			@Nullable Location spawnLocation,
+			@Nullable BlockFace targetedBlockFace,
+			@Nullable Shopkeeper shopkeeper
+	) {
+		return this.validateSpawnLocation(
+				null, // player
+				spawnLocation,
+				targetedBlockFace,
+				null, // shopCreationData
+				shopkeeper
+		);
+	}
+
 	/**
-	 * Validates the given spawn location according to any shop-type specific validation rules.
+	 * Checks if this type of shopkeeper can be spawned at the specified location according to any
+	 * shop type specific spawn location validation rules.
 	 * <p>
-	 * If a player is specified, this sends feedback about failed validation rules to the player.
+	 * Unlike {@link #isValidSpawnLocation(Location, BlockFace, Shopkeeper)}, this may send feedback
+	 * to the given player.
 	 * <p>
 	 * Only the {@code shopCreationData} or the {@code shopkeeper} can be specified, but not both.
 	 * 
@@ -356,14 +374,14 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 	 * @param shopkeeper
 	 *            the shopkeeper for which the spawn location is validated, or <code>null</code> if
 	 *            not available
-	 * @return <code>true</code> if the spawn location is valid
+	 * @return <code>true</code> if the shopkeeper can be spawned at the given location
 	 */
 	public boolean validateSpawnLocation(
 			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace blockFace,
 			@Nullable ShopCreationData shopCreationData,
-			@Nullable AbstractShopkeeper shopkeeper
+			@Nullable Shopkeeper shopkeeper
 	) {
 		// Common argument validation:
 		if (shopCreationData != null) {

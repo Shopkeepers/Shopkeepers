@@ -40,7 +40,7 @@ public final class SKVirtualShopObjectType extends AbstractShopObjectType<SKVirt
 
 	@Override
 	public boolean validateSpawnLocation(
-			@Nullable Player creator,
+			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace attachedBlockFace
 	) {

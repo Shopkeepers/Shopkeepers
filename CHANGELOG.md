@@ -116,6 +116,9 @@ Date format: (YYYY-MM-DD)
   * `shop-setup-desc-trading`
   * `shop-setup-desc-book`
   * `shop-setup-desc-admin-regular`
+* API: Add support for moving shopkeepers.
+  * Add `Shopkeeper#teleport(Location, BlockFace)`: Updates the shopkeeper's stored location and moves its shop object. Unlike the editor's move option, this performs no spawn location validation.
+  * Add `ShopType#isValidSpawnLocation(Location, BlockFace, Shopkeeper)`, the shop type counterpart to `ShopObjectType#isValidSpawnLocation(Location, BlockFace)`, allowing add-ons to replicate the plugin's own spawn location validation.
 * Build: Add `shopkeepers-paper` module and move version unspecific Paper-specific code there.
 * Internal: The editor layout and its buttons are dynamically set up per editor view now, instead of being shared and cached across all editor views of a shopkeeper.
   * This enables future flexibility, such as conditionally omitting certain buttons for specific players.

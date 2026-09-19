@@ -98,25 +98,25 @@ public abstract class AbstractShopObjectType<T extends AbstractShopObject>
 	 * Checks if this type of shop object can be spawned at the specified location.
 	 * <p>
 	 * Unlike {@link #isValidSpawnLocation(Location, BlockFace)}, this may send feedback to the
-	 * given shop creator (if a shop creator is available).
+	 * given player.
 	 * 
-	 * @param creator
-	 *            the shop creator, can be <code>null</code>
+	 * @param player
+	 *            the player who is trying to place the shopkeeper, or <code>null</code>
 	 * @param spawnLocation
-	 *            the spawn location, can be <code>null</code>
+	 *            the spawn location, can be <code>null</code> for virtual shops
 	 * @param attachedBlockFace
 	 *            the block face against which to spawn the object, or <code>null</code> if unknown
-	 * @return <code>true</code> if the shop object can be spawned at the specified location
+	 * @return <code>true</code> if the shop object can be spawned at the given location
 	 */
 	public boolean validateSpawnLocation(
-			@Nullable Player creator,
+			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace attachedBlockFace
 	) {
 		// TODO Check the actual object size?
 		if (spawnLocation == null || !spawnLocation.isWorldLoaded()) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.missingSpawnLocation);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.missingSpawnLocation);
 			}
 			return false;
 		}

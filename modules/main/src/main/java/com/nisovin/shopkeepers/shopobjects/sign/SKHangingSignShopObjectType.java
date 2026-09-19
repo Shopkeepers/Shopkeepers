@@ -51,11 +51,11 @@ public final class SKHangingSignShopObjectType
 
 	@Override
 	public boolean validateSpawnLocation(
-			@Nullable Player creator,
+			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace attachedBlockFace
 	) {
-		if (!super.validateSpawnLocation(creator, spawnLocation, attachedBlockFace)) {
+		if (!super.validateSpawnLocation(player, spawnLocation, attachedBlockFace)) {
 			return false;
 		}
 		assert spawnLocation != null;
@@ -63,8 +63,8 @@ public final class SKHangingSignShopObjectType
 		// Block has to be empty:
 		Block spawnBlock = spawnLocation.getBlock();
 		if (!spawnBlock.isEmpty()) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.spawnBlockNotEmpty);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.spawnBlockNotEmpty);
 			}
 			return false;
 		}
@@ -73,8 +73,8 @@ public final class SKHangingSignShopObjectType
 		// Block side: Hanging wall sign
 		if (attachedBlockFace == BlockFace.UP
 				|| (attachedBlockFace != null && !BlockFaceUtils.isBlockSide(attachedBlockFace))) {
-			if (creator != null) {
-				TextUtils.sendMessage(creator, Messages.invalidSpawnBlockFace);
+			if (player != null) {
+				TextUtils.sendMessage(player, Messages.invalidSpawnBlockFace);
 			}
 			return false;
 		}

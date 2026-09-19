@@ -19,13 +19,13 @@ public interface ShopObjectType<T extends ShopObject> extends SelectableType {
 	public abstract String getDisplayName();
 
 	/**
-	 * Checks if the shopkeeper object can be spawned at the specified location.
+	 * Checks if this type of shop object can be spawned at the specified location.
 	 * 
 	 * @param spawnLocation
-	 *            the spawn location
+	 *            the spawn location, can be <code>null</code> for virtual shops
 	 * @param targetedBlockFace
 	 *            the block face against which to spawn the object, or <code>null</code> if unknown
-	 * @return <code>true</code> if the shopkeeper object can be spawned there
+	 * @return <code>true</code> if the shop object can be spawned at the given location
 	 */
 	public boolean isValidSpawnLocation(
 			@Nullable Location spawnLocation,

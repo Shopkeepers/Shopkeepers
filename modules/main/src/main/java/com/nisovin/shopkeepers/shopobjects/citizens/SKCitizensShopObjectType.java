@@ -41,11 +41,11 @@ public final class SKCitizensShopObjectType
 
 	@Override
 	public boolean validateSpawnLocation(
-			@Nullable Player creator,
+			@Nullable Player player,
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace attachedBlockFace
 	) {
-		if (!super.validateSpawnLocation(creator, spawnLocation, attachedBlockFace)) {
+		if (!super.validateSpawnLocation(player, spawnLocation, attachedBlockFace)) {
 			return false;
 		}
 		return true;

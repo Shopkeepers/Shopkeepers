@@ -13,9 +13,11 @@ import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.events.PlayerCreatePlayerShopkeeperEvent;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.shopkeeper.ShopCreationData;
+import com.nisovin.shopkeepers.api.shopkeeper.Shopkeeper;
 import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopCreationData;
 import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopType;
+import com.nisovin.shopkeepers.api.shopkeeper.player.PlayerShopkeeper;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.container.SKShopContainer;
 import com.nisovin.shopkeepers.container.ShopContainers;
@@ -26,7 +28,6 @@ import com.nisovin.shopkeepers.playershops.PlayerShopsLimit;
 import com.nisovin.shopkeepers.shopcreation.ContainerSelection;
 import com.nisovin.shopkeepers.shopcreation.ShopkeeperCreation;
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopType;
-import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
 import com.nisovin.shopkeepers.util.bukkit.BlockLocation;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.interaction.InteractionUtils;
@@ -112,7 +113,7 @@ public abstract class AbstractPlayerShopType<T extends AbstractPlayerShopkeeper>
 			@Nullable Location spawnLocation,
 			@Nullable BlockFace blockFace,
 			@Nullable ShopCreationData shopCreationData,
-			@Nullable AbstractShopkeeper shopkeeper
+			@Nullable Shopkeeper shopkeeper
 	) {
 		if (!super.validateSpawnLocation(player, spawnLocation, blockFace, shopCreationData, shopkeeper)) {
 			return false;
@@ -137,8 +138,8 @@ public abstract class AbstractPlayerShopType<T extends AbstractPlayerShopkeeper>
 			}
 		} else if (shopkeeper != null) {
 			// All of the shop's containers must be within range of the new location:
-			assert shopkeeper instanceof AbstractPlayerShopkeeper;
-			AbstractPlayerShopkeeper playerShopkeeper = (AbstractPlayerShopkeeper) shopkeeper;
+			assert shopkeeper instanceof PlayerShopkeeper;
+			PlayerShopkeeper playerShopkeeper = (PlayerShopkeeper) shopkeeper;
 			for (ShopContainer container : playerShopkeeper.getContainers()) {
 				BlockLocation containerLocation = ((SKShopContainer) container).getLocation();
 				if (containerLocation.getBlockCenterDistanceSquared(spawnLocation) > maxContainerDistanceSq) {
