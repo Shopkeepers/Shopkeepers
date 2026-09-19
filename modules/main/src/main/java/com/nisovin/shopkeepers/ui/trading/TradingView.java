@@ -185,7 +185,7 @@ public class TradingView extends View {
 	// or adding trades, is fine. But reducing the number of trades is not safe, because the index
 	// of the currently selected recipe can end up being out of bounds on the client. There is no
 	// way for us to remotely update it into valid bounds.
-	// TODO Check if this still applies in MC 1.14+
+	// TODO Check if this still applies in MC 1.14+ (MC 26.3 also has made changes in this area)
 	// We therefore insert blocked dummy trades to retain the previous recipe count. We could insert
 	// empty dummy trades at the end of the recipe list, but that might confuse players since empty
 	// trades are rather unusual. Instead we try to (heuristically) determine the recipes that were

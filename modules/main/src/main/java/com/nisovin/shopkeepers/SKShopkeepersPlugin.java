@@ -27,6 +27,7 @@ import com.nisovin.shopkeepers.commands.Commands;
 import com.nisovin.shopkeepers.compat.Compat;
 import com.nisovin.shopkeepers.compat.MC_1_21_11;
 import com.nisovin.shopkeepers.compat.MC_1_21_9;
+import com.nisovin.shopkeepers.compat.MC_26_3;
 import com.nisovin.shopkeepers.compat.ServerAssumptionsTest;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.config.lib.ConfigLoadException;
@@ -350,6 +351,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		// Example: MC_1_20_6.init();
 		MC_1_21_9.init();
 		MC_1_21_11.init();
+		MC_26_3.init();
 
 		// Compat module:
 		Compat.getProvider().onEnable();

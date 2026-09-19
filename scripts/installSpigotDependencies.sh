@@ -78,5 +78,6 @@ source installJDK.sh 25
 
 buildSpigotIfMissing 26.1.2 R0.1
 buildSpigotIfMissing 26.2 R0.1
+buildSpigotIfMissing 26.3 R0.1
 
 popd
