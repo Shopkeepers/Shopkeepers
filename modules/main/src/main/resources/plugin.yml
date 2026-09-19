@@ -206,7 +206,8 @@ permissions:
         description: Receive trade notifications for player shops
         default: false
 
-    # Star notation: Includes all other permissions
+    # Star notation: Includes all other permissions, except the shopkeeper.trade-notifications.*
+    # permissions in order to not automatically spam admins with trade notifications.
     shopkeeper.*:
         description: Access to everything
         default: op
@@ -230,21 +231,31 @@ permissions:
             shopkeeper.remove-all.others: true
             shopkeeper.remove-all.player: true
             shopkeeper.remove-all.admin: true
+            shopkeeper.notify.trades: true
             shopkeeper.give: true
             shopkeeper.givecurrency: true
+            shopkeeper.setcurrency: true
             shopkeeper.updateitems: true
             shopkeeper.remote: true
             shopkeeper.remote.otherplayers: true
             shopkeeper.remoteedit: true
             shopkeeper.transfer: true
+            shopkeeper.teleport: true
+            shopkeeper.teleport.others: true
             shopkeeper.settradeperm: true
+            shopkeeper.settradedcommand: true
             shopkeeper.setforhire: true
+            shopkeeper.snapshot: true
+            shopkeeper.edit-villagers: true
+            shopkeeper.edit-wandering-traders: true
             shopkeeper.trade: true
             shopkeeper.hire: true
+            shopkeeper.create: true
             shopkeeper.bypass: true
             shopkeeper.maxshops.unlimited: true
             shopkeeper.admin: true
             shopkeeper.player: true
             shopkeeper.sign: true
+            shopkeeper.hanging-sign: true
             shopkeeper.citizen: true
             shopkeeper.entity.*: true

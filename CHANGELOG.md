@@ -4,6 +4,17 @@ Date format: (YYYY-MM-DD)
 ## v2.28.1 (TBA)
 ### Supported MC versions: 26.3, 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
 
+* Permission: The `shopkeeper.*` permission was missing some permissions.
+  * `shopkeeper.notify.trades`
+  * `shopkeeper.setcurrency`
+  * `shopkeeper.teleport`
+  * `shopkeeper.teleport.others`
+  * `shopkeeper.settradedcommand`
+  * `shopkeeper.snapshot`
+  * `shopkeeper.edit-villagers`
+  * `shopkeeper.edit-wandering-traders`
+  * `shopkeeper.create`
+  * `shopkeeper.hanging-sign`
 
 ## v2.28.0 (2026-09-20)
 ### Supported MC versions: 26.3, 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
