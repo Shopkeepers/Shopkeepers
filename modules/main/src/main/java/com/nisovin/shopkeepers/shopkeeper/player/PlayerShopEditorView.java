@@ -25,6 +25,11 @@ public abstract class PlayerShopEditorView extends ShopkeeperEditorView {
 	}
 
 	@Override
+	protected PlayerShopEditorLayout createLayout() {
+		return new PlayerShopEditorLayout(this);
+	}
+
+	@Override
 	protected void onInventoryDragEarly(InventoryDragEvent event) {
 		// Cancel all inventory clicks and handle everything on our own:
 		// TODO Maybe allow certain inventory actions which only affect the player's inventory?

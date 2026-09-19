@@ -33,19 +33,26 @@ import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
-import com.nisovin.shopkeepers.util.java.Validate;
 
 public class ShopkeeperEditorLayout extends EditorLayout {
 
 	private final AbstractShopkeeper shopkeeper;
 
-	public ShopkeeperEditorLayout(AbstractShopkeeper shopkeeper) {
-		Validate.notNull(shopkeeper, "shopkeeper is null");
-		this.shopkeeper = shopkeeper;
+	public ShopkeeperEditorLayout(ShopkeeperEditorView editorView) {
+		super(editorView);
+		this.shopkeeper = editorView.getShopkeeperNonNull();
 	}
 
 	protected AbstractShopkeeper getShopkeeper() {
 		return shopkeeper;
+	}
+
+	@Override
+	public void setupButtons() {
+		super.setupButtons();
+
+		this.setupShopkeeperButtons();
+		this.setupShopObjectButtons();
 	}
 
 	@Override
@@ -102,7 +109,7 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 		// the shopkeeper when clicked.
 		return new ActionButton(true) {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				if (getHireableShop() != null) {
 					return DerivedSettings.restoreForHireButtonItem.createItemStack();
 				}
@@ -111,7 +118,9 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
+
 				// Check if the player is allowed to delete this shopkeeper:
 				if (shopkeeper instanceof AbstractPlayerShopkeeper playerShop
 						&& !playerShop.checkAccess(editorView.getPlayer(), DefaultPlayerShopAccessLevels.FULL(), false)) {
@@ -239,13 +248,13 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return shopkeeper.isOpen() ? DerivedSettings.shopOpenButtonItem.createItemStack()
 						: DerivedSettings.shopClosedButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				var newState = !shopkeeper.isOpen();
 				shopkeeper.setOpen(newState);
 				return true;
@@ -261,8 +270,6 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 				useNamingButton = false;
 			} else {
 				// No naming button for Citizens player shops if renaming is disabled for those.
-				// TODO Restructure this to allow for dynamic editor buttons depending on shop
-				// (object) types and settings.
 				if (!Settings.allowRenamingOfPlayerNpcShops
 						&& shopkeeper.getShopObject().getType() == DefaultShopObjectTypes.CITIZEN()) {
 					useNamingButton = false;
@@ -273,12 +280,14 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return DerivedSettings.nameButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
+
 				// Also triggers a save:
 				editorView.closeDelayed();
 
@@ -300,12 +309,13 @@ public class ShopkeeperEditorLayout extends EditorLayout {
 
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return DerivedSettings.moveButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				Player player = editorView.getPlayer();
 
 				// Prevent players from moving hired shops, unless the player has the setforhire

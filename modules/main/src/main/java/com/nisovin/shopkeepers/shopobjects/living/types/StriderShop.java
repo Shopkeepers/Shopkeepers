@@ -16,7 +16,6 @@ import com.nisovin.shopkeepers.shopobjects.ShopObjectData;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectCreationContext;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.util.data.property.BasicProperty;
 import com.nisovin.shopkeepers.util.data.property.Property;
@@ -104,12 +103,12 @@ public class StriderShop extends BabyableShop<Strider> {
 	private Button getSaddleEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getSaddleEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				cycleSaddle();
 				return true;
 			}

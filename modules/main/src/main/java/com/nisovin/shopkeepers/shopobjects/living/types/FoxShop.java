@@ -17,7 +17,6 @@ import com.nisovin.shopkeepers.shopobjects.ShopObjectData;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectCreationContext;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.util.data.property.BasicProperty;
 import com.nisovin.shopkeepers.util.data.property.Property;
@@ -143,12 +142,12 @@ public class FoxShop extends SittableShop<Fox> {
 	private Button getFoxTypeEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getFoxTypeEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleFoxType(backwards);
 				return true;
@@ -194,15 +193,21 @@ public class FoxShop extends SittableShop<Fox> {
 	private Button getSleepingEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getSleepingEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				cycleSleeping();
-				this.updateAllIcons(editorView); // Required if crouching got disabled
+				this.updateAllIcons(); // Required if crouching got disabled
 				return true;
+			}
+
+			@Override
+			protected boolean isUpdateIconOnActionSuccess() {
+				// The action already updates all icons.
+				return false;
 			}
 		};
 	}
@@ -245,15 +250,21 @@ public class FoxShop extends SittableShop<Fox> {
 	private Button getCrouchingEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getCrouchingEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				cycleCrouching();
-				this.updateAllIcons(editorView); // Required if sleeping got disabled
+				this.updateAllIcons(); // Required if sleeping got disabled
 				return true;
+			}
+
+			@Override
+			protected boolean isUpdateIconOnActionSuccess() {
+				// The action already updates all icons.
+				return false;
 			}
 		};
 	}

@@ -23,7 +23,6 @@ import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.entity.base.EntityAI;
 import com.nisovin.shopkeepers.shopobjects.living.SKLivingShopObject;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.util.bukkit.BlockFaceUtils;
 import com.nisovin.shopkeepers.util.bukkit.EntityUtils;
@@ -194,12 +193,12 @@ public class ShulkerShop extends SKLivingShopObject<Shulker> {
 	private Button getColorEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getColorEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleColor(backwards);
 				return true;

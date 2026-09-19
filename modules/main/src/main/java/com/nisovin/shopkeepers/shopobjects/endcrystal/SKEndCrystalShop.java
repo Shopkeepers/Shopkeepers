@@ -18,7 +18,6 @@ import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObject;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectCreationContext;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.util.data.property.BasicProperty;
 import com.nisovin.shopkeepers.util.data.property.Property;
@@ -113,12 +112,12 @@ public class SKEndCrystalShop extends BaseEntityShopObject<EnderCrystal>
 	private Button getShowBottomEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getShowBottomEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleShowBottom(backwards);
 				return true;

@@ -37,11 +37,11 @@ public abstract class ShopkeeperActionButton extends ActionButton {
 	}
 
 	@Override
-	protected void onActionSuccess(EditorView editorView, InventoryClickEvent clickEvent) {
+	protected void onActionSuccess(InventoryClickEvent clickEvent) {
 		Shopkeeper shopkeeper = this.getShopkeeper();
 
 		// Call shopkeeper edited event:
-		Player player = editorView.getPlayer();
+		Player player = this.getEditorView().getPlayer();
 		Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
 		// Save:

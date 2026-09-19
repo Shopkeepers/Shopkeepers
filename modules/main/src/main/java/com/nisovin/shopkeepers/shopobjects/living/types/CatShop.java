@@ -19,7 +19,6 @@ import com.nisovin.shopkeepers.shopobjects.ShopObjectData;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectCreationContext;
 import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
 import com.nisovin.shopkeepers.util.data.property.BasicProperty;
@@ -139,12 +138,12 @@ public class CatShop extends SittableShop<Cat> {
 	private Button getCatTypeEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getCatTypeEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleCatType(backwards);
 				return true;
@@ -204,12 +203,12 @@ public class CatShop extends SittableShop<Cat> {
 	private Button getCollarColorEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getCollarColorEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleCollarColor(backwards);
 				return true;

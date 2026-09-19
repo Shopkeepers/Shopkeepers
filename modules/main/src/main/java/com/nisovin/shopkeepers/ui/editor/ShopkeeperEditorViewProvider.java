@@ -25,20 +25,4 @@ public abstract class ShopkeeperEditorViewProvider extends AbstractEditorViewPro
 	public AbstractShopkeeper getShopkeeper() {
 		return this.getContext().getObject();
 	}
-
-	// EDITOR LAYOUT
-
-	@Override
-	protected ShopkeeperEditorLayout createLayout() {
-		return new ShopkeeperEditorLayout(this.getShopkeeper());
-	}
-
-	@Override
-	protected void setupButtons() {
-		super.setupButtons();
-
-		var layout = (ShopkeeperEditorLayout) this.getLayout();
-		layout.setupShopkeeperButtons();
-		layout.setupShopObjectButtons();
-	}
 }

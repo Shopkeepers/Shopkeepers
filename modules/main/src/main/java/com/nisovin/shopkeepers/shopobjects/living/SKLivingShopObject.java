@@ -472,12 +472,13 @@ public class SKLivingShopObject<E extends LivingEntity>
 	private Button getEquipmentEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getEquipmentEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				editorView.closeDelayedAndRunTask(() -> {
 					openEquipmentEditor(editorView.getPlayer(), false);
 				});
@@ -485,7 +486,7 @@ public class SKLivingShopObject<E extends LivingEntity>
 			}
 
 			@Override
-			protected void onActionSuccess(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected void onActionSuccess(InventoryClickEvent clickEvent) {
 				// The button only opens the equipment editor: Skip the ShopkeeperEditedEvent and
 				// saving.
 			}

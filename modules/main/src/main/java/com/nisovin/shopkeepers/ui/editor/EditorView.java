@@ -17,6 +17,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
 import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
+import com.nisovin.shopkeepers.ui.lib.UISessionManager;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.lib.View;
 import com.nisovin.shopkeepers.ui.villager.editor.VillagerEditorView;
@@ -35,6 +36,8 @@ public abstract class EditorView extends View {
 
 	protected static final String AREA_BUTTONS = "buttons";
 
+	private @Nullable EditorLayout layout; // Lazily setup
+
 	private @Nullable List<TradingRecipeDraft> recipes;
 	private @Nullable Inventory inventory;
 
@@ -48,9 +51,30 @@ public abstract class EditorView extends View {
 		return (AbstractEditorViewProvider) this.getProvider();
 	}
 
+	/**
+	 * Gets the {@link EditorLayout}, creating it if not yet set up.
+	 * 
+	 * @return the editor layout, not <code>null</code>
+	 */
 	protected final EditorLayout getLayout() {
-		return this.getEditorViewProvider().getLayout();
+		var layout = this.layout;
+		if (layout == null) {
+			layout = this.createLayout();
+			this.layout = layout;
+			layout.setupButtons();
+		}
+
+		return layout;
 	}
+
+	/**
+	 * Creates the {@link EditorLayout} for this view.
+	 * <p>
+	 * The layout is created lazily once it is requested for the first time.
+	 * 
+	 * @return the editor layout, not <code>null</code>
+	 */
+	protected abstract EditorLayout createLayout();
 
 	protected final TradingRecipesAdapter getTradingRecipesAdapter() {
 		return this.getEditorViewProvider().tradingRecipesAdapter;
@@ -169,7 +193,7 @@ public abstract class EditorView extends View {
 		for (int i = 0; i < buttons.length; ++i) {
 			Button button = buttons[i];
 			if (button == null) continue;
-			ItemStack icon = button.getIcon(this);
+			ItemStack icon = button.getIcon();
 			if (icon == null) continue;
 			inventory.setItem(button.getSlot(), icon);
 		}
@@ -190,8 +214,9 @@ public abstract class EditorView extends View {
 			ItemStack icon = null;
 			Button button = buttons[buttonIndex];
 			if (button != null) {
-				icon = button.getIcon(this);
+				icon = button.getIcon();
 			}
+
 			// Null will clear the slot (which is required if this is called to refresh the buttons
 			// in an already set up inventory):
 			inventory.setItem(slot, icon);
@@ -380,7 +405,7 @@ public abstract class EditorView extends View {
 		// Update page:
 		this.setPage(newPage);
 		this.setupCurrentPage();
-		this.updateInventory();
+		this.syncInventory();
 		return true;
 	}
 
@@ -388,6 +413,9 @@ public abstract class EditorView extends View {
 
 	@Override
 	public void updateInventory() {
+		// Note: The trades area is not updated here, because it can contain unsaved changes of the
+		// editing player, which would get discarded.
+		this.setupTradesPageBar();
 		this.updateButtons();
 		this.syncInventory();
 	}
@@ -397,17 +425,10 @@ public abstract class EditorView extends View {
 		if (AREA_BUTTONS.equals(area)) {
 			this.updateButtons();
 			this.syncInventory();
+			return;
 		}
-	}
 
-	@Override
-	public void updateSlot(int slot) {
-		Button button = this.getLayout()._getButton(slot);
-		if (button == null) return;
-
-		ItemStack icon = button.getIcon(this);
-		this.getInventory().setItem(slot, icon);
-		this.syncInventory();
+		super.updateArea(area);
 	}
 
 	// Note: This cannot deal with new button rows being required due to newly added buttons (which
@@ -418,6 +439,31 @@ public abstract class EditorView extends View {
 
 	void updateButtonsInAllViews() {
 		this.updateAreaInAllViews(AREA_BUTTONS);
+	}
+
+	// Updates the icon of the button with the given identity, if this view has such a button.
+	void updateButton(Object buttonIdentity) {
+		Button button = this.getLayout().findButton(buttonIdentity);
+		if (button == null) return;
+
+		int slot = button.getSlot();
+		if (slot == Button.NO_SLOT) return;
+
+		ItemStack icon = button.getIcon();
+		this.getInventory().setItem(slot, icon);
+		this.syncInventory();
+	}
+
+	// Each view sets up its own layout, so the same button can occupy different slots across views:
+	// The buttons are therefore matched by their identity instead of by slot.
+	void updateButtonInAllViews(Object buttonIdentity) {
+		UISessionManager.getInstance()
+				.getUISessionsForContext(this.getContext().getObject(), this.getUIType())
+				.forEach(view -> {
+					if (view instanceof EditorView editorView) {
+						editorView.updateButton(buttonIdentity);
+					}
+				});
 	}
 
 	// VIEW INTERACTIONS
@@ -471,9 +517,9 @@ public abstract class EditorView extends View {
 		assert this.getLayout().isTradesPageBar(event.getRawSlot());
 		event.setCancelled(true);
 		int rawSlot = event.getRawSlot();
-		Button button = this.getLayout()._getTradesPageBarButton(rawSlot);
+		Button button = this.getLayout().getTradesPageBarButton(rawSlot);
 		if (button != null) {
-			button.onClick(this, event);
+			button.onClick(event);
 		}
 	}
 
@@ -481,9 +527,9 @@ public abstract class EditorView extends View {
 		assert this.getLayout().isButtonArea(event.getRawSlot());
 		event.setCancelled(true);
 		int rawSlot = event.getRawSlot();
-		Button button = this.getLayout()._getButton(rawSlot);
+		Button button = this.getLayout().getButton(rawSlot);
 		if (button != null) {
-			button.onClick(this, event);
+			button.onClick(event);
 		}
 	}
 

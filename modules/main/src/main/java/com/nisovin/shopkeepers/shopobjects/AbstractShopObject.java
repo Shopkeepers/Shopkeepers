@@ -597,8 +597,8 @@ public abstract class AbstractShopObject implements ShopObject {
 	/**
 	 * Creates the editor buttons for editing this shop object.
 	 * <p>
-	 * This is usually only invoked once, when the {@link ShopkeeperEditorLayout} is set up for the
-	 * shopkeeper. So it is not possible to dynamically add or remove buttons with this method.
+	 * This is invoked once for each editor view, when its {@link ShopkeeperEditorLayout} is set up.
+	 * It is not possible to dynamically add or remove the buttons of an already open editor view.
 	 * <p>
 	 * In order to allow for subtypes to more easily add or modify the returned editor buttons, this
 	 * method is expected to return a new modifiable list with each invocation.

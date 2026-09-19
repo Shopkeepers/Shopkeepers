@@ -37,19 +37,25 @@ import com.nisovin.shopkeepers.util.bukkit.TextUtils;
 import com.nisovin.shopkeepers.util.inventory.ItemUtils;
 import com.nisovin.shopkeepers.util.java.MathUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
-import com.nisovin.shopkeepers.util.java.Validate;
 
 public final class VillagerEditorLayout extends EditorLayout {
 
 	private final AbstractVillager villager;
 
-	public VillagerEditorLayout(AbstractVillager villager) {
-		Validate.notNull(villager, "villager is null");
-		this.villager = villager;
+	public VillagerEditorLayout(VillagerEditorView editorView) {
+		super(editorView);
+		this.villager = editorView.getVillager();
 	}
 
 	protected AbstractVillager getVillager() {
 		return villager;
+	}
+
+	@Override
+	public void setupButtons() {
+		super.setupButtons();
+
+		this.setupVillagerButtons();
 	}
 
 	@Override
@@ -110,22 +116,24 @@ public final class VillagerEditorLayout extends EditorLayout {
 	protected Button createDeleteButton() {
 		return new ActionButton(true) {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return DerivedSettings.deleteVillagerButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				UIState capturedUIState = editorView.captureState();
 				editorView.closeDelayedAndRunTask(() -> {
-					requestConfirmationDeleteVillager(editorView, capturedUIState);
+					requestConfirmationDeleteVillager(capturedUIState);
 				});
 				return true;
 			}
 		};
 	}
 
-	private void requestConfirmationDeleteVillager(EditorView editorView, UIState previousUIState) {
+	private void requestConfirmationDeleteVillager(UIState previousUIState) {
+		EditorView editorView = this.getEditorView();
 		Player player = editorView.getPlayer();
 		var config = new ConfirmationUIState(
 				Messages.confirmationUiDeleteVillagerTitle,
@@ -158,12 +166,13 @@ public final class VillagerEditorLayout extends EditorLayout {
 	protected Button createNamingButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return DerivedSettings.nameVillagerButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				editorView.closeDelayedAndRunTask(() -> {
 					Player player = editorView.getPlayer();
 					if (!player.isValid()) return;
@@ -173,7 +182,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 
 					// Start naming:
 					SKShopkeepersPlugin.getInstance().getChatInput().request(player, message -> {
-						renameVillager(editorView, message);
+						renameVillager(message);
 					});
 					TextUtils.sendMessage(player, Messages.typeNewVillagerName);
 				});
@@ -182,8 +191,9 @@ public final class VillagerEditorLayout extends EditorLayout {
 		};
 	}
 
-	private void renameVillager(EditorView editorView, String newName) {
-		assert editorView != null && newName != null;
+	private void renameVillager(String newName) {
+		assert newName != null;
+		EditorView editorView = this.getEditorView();
 		if (editorView.abortIfContextInvalid()) {
 			return;
 		}
@@ -228,7 +238,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 	protected Button createEquipmentButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return ItemUtils.setDisplayNameAndLore(
 						new ItemStack(Material.ARMOR_STAND),
 						Messages.buttonEquipment,
@@ -237,7 +247,8 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				editorView.closeDelayedAndRunTask(() -> {
 					Player player = editorView.getPlayer();
 					if (!player.isValid()) return;
@@ -255,12 +266,13 @@ public final class VillagerEditorLayout extends EditorLayout {
 	protected Button createContainerButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return DerivedSettings.villagerInventoryButtonItem.createItemStack();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				editorView.closeDelayedAndRunTask(() -> {
 					Player player = editorView.getPlayer();
 					if (!player.isValid()) return;
@@ -299,7 +311,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 	protected Button getBabyEditorButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				ItemStack iconItem = new ItemStack(Material.EGG);
 				ItemUtils.setDisplayNameAndLore(
 						iconItem,
@@ -310,7 +322,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				if (villager.isAdult()) {
 					villager.setBaby();
 				} else {
@@ -334,7 +346,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			private Profession profession = regularVillager.getProfession();
 
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				var iconItem = VillagerEditorItems.getProfessionEditorItem(profession);
 				ItemUtils.setDisplayNameAndLore(iconItem,
 						Messages.buttonVillagerProfession,
@@ -344,7 +356,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				// Changing the profession will change the trades. Closing the editor view will
 				// replace the new trades with the old ones from the editor. But we try to preserve
@@ -363,7 +375,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 				// automatically change its profession:
 				if (regularVillager.getVillagerExperience() == 0) {
 					regularVillager.setVillagerExperience(1);
-					Player player = editorView.getPlayer();
+					Player player = this.getEditorView().getPlayer();
 					TextUtils.sendMessage(player, Messages.setVillagerXp, "xp", 1);
 				}
 				return true;
@@ -379,7 +391,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			private Villager.Type villagerType = regularVillager.getVillagerType();
 
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				var iconItem = VillagerEditorItems.getVillagerTypeEditorItem(villagerType);
 				ItemUtils.setDisplayNameAndLore(iconItem,
 						Messages.buttonVillagerVariant,
@@ -389,7 +401,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				villagerType = RegistryUtils.cycleKeyed(
 						Villager.Type.class,
@@ -410,7 +422,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			private int villagerLevel = regularVillager.getVillagerLevel();
 
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				ItemStack iconItem;
 				switch (regularVillager.getVillagerLevel()) {
 				default:
@@ -441,7 +453,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				if (backwards) {
 					villagerLevel -= 1;
@@ -461,7 +473,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			private boolean hasAI = villager.hasAI();
 
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				ItemStack iconItem;
 				if (hasAI) {
 					iconItem = new ItemStack(Material.JACK_O_LANTERN);
@@ -477,7 +489,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				hasAI = !hasAI;
 				villager.setAI(hasAI);
 				return true;
@@ -491,7 +503,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			private boolean invulnerable = villager.isInvulnerable();
 
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				ItemStack iconItem;
 				if (invulnerable) {
 					iconItem = new ItemStack(Material.POTION);
@@ -510,7 +522,7 @@ public final class VillagerEditorLayout extends EditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				invulnerable = !invulnerable;
 				villager.setInvulnerable(invulnerable);
 				return true;

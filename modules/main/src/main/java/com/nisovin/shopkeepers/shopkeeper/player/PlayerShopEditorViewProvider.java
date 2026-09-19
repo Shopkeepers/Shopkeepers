@@ -11,7 +11,6 @@ import com.nisovin.shopkeepers.currency.Currencies;
 import com.nisovin.shopkeepers.currency.Currency;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
 import com.nisovin.shopkeepers.ui.SKDefaultUITypes;
-import com.nisovin.shopkeepers.ui.editor.ShopkeeperEditorLayout;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperEditorViewProvider;
 import com.nisovin.shopkeepers.ui.editor.TradingRecipesAdapter;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
@@ -49,11 +48,6 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 		}
 
 		return true;
-	}
-
-	@Override
-	protected ShopkeeperEditorLayout createLayout() {
-		return new PlayerShopEditorLayout(this.getShopkeeper());
 	}
 
 	// Note: In case the cost is too large to represent, it sets the cost to zero.

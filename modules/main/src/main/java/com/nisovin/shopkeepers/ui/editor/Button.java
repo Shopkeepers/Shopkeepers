@@ -6,6 +6,7 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.util.bukkit.SoundEffect;
+import com.nisovin.shopkeepers.util.java.Validate;
 
 public abstract class Button {
 
@@ -29,9 +30,15 @@ public abstract class Button {
 	}
 
 	void setEditorLayout(EditorLayout editorLayout) {
-		if (this.editorLayout != null) {
-			throw new IllegalStateException("Button was already added to some editor layout!");
-		}
+		Validate.State.isTrue(
+				this.editorLayout == null,
+				"Button was already added to some editor layout!"
+		);
+		Validate.isTrue(
+				this.isApplicable(editorLayout),
+				"Button is not applicable to this layout!"
+		);
+
 		this.editorLayout = editorLayout;
 	}
 
@@ -55,23 +62,51 @@ public abstract class Button {
 		return editorLayout;
 	}
 
-	public abstract @Nullable ItemStack getIcon(EditorView editorView);
+	/**
+	 * Gets the {@link EditorView} this button has been created for.
+	 * 
+	 * @return the editor view, not <code>null</code>
+	 */
+	protected final EditorView getEditorView() {
+		var editorLayout = Validate.State.notNull(
+				this.editorLayout,
+				"Button was not yet added to any editor layout!"
+		);
+		return editorLayout.getEditorView();
+	}
+
+	/**
+	 * Gets an object that identifies this specific button type.
+	 * <p>
+	 * This is for example used to update the button icon across all {@link EditorView}s for the
+	 * same context.
+	 * <p>
+	 * By default, this uses the (often anonymous) button class. Button types that share their class
+	 * with other buttons have to override this.
+	 * 
+	 * @return the button identity, not <code>null</code>
+	 */
+	protected Object getIdentity() {
+		return this.getClass();
+	}
+
+	public abstract @Nullable ItemStack getIcon();
 
 	// Updates the icon in all editor views.
-	// Note: Cannot deal with changes to the registered buttons (the button's slot) while the
-	// inventory is open.
-	protected final void updateIcon(EditorView editorView) {
-		if (slot != NO_SLOT && editorLayout != null) {
-			editorView.updateSlotInAllViews(slot);
-		}
+	protected final void updateIcon() {
+		if (editorLayout == null) return;
+		assert editorLayout != null;
+
+		editorLayout.getEditorView().updateButtonInAllViews(this.getIdentity());
 	}
 
-	// Updates all icons in all editor views.
-	protected final void updateAllIcons(EditorView editorView) {
-		if (editorLayout != null) {
-			editorView.updateButtonsInAllViews();
-		}
+	// Updates all button icons in all editor views.
+	protected final void updateAllIcons() {
+		if (editorLayout == null) return;
+		assert editorLayout != null;
+
+		editorLayout.getEditorView().updateButtonsInAllViews();
 	}
 
-	protected abstract void onClick(EditorView editorView, InventoryClickEvent clickEvent);
+	protected abstract void onClick(InventoryClickEvent clickEvent);
 }

@@ -33,6 +33,11 @@ public final class VillagerEditorView extends EditorView {
 	}
 
 	@Override
+	protected VillagerEditorLayout createLayout() {
+		return new VillagerEditorLayout(this);
+	}
+
+	@Override
 	protected String getTitle() {
 		var villager = this.getVillager();
 		String villagerName = villager.getName(); // Not null

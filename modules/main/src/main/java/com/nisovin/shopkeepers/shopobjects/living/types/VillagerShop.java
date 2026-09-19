@@ -21,7 +21,6 @@ import com.nisovin.shopkeepers.shopobjects.entity.base.BaseEntityShopObjectType;
 import com.nisovin.shopkeepers.shopobjects.living.types.villager.VillagerEditorItems;
 import com.nisovin.shopkeepers.shopobjects.living.types.villager.VillagerSounds;
 import com.nisovin.shopkeepers.ui.editor.Button;
-import com.nisovin.shopkeepers.ui.editor.EditorView;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperActionButton;
 import com.nisovin.shopkeepers.ui.trading.TradingViewProvider;
 import com.nisovin.shopkeepers.util.bukkit.RegistryUtils;
@@ -184,12 +183,12 @@ public class VillagerShop extends BabyableShop<Villager> {
 	private Button getProfessionEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getProfessionEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleProfession(backwards);
 				return true;
@@ -235,12 +234,12 @@ public class VillagerShop extends BabyableShop<Villager> {
 	private Button getVillagerTypeEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getVillagerTypeEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleVillagerType(backwards);
 				return true;
@@ -309,12 +308,12 @@ public class VillagerShop extends BabyableShop<Villager> {
 	private Button getVillagerLevelEditorButton() {
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return getVillagerLevelEditorItem();
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				boolean backwards = clickEvent.isRightClick();
 				cycleVillagerLevel(backwards);
 				return true;

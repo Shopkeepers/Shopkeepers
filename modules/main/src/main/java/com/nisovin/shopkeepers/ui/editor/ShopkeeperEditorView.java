@@ -19,6 +19,11 @@ public abstract class ShopkeeperEditorView extends EditorView {
 	}
 
 	@Override
+	protected ShopkeeperEditorLayout createLayout() {
+		return new ShopkeeperEditorLayout(this);
+	}
+
+	@Override
 	protected String getTitle() {
 		return Messages.editorTitle;
 	}

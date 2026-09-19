@@ -23,8 +23,8 @@ import com.nisovin.shopkeepers.util.java.StringUtils;
 
 public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 
-	public PlayerShopEditorLayout(AbstractPlayerShopkeeper shopkeeper) {
-		super(shopkeeper);
+	public PlayerShopEditorLayout(PlayerShopEditorView editorView) {
+		super(editorView);
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				var shopkeeper = (PlayerShopkeeper) this.getShopkeeper();
 				ItemStack iconItem = Settings.membersItem.createItemStack();
 				String memberCount = String.valueOf(shopkeeper.getMembers().size());
@@ -64,7 +64,8 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				var shopkeeper = (AbstractPlayerShopkeeper) this.getShopkeeper();
 				// Check if the player is allowed to edit the shop members:
 				if (!shopkeeper.canEditMembers(editorView.getPlayer(), false)) {
@@ -83,7 +84,7 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 			}
 
 			@Override
-			protected void onActionSuccess(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected void onActionSuccess(InventoryClickEvent clickEvent) {
 				// Skip the edit event and saving of the shopkeeper.
 			}
 		};
@@ -96,8 +97,8 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 		// the shopkeeper when clicked.
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
-				Player player = editorView.getPlayer();
+			public @Nullable ItemStack getIcon() {
+				Player player = this.getEditorView().getPlayer();
 				AbstractPlayerShopkeeper shopkeeper = getShopkeeper();
 				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper, player)) {
 					ItemStack iconItem = Settings.containerItem.createItemStack();
@@ -133,7 +134,8 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
+				EditorView editorView = this.getEditorView();
 				Player player = editorView.getPlayer();
 				AbstractPlayerShopkeeper shopkeeper = getShopkeeper();
 				if (ShopContainerEditorUtils.usesContainersEditor(shopkeeper, player)) {
@@ -174,7 +176,7 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 
 		return new ShopkeeperActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				var shopkeeper = (AbstractPlayerShopkeeper) this.getShopkeeper();
 				ItemStack iconItem = Settings.tradeNotificationsItem.createItemStack();
 				String state = shopkeeper.isNotifyOnTrades() ? Messages.stateEnabled : Messages.stateDisabled;
@@ -190,7 +192,7 @@ public class PlayerShopEditorLayout extends ShopkeeperEditorLayout {
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				var shopkeeper = (AbstractPlayerShopkeeper) this.getShopkeeper();
 				shopkeeper.setNotifyOnTrades(!shopkeeper.isNotifyOnTrades());
 				return true;

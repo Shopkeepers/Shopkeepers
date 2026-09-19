@@ -17,7 +17,6 @@ import com.nisovin.shopkeepers.text.Text;
 import com.nisovin.shopkeepers.ui.SKDefaultUITypes;
 import com.nisovin.shopkeepers.ui.editor.AbstractEditorViewProvider;
 import com.nisovin.shopkeepers.ui.editor.DefaultTradingRecipesAdapter;
-import com.nisovin.shopkeepers.ui.editor.EditorLayout;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.ui.lib.View;
 import com.nisovin.shopkeepers.ui.villager.VillagerViewContext;
@@ -163,20 +162,5 @@ public final class VillagerEditorViewProvider extends AbstractEditorViewProvider
 	@Override
 	protected @Nullable View createView(Player player, UIState uiState) {
 		return new VillagerEditorView(this, player, uiState);
-	}
-
-	// EDITOR LAYOUT
-
-	@Override
-	protected EditorLayout createLayout() {
-		return new VillagerEditorLayout(this.getVillager());
-	}
-
-	@Override
-	protected void setupButtons() {
-		super.setupButtons();
-
-		var layout = (VillagerEditorLayout) this.getLayout();
-		layout.setupVillagerButtons();
 	}
 }

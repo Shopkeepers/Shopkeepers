@@ -117,6 +117,9 @@ Date format: (YYYY-MM-DD)
   * `shop-setup-desc-book`
   * `shop-setup-desc-admin-regular`
 * Build: Add `shopkeepers-paper` module and move version unspecific Paper-specific code there.
+* Internal: The editor layout and its buttons are dynamically set up per editor view now, instead of being shared and cached across all editor views of a shopkeeper.
+  * This enables future flexibility, such as conditionally omitting certain buttons for specific players.
+  * Button setup methods, such as `AbstractShopObject#createEditorButtons`, are invoked once per opened editor view now.
 
 Removed messages:  
 * `button-container`

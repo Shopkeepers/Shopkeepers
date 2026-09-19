@@ -441,34 +441,6 @@ public abstract class View implements UISession {
 	// the time being, these direct view update methods are simpler and suffice our current needs.
 
 	/**
-	 * Request to update the content of the specified slot.
-	 * <p>
-	 * By default, this falls back to {@link #updateInventory() updating the whole inventory}. It is
-	 * up to each UI to implement this in a more fine-grained manner if needed.
-	 * <p>
-	 * This may need to {@link #syncInventory() synchronize} the inventory for the viewing player.
-	 * 
-	 * @param slot
-	 *            the slot
-	 */
-	public void updateSlot(int slot) {
-		this.updateInventory();
-	}
-
-	/**
-	 * Request to update the content of the specified slot for this {@link View} and all other
-	 * active views that share the same {@link #getContext() context object}.
-	 * 
-	 * @param slot
-	 *            the slot
-	 */
-	public final void updateSlotInAllViews(int slot) {
-		UISessionManager.getInstance()
-				.getUISessionsForContext(this.getContext().getObject(), this.getUIType())
-				.forEach(view -> view.updateSlot(slot));
-	}
-
-	/**
 	 * Request to update the contents of the inventory slots of the specified "area".
 	 * <p>
 	 * It is up to each UI to define and expose "areas" of inventory slots that are logically

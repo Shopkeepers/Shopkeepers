@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -19,6 +18,12 @@ import com.nisovin.shopkeepers.util.java.MathUtils;
 import com.nisovin.shopkeepers.util.java.StringUtils;
 import com.nisovin.shopkeepers.util.java.Validate;
 
+/**
+ * The layout of an {@link EditorView}, including its buttons.
+ * <p>
+ * Each {@link EditorView} sets up its own layout. The buttons can therefore take the viewing player
+ * into account.
+ */
 public abstract class EditorLayout {
 
 	private static final SoundEffect PAGE_TURN_SOUND = new SoundEffect(Sound.ITEM_BOOK_PAGE_TURN);
@@ -50,13 +55,26 @@ public abstract class EditorLayout {
 	public static final int ITEM_1_OFFSET = TRADES_ROW_3_START;
 	public static final int ITEM_2_OFFSET = TRADES_ROW_2_START;
 
+	private final EditorView editorView;
+
 	private final @Nullable Button[] tradesPageBarButtons = new @Nullable Button[TRADES_PAGE_BAR_END - TRADES_PAGE_BAR_START + 1];
 	private final List<Button> buttons = new ArrayList<>();
 	private int buttonRows = 1;
 	private final @Nullable Button[] bakedButtons = new @Nullable Button[BUTTON_MAX_ROWS * COLUMNS_PER_ROW];
 	private boolean dirtyButtons = false;
 
-	public EditorLayout() {
+	public EditorLayout(EditorView editorView) {
+		Validate.notNull(editorView, "editorView is null");
+		this.editorView = editorView;
+	}
+
+	/**
+	 * Gets the {@link EditorView} this layout has been created for.
+	 * 
+	 * @return the editor view, not <code>null</code>
+	 */
+	public EditorView getEditorView() {
+		return editorView;
 	}
 
 	// INVENTORY LAYOUT
@@ -123,72 +141,78 @@ public abstract class EditorLayout {
 		return Settings.maxTradesPages;
 	}
 
+	// BUTTONS
+
+	/**
+	 * Sets up the buttons of this layout.
+	 * <p>
+	 * This is called once right after the layout has been created.
+	 */
+	public void setupButtons() {
+		this.setupTradesPageBarButtons();
+	}
+
 	// PAGE BAR
 
 	@Nullable
 	Button[] getTradesPageBarButtons() {
-		this.setupTradesPageBarButtons();
 		return tradesPageBarButtons;
 	}
 
-	private @Nullable Button getTradesPageBarButton(int rawSlot) {
-		if (!this.isTradesPageBar(rawSlot)) return null;
-		return this._getTradesPageBarButton(rawSlot);
-	}
-
 	@Nullable
-	Button _getTradesPageBarButton(int rawSlot) {
-		assert this.isTradesPageBar(rawSlot);
+	Button getTradesPageBarButton(int rawSlot) {
+		if (!this.isTradesPageBar(rawSlot)) return null;
 		return tradesPageBarButtons[rawSlot - TRADES_PAGE_BAR_START];
 	}
 
-	public void setupTradesPageBarButtons() {
-		Button prevPageButton = this.createPrevPageButton();
-		prevPageButton.setSlot(TRADES_PAGE_BAR_START);
-		tradesPageBarButtons[0] = prevPageButton;
+	protected void setupTradesPageBarButtons() {
+		this.setTradesPageBarButton(TRADES_PAGE_BAR_START, this.createPrevPageButton());
+		this.setTradesPageBarButton(TRADES_SETUP_ICON, this.createTradeSetupButton());
+		this.setTradesPageBarButton(TRADES_PAGE_ICON, this.createCurrentPageButton());
+		this.setTradesPageBarButton(SHOP_INFORMATION_ICON, this.createShopInformationButton());
+		this.setTradesPageBarButton(TRADES_PAGE_BAR_END, this.createNextPageButton());
+	}
 
-		Button tradeSetupButton = this.createTradeSetupButton();
-		tradeSetupButton.setSlot(TRADES_SETUP_ICON);
-		tradesPageBarButtons[TRADES_SETUP_ICON - TRADES_PAGE_BAR_START] = tradeSetupButton;
-
-		Button currentPageButton = this.createCurrentPageButton();
-		currentPageButton.setSlot(TRADES_PAGE_ICON);
-		tradesPageBarButtons[TRADES_PAGE_ICON - TRADES_PAGE_BAR_START] = currentPageButton;
-
-		Button shopInformationButton = this.createShopInformationButton();
-		shopInformationButton.setSlot(SHOP_INFORMATION_ICON);
-		tradesPageBarButtons[SHOP_INFORMATION_ICON - TRADES_PAGE_BAR_START] = shopInformationButton;
-
-		Button nextPageButton = this.createNextPageButton();
-		nextPageButton.setSlot(TRADES_PAGE_BAR_END);
-		tradesPageBarButtons[TRADES_PAGE_BAR_END - TRADES_PAGE_BAR_START] = nextPageButton;
+	private void setTradesPageBarButton(int slot, Button button) {
+		assert this.isTradesPageBar(slot);
+		// Validates that the button is applicable and not yet used in another layout:
+		button.setEditorLayout(this);
+		button.setSlot(slot);
+		tradesPageBarButtons[slot - TRADES_PAGE_BAR_START] = button;
 	}
 
 	protected Button createPrevPageButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
-				int page = editorView.getCurrentPage();
+			public @Nullable ItemStack getIcon() {
+				int page = this.getEditorView().getCurrentPage();
 				if (page <= 1) return null;
 
 				return createPrevPageIcon(page);
 			}
 
 			@Override
-			protected void playButtonClickSound(Player player, boolean actionSuccess) {
+			protected void playButtonClickSound(boolean actionSuccess) {
 				if (actionSuccess) {
-					PAGE_TURN_SOUND.play(player);
+					PAGE_TURN_SOUND.play(this.getEditorView().getPlayer());
 				}
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				// Ignore double clicks:
 				if (clickEvent.getClick() == ClickType.DOUBLE_CLICK) return false;
 
 				// Switch to previous page:
+				EditorView editorView = this.getEditorView();
 				int currentPage = editorView.getCurrentPage();
 				return editorView.switchPage(currentPage - 1, true);
+			}
+
+			@Override
+			protected boolean isUpdateIconOnActionSuccess() {
+				// Switching the page already updates the whole view.
+				return false;
 			}
 		};
 	}
@@ -196,28 +220,35 @@ public abstract class EditorLayout {
 	protected Button createNextPageButton() {
 		return new ActionButton() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
-				int page = editorView.getCurrentPage();
+			public @Nullable ItemStack getIcon() {
+				int page = this.getEditorView().getCurrentPage();
 				if (page >= getMaxTradesPages()) return null;
 
 				return createNextPageIcon(page);
 			}
 
 			@Override
-			protected void playButtonClickSound(Player player, boolean actionSuccess) {
+			protected void playButtonClickSound(boolean actionSuccess) {
 				if (actionSuccess) {
-					PAGE_TURN_SOUND.play(player);
+					PAGE_TURN_SOUND.play(this.getEditorView().getPlayer());
 				}
 			}
 
 			@Override
-			protected boolean runAction(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected boolean runAction(InventoryClickEvent clickEvent) {
 				// Ignore double clicks:
 				if (clickEvent.getClick() == ClickType.DOUBLE_CLICK) return false;
 
 				// Switch to next page:
+				EditorView editorView = this.getEditorView();
 				int currentPage = editorView.getCurrentPage();
 				return editorView.switchPage(currentPage + 1, true);
+			}
+
+			@Override
+			protected boolean isUpdateIconOnActionSuccess() {
+				// Switching the page already updates the whole view.
+				return false;
 			}
 		};
 	}
@@ -225,13 +256,13 @@ public abstract class EditorLayout {
 	protected Button createCurrentPageButton() {
 		return new Button() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
-				int page = editorView.getCurrentPage();
+			public @Nullable ItemStack getIcon() {
+				int page = this.getEditorView().getCurrentPage();
 				return createCurrentPageIcon(page);
 			}
 
 			@Override
-			protected void onClick(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected void onClick(InventoryClickEvent clickEvent) {
 				// Current page button: Does nothing.
 			}
 		};
@@ -240,12 +271,12 @@ public abstract class EditorLayout {
 	protected Button createShopInformationButton() {
 		return new Button() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return createShopInformationIcon();
 			}
 
 			@Override
-			protected void onClick(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected void onClick(InventoryClickEvent clickEvent) {
 				// Shop information button: Does nothing.
 			}
 		};
@@ -254,12 +285,12 @@ public abstract class EditorLayout {
 	protected Button createTradeSetupButton() {
 		return new Button() {
 			@Override
-			public @Nullable ItemStack getIcon(EditorView editorView) {
+			public @Nullable ItemStack getIcon() {
 				return createTradeSetupIcon();
 			}
 
 			@Override
-			protected void onClick(EditorView editorView, InventoryClickEvent clickEvent) {
+			protected void onClick(InventoryClickEvent clickEvent) {
 				// Trade setup button: Does nothing.
 			}
 		};
@@ -323,8 +354,7 @@ public abstract class EditorLayout {
 
 	public void addButton(Button button) {
 		Validate.notNull(button, "button is null");
-		Validate.isTrue(button.isApplicable(this), "button is not applicable to this layout");
-		// Validates that the button isn't used in another layout yet:
+		// Validates that the button is applicable and not yet used in another layout:
 		button.setEditorLayout(this);
 		buttons.add(button);
 		dirtyButtons = true;
@@ -393,15 +423,35 @@ public abstract class EditorLayout {
 		return bakedButtons;
 	}
 
-	private @Nullable Button getButton(int rawSlot) {
+	@Nullable
+	Button getButton(int rawSlot) {
 		if (!this.isButtonArea(rawSlot)) return null;
-		return this._getButton(rawSlot);
+		return this.getBakedButtons()[rawSlot - BUTTONS_START];
 	}
 
 	@Nullable
-	Button _getButton(int rawSlot) {
-		assert this.isButtonArea(rawSlot);
-		this.bakeButtons();
-		return bakedButtons[rawSlot - BUTTONS_START];
+	Button findButton(Object buttonIdentity) {
+		// Uses the baked buttons, so if the caller subsequently accesses the slot of the returned
+		// button, it is already filled in:
+		Button button = findButton(this.getBakedButtons(), buttonIdentity);
+		if (button != null) return button;
+
+		return findButton(this.getTradesPageBarButtons(), buttonIdentity);
+	}
+
+	private static @Nullable Button findButton(
+			@Nullable Button[] buttons,
+			Object buttonIdentity
+	) {
+		for (int i = 0; i < buttons.length; ++i) {
+			Button button = buttons[i];
+			if (button == null) continue;
+
+			if (button.getIdentity().equals(buttonIdentity)) {
+				return button;
+			}
+		}
+
+		return null;
 	}
 }
