@@ -95,7 +95,7 @@ public class SellingPlayerShopEditorViewProvider extends PlayerShopEditorViewPro
 		@Override
 		protected @Nullable PriceOffer createOffer(TradingRecipeDraft recipe) {
 			assert recipe != null && recipe.isValid();
-			int price = getPrice(shopkeeper, recipe);
+			int price = getSellingRecipePrice(shopkeeper, recipe);
 			if (price <= 0) {
 				// Unexpected.
 				return null; // Ignore invalid recipe

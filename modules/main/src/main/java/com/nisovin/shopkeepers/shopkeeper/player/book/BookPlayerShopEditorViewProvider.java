@@ -99,7 +99,7 @@ public class BookPlayerShopEditorViewProvider extends PlayerShopEditorViewProvid
 			String bookTitle = BookItems.getTitle(bookMeta);
 			if (bookTitle == null) return null; // Invalid recipe
 
-			int price = getPrice(shopkeeper, recipe);
+			int price = getSellingRecipePrice(shopkeeper, recipe);
 			if (price <= 0) {
 				// Unexpected.
 				return null; // Ignore invalid recipe

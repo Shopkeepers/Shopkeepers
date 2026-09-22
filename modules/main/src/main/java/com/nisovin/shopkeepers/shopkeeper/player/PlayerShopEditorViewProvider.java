@@ -9,6 +9,7 @@ import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.currency.Currencies;
 import com.nisovin.shopkeepers.currency.Currency;
+import com.nisovin.shopkeepers.currency.CurrencyInventoryUtils;
 import com.nisovin.shopkeepers.shopkeeper.TradingRecipeDraft;
 import com.nisovin.shopkeepers.ui.SKDefaultUITypes;
 import com.nisovin.shopkeepers.ui.editor.ShopkeeperEditorViewProvider;
@@ -89,29 +90,27 @@ public abstract class PlayerShopEditorViewProvider extends ShopkeeperEditorViewP
 		return new TradingRecipeDraft(resultItem, lowCostItem, highCostItem);
 	}
 
-	protected static int getPrice(Shopkeeper shopkeeper, TradingRecipeDraft recipe) {
+	protected static int getSellingRecipePrice(Shopkeeper shopkeeper, TradingRecipeDraft recipe) {
 		Validate.notNull(recipe, "recipe is null");
 		int price = 0;
 
 		UnmodifiableItemStack item1 = recipe.getItem1();
-		Currency currency1 = Currencies.match(item1);
-		if (currency1 != null) {
-			assert item1 != null;
-			price += (currency1.getValue() * item1.getAmount());
-		} else if (!ItemUtils.isEmpty(item1)) {
+		int value1 = CurrencyInventoryUtils.getCurrencyValue(item1);
+		if (value1 == 0 && !ItemUtils.isEmpty(item1)) {
 			// Unexpected.
 			Log.debug(shopkeeper.getLogPrefix() + "Price item 1 does not match any currency!");
 		}
 
+		price += value1;
+
 		UnmodifiableItemStack item2 = recipe.getItem2();
-		Currency currency2 = Currencies.match(item2);
-		if (currency2 != null) {
-			assert item2 != null;
-			price += (currency2.getValue() * item2.getAmount());
-		} else if (!ItemUtils.isEmpty(item2)) {
+		int value2 = CurrencyInventoryUtils.getCurrencyValue(item2);
+		if (value2 == 0 && !ItemUtils.isEmpty(item2)) {
 			// Unexpected.
 			Log.debug(shopkeeper.getLogPrefix() + "Price item 2 does not match any currency!");
 		}
+
+		price += value2;
 		return price;
 	}
 }

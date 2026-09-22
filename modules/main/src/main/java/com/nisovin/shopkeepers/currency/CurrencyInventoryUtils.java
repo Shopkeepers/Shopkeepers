@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import com.nisovin.shopkeepers.api.util.UnmodifiableItemStack;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.util.annotations.ReadOnly;
 import com.nisovin.shopkeepers.util.annotations.ReadWrite;
@@ -36,6 +37,36 @@ public final class CurrencyInventoryUtils {
 	}
 
 	/**
+	 * Gets the {@link Currency currency} value of the given item.
+	 * 
+	 * @param itemStack
+	 *            the item stack, can be <code>null</code> or empty
+	 * @return the currency value, or <code>0</code> if the item is <code>null</code> or empty or
+	 *         not a currency item
+	 */
+	public static int getCurrencyValue(@ReadOnly @Nullable ItemStack itemStack) {
+		if (ItemUtils.isEmpty(itemStack)) return 0;
+		assert itemStack != null;
+
+		Currency currency = Currencies.match(itemStack);
+		if (currency == null) return 0;
+
+		return itemStack.getAmount() * currency.getValue();
+	}
+
+	/**
+	 * Gets the {@link Currency currency} value of the given item.
+	 * 
+	 * @param itemStack
+	 *            the item stack, can be <code>null</code> or empty
+	 * @return the currency value, or <code>0</code> if the item is <code>null</code> or empty or
+	 *         not a currency item
+	 */
+	public static int getCurrencyValue(@Nullable UnmodifiableItemStack itemStack) {
+		return getCurrencyValue(ItemUtils.asItemStackOrNull(itemStack));
+	}
+
+	/**
 	 * Counts the total {@link Currency currency} value contained in the given contents.
 	 * 
 	 * @param contents
@@ -46,12 +77,7 @@ public final class CurrencyInventoryUtils {
 		Validate.notNull(contents, "contents is null");
 		int totalCurrency = 0;
 		for (ItemStack itemStack : contents) {
-			if (itemStack == null) continue;
-
-			Currency currency = Currencies.match(itemStack);
-			if (currency != null) {
-				totalCurrency += (itemStack.getAmount() * currency.getValue());
-			}
+			totalCurrency += getCurrencyValue(itemStack);
 		}
 		return totalCurrency;
 	}
