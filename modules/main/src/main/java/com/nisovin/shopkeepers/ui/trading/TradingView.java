@@ -57,6 +57,13 @@ public class TradingView extends View {
 	protected static final int BUY_ITEM_2_SLOT_ID = 1;
 	protected static final int RESULT_ITEM_SLOT_ID = 2;
 
+	// Whether a trade has been prepared but not yet ended, i.e. neither completed nor aborted:
+	// This is used to detect a previously failed but not properly cleaned up trading state during
+	// subsequent trade attempts, likely caused by a bug. When detected, we abort the subsequent
+	// trade attempt in order to prevent continuing in an unexpected state that players could abuse,
+	// e.g. to duplicate items.
+	private boolean tradePrepared = false;
+
 	public TradingView(TradingViewProvider provider, Player player, UIState uiState) {
 		super(provider, player, uiState);
 	}
@@ -388,6 +395,7 @@ public class TradingView extends View {
 				}
 
 				if (!this.finalTradePreparation(trade)) {
+					this.onTradeAborted(tradingContext, false);
 					return;
 				}
 
@@ -448,6 +456,7 @@ public class TradingView extends View {
 					}
 
 					if (!this.finalTradePreparation(trade)) {
+						this.onTradeAborted(tradingContext, false);
 						return;
 					}
 
@@ -524,6 +533,7 @@ public class TradingView extends View {
 				}
 
 				if (!this.finalTradePreparation(trade)) {
+					this.onTradeAborted(tradingContext, false);
 					return;
 				}
 
@@ -796,7 +806,7 @@ public class TradingView extends View {
 	private boolean handleTrade(Trade trade) {
 		assert trade != null;
 		// Shopkeeper-specific checks and preparation:
-		if (!this.prepareTrade(trade)) {
+		if (!this.internalPrepareTrade(trade)) {
 			// The trade got cancelled for some shopkeeper-specific reason:
 			this.onTradeAborted(trade.getTradingContext(), false);
 			return false;
@@ -902,7 +912,18 @@ public class TradingView extends View {
 				+ ") by " + player.getName() + ": " + ItemUtils.getSimpleRecipeInfo(tradingRecipe));
 
 		this.onTradeCompleted(trade);
-		this.onTradeOver(trade.getTradingContext());
+		this.internalOnTradeOver(trade.getTradingContext());
+	}
+
+	private boolean internalPrepareTrade(Trade trade) {
+		if (tradePrepared) {
+			throw new IllegalStateException(this.getContext().getLogPrefix() + "Trade aborted!"
+					+ " A previously prepared trade was not properly cleaned up."
+					+ " This is likely a bug! Please report this issue to the plugin author(s).");
+		}
+
+		tradePrepared = true;
+		return this.prepareTrade(trade);
 	}
 
 	/**
@@ -1002,7 +1023,7 @@ public class TradingView extends View {
 			Settings.tradeFailedSound.play(tradingContext.getTradingPlayer());
 		}
 
-		this.onTradeOver(tradingContext);
+		this.internalOnTradeOver(tradingContext);
 	}
 
 	/**
@@ -1058,6 +1079,13 @@ public class TradingView extends View {
 	 */
 	protected void onTradeCompleted(Trade trade) {
 		// Callback for subclasses.
+	}
+
+	private void internalOnTradeOver(TradingContext tradingContext) {
+		this.onTradeOver(tradingContext);
+
+		// Only reset if onTradeOver completes successfully (without throwing):
+		tradePrepared = false;
 	}
 
 	/**

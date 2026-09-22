@@ -15,6 +15,8 @@ Date format: (YYYY-MM-DD)
   * `shopkeeper.edit-wandering-traders`
   * `shopkeeper.create`
   * `shopkeeper.hanging-sign`
+* Fix: A potential item duplication issue with player shops introduced in v2.28.0, caused by not properly resetting the trading state on failed trade attempts.
+  * Also added a safeguard that aborts subsequent trade attempts if the previous trade was not properly ended.
 
 ## v2.28.0 (2026-09-20)
 ### Supported MC versions: 26.3, 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
