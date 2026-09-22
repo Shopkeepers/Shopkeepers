@@ -41,11 +41,14 @@ public class TradingPlayerShopTradingView extends PlayerShopTradingView {
 		// Find offer:
 		TradeOffer offer = shopkeeper.getOffer(tradingRecipe);
 		if (offer == null) {
-			// Unexpected, because the recipes were created based on the shopkeeper's offers.
+			// Unexpected, unless the offers were changed while the trading UI was open.
 			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeUnexpectedTrade);
 			this.debugPreventedTrade("Could not find the offer corresponding to the trading recipe!");
 			return false;
 		}
+
+		// Note: No additional validation of the found offer and the current trading recipe needed:
+		// getOffer(recipe) already compares all items and their amounts.
 
 		return true;
 	}

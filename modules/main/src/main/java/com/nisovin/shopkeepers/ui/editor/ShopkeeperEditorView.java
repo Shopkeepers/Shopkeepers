@@ -4,7 +4,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import com.nisovin.shopkeepers.api.events.ShopkeeperEditedEvent;
+import com.nisovin.shopkeepers.api.ui.DefaultUITypes;
 import com.nisovin.shopkeepers.lang.Messages;
+import com.nisovin.shopkeepers.ui.lib.UISessionManager;
 import com.nisovin.shopkeepers.ui.lib.UIState;
 import com.nisovin.shopkeepers.util.logging.Log;
 
@@ -49,8 +51,16 @@ public abstract class ShopkeeperEditorView extends EditorView {
 			// Call event:
 			Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
-			// TODO Close all other UI sessions for the shopkeeper (e.g. trading players)? Also send
-			// a message to them.
+			// Close any open trading UIs, so that players do not continue trading based on outdated
+			// offers:
+			// Note: Any trade attempts during the UI closing delay are catched by the trading view
+			// implementations by validating that the found offer still matches the selected trading
+			// recipe.
+			// TODO Also send a message to them?
+			UISessionManager.getInstance().abortUISessionsForContextDelayed(
+					shopkeeper,
+					DefaultUITypes.TRADING()
+			);
 		}
 
 		// Even if no trades have changed, the shopkeeper might have been marked as dirty due to

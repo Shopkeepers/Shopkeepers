@@ -85,6 +85,16 @@ public class BookPlayerShopTradingView extends PlayerShopTradingView {
 			return false;
 		}
 
+		// Validate the found offer:
+		// The offer's price might have changed while the trading UI was open:
+		int recipePrice = CurrencyInventoryUtils.getCurrencyValue(tradingRecipe.getItem1())
+				+ CurrencyInventoryUtils.getCurrencyValue(tradingRecipe.getItem2());
+		if (recipePrice != offer.getPrice()) {
+			TextUtils.sendMessage(tradingPlayer, Messages.cannotTradeUnexpectedTrade);
+			this.debugPreventedTrade("The price of the trading recipe does not match the offer!");
+			return false;
+		}
+
 		this.currentOffer = offer;
 
 		return true;
