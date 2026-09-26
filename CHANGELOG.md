@@ -23,6 +23,7 @@ Date format: (YYYY-MM-DD)
   * We also immediately close any open trading views now when the trade offers have been edited, so trading players don't see outdated trades.
 * Fix: An item duplication issue with the shop creation item and the naming item, caused by removing used items one tick later.
 * Fix: Hiring non-shopkeeper villagers only charged a part of the costs if the hire items in the player's hand did not cover the full costs.
+* Fix: Shopkeeper mobs could drop items and experience if they were killed directly, e.g. by other plugins. For example, a fox shopkeeper would always drop the item in its mouth. We now clear the drops of dying shopkeeper entities.
 * Debug: Add debug command `/shopkeeper testKill`, which kills the targeted entity by setting its health to zero. Unlike the vanilla kill command, this bypasses damage events and can be used to test the death behavior of shopkeeper entities.
 * Assumptions:
   * Remove the no longer relevant sections about our `SKUnmodifiableItemStack`: The implementation has changed in v2.22.0.

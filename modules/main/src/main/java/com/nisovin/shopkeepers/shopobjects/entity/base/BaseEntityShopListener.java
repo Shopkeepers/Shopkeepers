@@ -21,6 +21,7 @@ import org.bukkit.event.entity.EntityCombustByBlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityMountEvent;
@@ -422,6 +423,19 @@ class BaseEntityShopListener implements Listener {
 	void onEntityDropItem(EntityDropItemEvent event) {
 		if (shopkeeperRegistry.isShopkeeper(event.getEntity())) {
 			event.setCancelled(true);
+		}
+	}
+
+	// Shopkeeper entities are not expected to die, since we cancel all damage. This cancellation
+	// also applies to Minecraft's built-in kill and damage commands. However, they might still be
+	// killed directly, e.g. by other plugins.
+	// Prevent any item and experience drops in this case, e.g. of their equipment or loot.
+	// Example: Without this, fox shopkeepers would always drop the item in their mouth on death.
+	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+	void onEntityDeath(EntityDeathEvent event) {
+		if (shopkeeperRegistry.isShopkeeper(event.getEntity())) {
+			event.getDrops().clear();
+			event.setDroppedExp(0);
 		}
 	}
 
