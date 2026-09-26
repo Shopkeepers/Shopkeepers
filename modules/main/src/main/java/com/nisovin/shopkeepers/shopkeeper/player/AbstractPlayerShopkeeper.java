@@ -225,7 +225,7 @@ public abstract class AbstractPlayerShopkeeper
 				shopkeeperData.set(CONTAINERS, Collections.singletonList(container));
 
 				// Remove the legacy container data:
-				shopkeeperData.remove(CONTAINER.getName());
+				shopkeeperData.set(CONTAINER.getUnvalidatedSaver(), null);
 
 				Log.debug(() -> logPrefix + "Migrated container to the container list format.");
 				return true;
@@ -1183,9 +1183,9 @@ public abstract class AbstractPlayerShopkeeper
 						dataContainer.set(CONTAINER_Y, value.getY());
 						dataContainer.set(CONTAINER_Z, value.getZ());
 					} else {
-						dataContainer.set(CONTAINER_X, null);
-						dataContainer.set(CONTAINER_Y, null);
-						dataContainer.set(CONTAINER_Z, null);
+						dataContainer.set(CONTAINER_X.getUnvalidatedSaver(), null);
+						dataContainer.set(CONTAINER_Y.getUnvalidatedSaver(), null);
+						dataContainer.set(CONTAINER_Z.getUnvalidatedSaver(), null);
 					}
 				}
 

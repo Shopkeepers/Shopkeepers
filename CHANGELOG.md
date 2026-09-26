@@ -18,6 +18,7 @@ Date format: (YYYY-MM-DD)
 * Fix: An item duplication issue with player shops introduced in v2.28.0, caused by not properly resetting the trading state on failed trade attempts.
   * Also added a safeguard that aborts subsequent trade attempts if the previous trade was not properly ended.
 * Fix: An item duplication issue with player shops introduced in v2.28.0 if multiple shop containers share the same inventory, e.g. the two chests of a double chest.
+* Fix: The container list migration did not remove the legacy container data (`chestx`, `chesty`, `chestz`).
 * Fix: A currency item duplication issue in player shops when the shop owner edits the offers while another player is currently trading.
   * Trades are now aborted if the trading recipe price no longer matches the price of the corresponding offer.
   * We also immediately close any open trading views now when the trade offers have been edited, so trading players don't see outdated trades.
