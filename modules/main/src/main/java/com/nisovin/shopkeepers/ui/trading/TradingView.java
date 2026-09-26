@@ -534,7 +534,7 @@ public class TradingView extends View {
 
 				if (!this.finalTradePreparation(trade)) {
 					this.onTradeAborted(tradingContext, false);
-					return;
+					break;
 				}
 
 				// We are going to apply the trade now:
