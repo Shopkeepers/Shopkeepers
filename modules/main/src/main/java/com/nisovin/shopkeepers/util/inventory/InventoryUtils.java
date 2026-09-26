@@ -11,6 +11,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.BlockInventoryHolder;
+import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -87,6 +88,44 @@ public final class InventoryUtils {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Checks if the given inventories are the same, or overlap in the case of double chest
+	 * inventories.
+	 * <p>
+	 * This compares the inventories themselves, not their contents / items.
+	 * <p>
+	 * For {@link DoubleChestInventory double chest inventories}, this checks if any of their
+	 * {@link DoubleChestInventory#getLeftSide() left} or {@link DoubleChestInventory#getRightSide()
+	 * right} sides are the same. A single side match is sufficient: This returns <code>true</code>
+	 * for two double chest inventories that were retrieved for the two different chest blocks of
+	 * the same double chest, or for a double chest inventory and the inventory of one of its sides.
+	 * 
+	 * @param inventory1
+	 *            the first inventory, not <code>null</code>
+	 * @param inventory2
+	 *            the second inventory, not <code>null</code>
+	 * @return <code>true</code> if the inventories are the same or overlap
+	 */
+	public static boolean isSameInventory(Inventory inventory1, Inventory inventory2) {
+		Validate.notNull(inventory1, "inventory1 is null");
+		Validate.notNull(inventory2, "inventory2 is null");
+		// Note: Double chest inventories cannot be compared via equals, because each inventory
+		// lookup creates a new underlying Minecraft inventory that combines both chest inventories.
+		// We therefore compare the inventories of the individual sides instead.
+		// This also handles nested double chest inventories.
+		if (inventory1 instanceof DoubleChestInventory doubleChestInventory) {
+			return isSameInventory(doubleChestInventory.getLeftSide(), inventory2)
+					|| isSameInventory(doubleChestInventory.getRightSide(), inventory2);
+		}
+
+		if (inventory2 instanceof DoubleChestInventory doubleChestInventory) {
+			return isSameInventory(inventory1, doubleChestInventory.getLeftSide())
+					|| isSameInventory(inventory1, doubleChestInventory.getRightSide());
+		}
+
+		return inventory1.equals(inventory2);
 	}
 
 	/**

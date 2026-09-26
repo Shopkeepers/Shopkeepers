@@ -1407,14 +1407,12 @@ public abstract class AbstractPlayerShopkeeper
 		return this.getFirstContainerLocation().getBlock();
 	}
 
-	// Returns the combined contents of all stock containers.
-	// Returns an empty array if no stock containers could be found.
+	@Override
 	public @Nullable ItemStack[] getStockContainerContents() {
 		return this.getContainerContents(true);
 	}
 
-	// Returns the combined contents of all earnings containers.
-	// Returns an empty array if no earnings containers could be found.
+	@Override
 	public @Nullable ItemStack[] getEarningsContainerContents() {
 		return this.getContainerContents(false);
 	}
@@ -1444,12 +1442,29 @@ public abstract class AbstractPlayerShopkeeper
 		// Combine the contents of all matching containers, skipping empty item stacks to keep the
 		// returned array (and the downstream iteration) smaller:
 		List<@Nullable ItemStack> contents = new ArrayList<>();
+		// The already processed inventories, to filter out overlapping container inventories:
+		List<Inventory> processedInventories = new ArrayList<>(containers.size());
 		for (ShopContainer container : containers) {
 			var type = container.getType();
 			if (stock ? !type.isStock() : !type.isEarnings()) continue;
 
 			Inventory containerInventory = container.getInventory();
 			if (containerInventory == null) continue;
+
+			// Skip containers that share their inventory with an already processed container (e.g.
+			// both sides of a double chest):
+			var isDuplicateInventory = false;
+			for (Inventory processedInventory : processedInventories) {
+				if (InventoryUtils.isSameInventory(processedInventory, containerInventory)) {
+					isDuplicateInventory = true;
+					break;
+				}
+			}
+			if (isDuplicateInventory) {
+				continue;
+			}
+
+			processedInventories.add(containerInventory);
 
 			for (ItemStack itemStack : containerInventory.getContents()) {
 				if (ItemUtils.isEmpty(itemStack)) continue;

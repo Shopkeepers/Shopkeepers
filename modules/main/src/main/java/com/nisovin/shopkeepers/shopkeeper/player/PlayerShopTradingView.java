@@ -10,7 +10,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.ShopkeepersPlugin;
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
-import com.nisovin.shopkeepers.api.shopkeeper.container.ShopContainer;
 import com.nisovin.shopkeepers.config.Settings;
 import com.nisovin.shopkeepers.lang.Messages;
 import com.nisovin.shopkeepers.ui.lib.UIState;
@@ -19,23 +18,23 @@ import com.nisovin.shopkeepers.ui.trading.TradingContext;
 import com.nisovin.shopkeepers.ui.trading.TradingView;
 import com.nisovin.shopkeepers.util.bukkit.PermissionUtils;
 import com.nisovin.shopkeepers.util.bukkit.TextUtils;
+import com.nisovin.shopkeepers.util.inventory.InventoryUtils;
 import com.nisovin.shopkeepers.util.logging.Log;
 
 public class PlayerShopTradingView extends TradingView {
 
-	// Snapshot of a single container's contents during the currently handled trade:
+	// Snapshot of a single container's inventory contents during the currently handled trade:
 	protected static final class TradeContainer {
 
-		private final ShopContainer shopContainer;
+		// No ShopContainer reference: ShopContainers with overlapping inventories are combined into
+		// a single TradeContainer.
 		private final Inventory inventory;
 		private final @Nullable ItemStack[] contents;
+		// Whether the contents have already been added to the stock or earnings contents:
+		private boolean isStock = false;
+		private boolean isEarnings = false;
 
-		private TradeContainer(
-				ShopContainer shopContainer,
-				Inventory inventory,
-				@Nullable ItemStack[] contents
-		) {
-			this.shopContainer = shopContainer;
+		private TradeContainer(Inventory inventory, @Nullable ItemStack[] contents) {
 			this.inventory = inventory;
 			this.contents = contents;
 		}
@@ -101,19 +100,32 @@ public class PlayerShopTradingView extends TradingView {
 			Inventory containerInventory = container.getInventory();
 			if (containerInventory == null) continue;
 
-			var tradeContainer = new TradeContainer(
-					container,
-					containerInventory,
-					containerInventory.getContents()
-			);
-			tradeContainers.add(tradeContainer);
+			// Shop containers that share their inventory (e.g. both sides of a double chest) are
+			// only collected once. Otherwise, applying the contents of one snapshot would overwrite
+			// the changes to the other snapshot.
+			// The shared inventory combines the types (stock or earnings) of these shop containers.
+			TradeContainer tradeContainer = this.getTradeContainer(containerInventory);
+			if (tradeContainer == null) {
+				tradeContainer = new TradeContainer(
+						containerInventory,
+						containerInventory.getContents()
+				);
+				tradeContainers.add(tradeContainer);
+			} else {
+				Log.debug(() -> this.getContext().getLogPrefix() + "Container at "
+						+ TextUtils.getLocationString(container.getLocation())
+						+ " shares its inventory with another shop container.");
+			}
 
 			// Pre-build the lists of stock and earnings container contents:
-			if (tradeContainer.shopContainer.getType().isStock()) {
+			var containerType = container.getType();
+			if (containerType.isStock() && !tradeContainer.isStock) {
+				tradeContainer.isStock = true;
 				stockContents.add(tradeContainer.contents);
 			}
 
-			if (tradeContainer.shopContainer.getType().isEarnings()) {
+			if (containerType.isEarnings() && !tradeContainer.isEarnings) {
+				tradeContainer.isEarnings = true;
 				earningsContents.add(tradeContainer.contents);
 			}
 		}
@@ -125,6 +137,16 @@ public class PlayerShopTradingView extends TradingView {
 		}
 
 		return true;
+	}
+
+	// Returns null if there is no trade container for the given inventory yet:
+	private @Nullable TradeContainer getTradeContainer(Inventory inventory) {
+		for (TradeContainer tradeContainer : tradeContainers) {
+			if (InventoryUtils.isSameInventory(tradeContainer.inventory, inventory)) {
+				return tradeContainer;
+			}
+		}
+		return null;
 	}
 
 	@Override

@@ -383,6 +383,18 @@ public interface PlayerShopkeeper extends Shopkeeper {
 
 	/**
 	 * Gets the containers used by this shop.
+	 * <p>
+	 * Important: Different containers can share the same inventory, for example if they refer to
+	 * the two sides of a double chest. When you process the inventory contents of the containers,
+	 * for example to count items, make sure that you process each inventory at most once. Also note
+	 * that Bukkit double chest inventories cannot be compared by equality, so you must exclude
+	 * duplicate inventories by some other means, e.g. by comparing the underlying inventory sides
+	 * or double chest blocks. Alternatively, you can use the existing helper methods, such as
+	 * {@link #getStockContainerContents()} and {@link #getEarningsContainerContents()}, which
+	 * filter out overlapping container inventories themselves.
+	 * <p>
+	 * If shop containers share the same inventory, the plugin treats them similarly to a single
+	 * shop container that combines their {@link ShopContainer#getType() types}.
 	 * 
 	 * @return an unmodifiable view on the shop's containers, not <code>null</code> but can be empty
 	 */
@@ -514,6 +526,36 @@ public interface PlayerShopkeeper extends Shopkeeper {
 	 */
 	@Deprecated
 	public @Nullable Block getContainer();
+
+	/**
+	 * Gets the combined contents of all of the shop's {@link ShopContainerType#isStock() stock}
+	 * containers.
+	 * <p>
+	 * If multiple stock containers share the same inventory (see {@link #getContainers()}), the
+	 * contents of this inventory are only included once.
+	 * <p>
+	 * The returned array may or may not include empty slots. The returned item stacks might
+	 * directly reflect the items inside the containers and must therefore not be modified.
+	 * 
+	 * @return the combined contents of the shop's stock containers, not <code>null</code>, but
+	 *         empty if the shop has no stock containers or they do not exist currently
+	 */
+	public @Nullable ItemStack[] getStockContainerContents();
+
+	/**
+	 * Gets the combined contents of all of the shop's {@link ShopContainerType#isEarnings()
+	 * earnings} containers.
+	 * <p>
+	 * If multiple earnings containers share the same inventory (see {@link #getContainers()}), the
+	 * contents of this inventory are only included once.
+	 * <p>
+	 * The returned array may or may not include empty slots. The returned item stacks might
+	 * directly reflect the items inside the containers and must therefore not be modified.
+	 * 
+	 * @return the combined contents of the shop's earnings containers, not <code>null</code>, but
+	 *         empty if the shop has no earnings containers or they do not exist currently
+	 */
+	public @Nullable ItemStack[] getEarningsContainerContents();
 
 	/**
 	 * Gets the amount of currency stored inside the shop's stock containers.
