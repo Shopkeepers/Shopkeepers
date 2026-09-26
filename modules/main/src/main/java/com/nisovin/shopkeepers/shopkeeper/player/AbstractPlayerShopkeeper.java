@@ -449,11 +449,9 @@ public abstract class AbstractPlayerShopkeeper
 
 				ShopkeeperNaming shopkeeperNaming = SKShopkeepersPlugin.getInstance().getShopkeeperNaming();
 				if (shopkeeperNaming.requestNameChange(player, this, newName)) {
-					// Manually remove rename item from player's hand after this event is processed:
-					Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
-						ItemStack newItemInMainHand = ItemUtils.decreaseItemAmount(itemInMainHand, 1);
-						playerInventory.setItemInMainHand(newItemInMainHand);
-					});
+					// Remove the naming item from player's hand:
+					ItemStack newItemInMainHand = ItemUtils.decreaseItemAmount(itemInMainHand, 1);
+					playerInventory.setItemInMainHand(newItemInMainHand);
 				}
 				return;
 			}

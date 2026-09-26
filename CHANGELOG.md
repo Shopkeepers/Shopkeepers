@@ -21,6 +21,7 @@ Date format: (YYYY-MM-DD)
 * Fix: A potential currency item duplication issue in player shops when the shop owner edits the offers while another player is currently trading.
   * Trades are now aborted if the trading recipe price no longer matches the price of the corresponding offer.
   * We also immediately close any open trading views now when the trade offers have been edited, so trading players don't see outdated trades.
+* Fix: An item duplication issue with the shop creation item and the naming item, caused by removing used items one tick later.
 * Assumptions:
   * Remove the no longer relevant sections about our `SKUnmodifiableItemStack`: The implementation has changed in v2.22.0.
   * Add section regarding `Inventory#equals`.
