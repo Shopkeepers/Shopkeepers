@@ -1426,12 +1426,24 @@ public abstract class AbstractShopkeeper implements Shopkeeper {
 
 				int shopkeeperId = shopkeeperData.get(ID);
 				String shopkeeperPrefix = getLogPrefix(shopkeeperId);
+				String worldName = shopkeeperData.getOrNullIfMissing(WORLD_NAME);
 
 				boolean migrated = false;
 				int snapshotId = 1;
 				for (SKShopkeeperSnapshot snapshot : snapshots) {
 					String snapshotLogPrefix = getLogPrefix(shopkeeperPrefix, snapshotId, snapshot);
-					migrated |= snapshot.getShopkeeperData().migrate(snapshotLogPrefix);
+					ShopkeeperData snapshotData = snapshot.getShopkeeperData();
+
+					// Snapshots do not store the shopkeeper's world, but the 'container-list'
+					// migration requires it: Temporarily provide the shopkeeper's world during the
+					// migration:
+					snapshotData.set(WORLD_NAME, worldName);
+					try {
+						migrated |= snapshotData.migrate(snapshotLogPrefix);
+					} finally {
+						snapshotData.remove(WORLD_NAME.getName());
+					}
+
 					snapshotId++;
 				}
 				return migrated;

@@ -343,6 +343,9 @@ public abstract class AbstractPlayerShopkeeper
 	@Override
 	public void saveDynamicState(ShopkeeperData shopkeeperData, boolean saveAll) {
 		super.saveDynamicState(shopkeeperData, saveAll);
+		// TODO Really save and restore owner, members and shop containers as part of the dynamic
+		// state? Skip loading them if applied to another shopkeeper? Add a parameter that controls
+		// what kind of data to save/restore?
 		this.saveOwnedSince(shopkeeperData);
 		this.saveOwner(shopkeeperData);
 		this.saveMembers(shopkeeperData);
