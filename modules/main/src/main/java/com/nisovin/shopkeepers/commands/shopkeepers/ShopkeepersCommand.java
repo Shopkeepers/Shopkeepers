@@ -107,6 +107,7 @@ public class ShopkeepersCommand extends BaseCommand {
 		childCommands.register(new CommandYaml());
 		childCommands.register(new CommandDebugCreateShops(plugin));
 		childCommands.register(new CommandTestDamage(plugin));
+		childCommands.register(new CommandTestKill());
 		childCommands.register(new CommandTestSpawn(plugin));
 	}
 
