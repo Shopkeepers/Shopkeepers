@@ -214,6 +214,9 @@ public class VillagerInteractionListener implements Listener {
 			} else { // remaining <= 0
 				playerInventory.setItemInMainHand(null); // Remove item in hand
 				if (remaining < 0) {
+					// Also clear the held item slot in the captured storage contents:
+					storageContents[playerInventory.getHeldItemSlot()] = null;
+
 					// Remove remaining costs from inventory:
 					InventoryUtils.removeItems(storageContents, Settings.hireItem, -remaining);
 					// Apply the change to the player's inventory:
