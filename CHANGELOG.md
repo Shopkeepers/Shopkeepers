@@ -20,6 +20,7 @@ Date format: (YYYY-MM-DD)
 * Fix: A potential currency item duplication issue in player shops when the shop owner edits the offers while another player is currently trading.
   * Trades are now aborted if the trading recipe price no longer matches the price of the corresponding offer.
   * We also immediately close any open trading views now when the trade offers have been edited, so trading players don't see outdated trades.
+* Assumptions: Remove the no longer relevant sections about our `SKUnmodifiableItemStack`: The implementation has changed in v2.22.0.
 
 ## v2.28.0 (2026-09-20)
 ### Supported MC versions: 26.3, 26.2, 26.1.2, 1.21.11, 1.21.10, 1.21.8, 1.21.7, 1.21.6, 1.21.5
