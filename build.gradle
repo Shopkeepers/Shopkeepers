@@ -297,7 +297,7 @@ subprojects {
 		dependencies {
 			compileOnly libs.checkerframework.qual
 			checkerFramework libs.checkerframework.checker
-			testImplementation libs.checkerframework.qual
+			testCompileOnly libs.checkerframework.qual
 		}
 
 		checkerFramework {
